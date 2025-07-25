@@ -16,12 +16,10 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/v3/api-docs/**",
                     "/swagger-ui/**",
-                    "/swagger-ui.html"
+                    "/swagger-ui.html",
+                    "/users/**"   // 회원가입 API도 permitAll 추가
                 ).permitAll()
                 .anyRequest().authenticated()
-            )
-            .oauth2Login(oauth2 -> oauth2
-                .defaultSuccessUrl("/") // 로그인되면 redirect? 어디로가노
             );
 
         return http.build();
