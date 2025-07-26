@@ -1,13 +1,10 @@
 package com.example.yenanow.users.controller;
 
 import com.example.yenanow.common.util.JwtUtil;
-import com.example.yenanow.auth.dto.request.LoginRequest;
 import com.example.yenanow.users.dto.request.SignupRequest;
-import com.example.yenanow.auth.dto.response.LoginResponse;
 import com.example.yenanow.users.dto.response.SignupResponse;
 import com.example.yenanow.users.entity.User;
 import com.example.yenanow.users.service.UserService;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
