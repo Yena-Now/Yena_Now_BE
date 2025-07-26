@@ -1,8 +1,11 @@
 package com.example.yenanow.users.controller;
 
 import com.example.yenanow.common.util.JwtUtil;
+import com.example.yenanow.auth.dto.request.LoginRequest;
 import com.example.yenanow.users.dto.request.SignupRequest;
+import com.example.yenanow.auth.dto.response.LoginResponse;
 import com.example.yenanow.users.dto.response.SignupResponse;
+import com.example.yenanow.users.entity.User;
 import com.example.yenanow.users.service.UserService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +24,19 @@ public class UsersController {
 
     @PostMapping("/signup")
     public ResponseEntity<SignupResponse> signup(@RequestBody SignupRequest signupRequest) {
-        return ResponseEntity.ok(userService.addUser(signupRequest));
+
+        User savedUser = userService.addUser(signupRequest);
+        String userUuid = savedUser.getUuid().toString();
+        String accessToken = JwtUtil.generateToken(userUuid);
+
+        SignupResponse response = SignupResponse.builder()
+            .accessToken(accessToken)
+            .userUuid(userUuid)
+            .nickname(signupRequest.getNickname())
+            .profileUrl(null)
+            .build();
+
+        return ResponseEntity.ok(response);
     }
 
 }
