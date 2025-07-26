@@ -15,6 +15,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import org.springframework.data.annotation.CreatedDate;
@@ -31,10 +32,10 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 public class User {
 
     @Id
-    @GeneratedValue(generator = "uuid2")
-    @JdbcTypeCode(SqlTypes.VARCHAR)
-    @Column(name = "user_uuid", length = 36, nullable = false)
-    private UUID uuid;
+    @GeneratedValue(generator = "UUID")
+    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
+    @Column(name = "user_uuid", updatable = false, nullable = false)
+    private String uuid;
 
     @Column(name = "email", length = 50, nullable = false)
     private String email;
