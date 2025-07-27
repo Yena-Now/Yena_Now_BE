@@ -7,6 +7,7 @@ pipeline {
 
     environment {
         DOCKER_IMAGE_NAME = "yena_now_be"
+        DEPLOY_SERVER = "ubuntu@i13e203.p.ssafy.io"
     }
 
     stages {
@@ -27,44 +28,36 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 echo '3. Docker 이미지 빌드'
-                sh "docker build -t ${env.DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER} ."
+                sh "docker build -t ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER} ."
             }
         }
 
         stage('Deploy to Production') {
             steps {
-                echo '4. master 브랜치에 머지되었거나, 수동 실행으로 인해 배포를 시작합니다.'
-                sshagent(credentials: ['server-ssh-key']) {
+                echo '4. master 브랜치 배포 시작'
+                sshagent(credentials: ['ubuntu']) {
                     script {
-                        // APP_로 시작하는 환경변수만 컨테이너에 전달
-                        def dockerEnvOpts = []
-                        env.getEnvironment().each { key, value ->
-                            if (key.startsWith('APP_')) {
-                                def containerEnvVar = key.substring(4)
-                                dockerEnvOpts.add("-e ${containerEnvVar}=${value}")
-                            }
-                        }
-                        dockerEnvOpts.add("-e SPRING_PROFILES_ACTIVE=prod")
-                        def envOptionString = dockerEnvOpts.join(' ')
+                        // 이미지 tar 파일 생성 & 전송
+                        sh "docker save -o app-image.tar ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER}"
+                        sh "scp -o StrictHostKeyChecking=no app-image.tar ${DEPLOY_SERVER}:/tmp/app-image.tar"
 
-                        echo "=== Docker 전달 환경 변수 옵션 ==="
-                        dockerEnvOpts.each { opt -> echo "${opt}" }
-
-                        // 도커 이미지 저장 및 서버 전송
-                        sh "docker save -o app-image.tar ${env.DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}"
-                        sh "scp -o StrictHostKeyChecking=no app-image.tar ${DEPLOY_SERVER_USER}@${DEPLOY_SERVER_IP}:/tmp/app-image.tar"
-
-                        // 서버에서 Docker 컨테이너 실행
-                        sh """
-                        ssh -o StrictHostKeyChecking=no ${DEPLOY_SERVER_USER}@${DEPLOY_SERVER_IP} '\
-                            docker load -i /tmp/app-image.tar && \
-                            docker stop ${DOCKER_IMAGE_NAME} || true && \
-                            docker rm ${DOCKER_IMAGE_NAME} || true && \
-                            docker run -d --name ${DOCKER_IMAGE_NAME} -p 8080:8080 ${envOptionString} ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER}'
-                        """
-
-                        // 임시 파일 삭제
-                        sh "rm -f app-image.tar"
+                        // 원격 서버에 배포 스크립트 생성
+                        writeFile file: 'deploy.sh', text: """
+#!/bin/bash
+set -e
+docker load -i /tmp/app-image.tar
+docker stop ${DOCKER_IMAGE_NAME} || true
+docker rm ${DOCKER_IMAGE_NAME} || true
+docker run -d --name ${DOCKER_IMAGE_NAME} -p 8080:8080 \\
+  -e DB_PASSWORD=${DB_PASSWORD} \\
+  -e DB_URL=${DB_URL} \\
+  -e DB_USERNAME=${DB_USERNAME} \\
+  -e SPRING_PROFILES_ACTIVE=prod \\
+  ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER}
+"""
+                        sh "chmod +x deploy.sh"
+                        sh "scp -o StrictHostKeyChecking=no deploy.sh ${DEPLOY_SERVER}:/tmp/deploy.sh"
+                        sh "ssh -o StrictHostKeyChecking=no ${DEPLOY_SERVER} 'bash /tmp/deploy.sh'"
                     }
                 }
             }
