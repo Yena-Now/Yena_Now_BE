@@ -36,23 +36,22 @@ pipeline {
             steps {
                 echo '4. master 브랜치 배포 시작'
                 sshagent(credentials: ['server-ssh-key']) {
-                    script {
-                        // 이미지 tar 파일 생성 & 전송
-                        sh "docker save -o app-image.tar ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER}"
-                        sh "scp -o StrictHostKeyChecking=no app-image.tar ${DEPLOY_SERVER}:/tmp/app-image.tar"
-
-                        // 원격 서버에 실행할 deploy.sh (줄바꿈 없이 한 줄 처리)
-                        writeFile file: 'deploy.sh', text: """#!/bin/bash
-set -e
-docker load -i /tmp/app-image.tar
-docker stop ${DOCKER_IMAGE_NAME} || true
-docker rm ${DOCKER_IMAGE_NAME} || true
-docker run -d --name ${DOCKER_IMAGE_NAME} -p 8080:8080 -e DB_PASSWORD=${DB_PASSWORD} -e DB_URL=${DB_URL} -e DB_USERNAME=${DB_USERNAME} -e SPRING_PROFILES_ACTIVE=prod ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER}
-"""
-                        sh "chmod +x deploy.sh"
-                        sh "scp -o StrictHostKeyChecking=no deploy.sh ${DEPLOY_SERVER}:/tmp/deploy.sh"
-                        sh "ssh -o StrictHostKeyChecking=no ${DEPLOY_SERVER} 'bash /tmp/deploy.sh'"
-                    }
+                    sh """
+                        docker save -o app-image.tar ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER}
+                        scp -o StrictHostKeyChecking=no app-image.tar ${DEPLOY_SERVER}:/tmp/app-image.tar
+                        ssh -o StrictHostKeyChecking=no ${DEPLOY_SERVER} '
+                            docker load -i /tmp/app-image.tar && \
+                            docker stop ${DOCKER_IMAGE_NAME} || true && \
+                            docker rm ${DOCKER_IMAGE_NAME} || true && \
+                            docker run -d --name ${DOCKER_IMAGE_NAME} -p 8080:8080 \
+                              -e DB_PASSWORD=${DB_PASSWORD} \
+                              -e DB_URL="${DB_URL}" \
+                              -e DB_USERNAME=${DB_USERNAME} \
+                              -e SPRING_PROFILES_ACTIVE=prod \
+                              ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER}
+                        '
+                        rm -f app-image.tar
+                    """
                 }
             }
         }
