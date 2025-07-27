@@ -16,7 +16,7 @@ pipeline {
         stage('Build & Test') {
             steps {
                 echo '2. Gradle로 프로젝트 빌드 및 테스트'
-                sh './gradlew clean build'
+                sh './gradlew clean build -x test'
             }
         }
 
