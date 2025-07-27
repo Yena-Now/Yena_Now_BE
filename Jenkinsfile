@@ -44,6 +44,11 @@ pipeline {
                                 dockerEnvOpts.add("-e ${containerEnvVar}=${value}")
                             }
                         }
+
+                        // >>> 추가: 실제 전달할 옵션 출력
+                        echo "=== Docker 전달 환경 변수 옵션 ==="
+                        dockerEnvOpts.each { opt -> echo opt }
+
                         dockerEnvOpts.add("-e SPRING_PROFILES_ACTIVE=prod")
                         def envOptionString = dockerEnvOpts.join(' ')
 
