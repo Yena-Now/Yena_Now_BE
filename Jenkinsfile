@@ -41,7 +41,7 @@ pipeline {
                         env.getEnvironment().each { key, value ->
                             if (key.startsWith('APP_')) {
                                 def containerEnvVar = key.substring(4)
-                                dockerEnvOpts.add("-e ${containerEnvVar}='${value}'")
+                                dockerEnvOpts.add("-e ${containerEnvVar}=${value}")
                             }
                         }
                         dockerEnvOpts.add("-e SPRING_PROFILES_ACTIVE=prod")
