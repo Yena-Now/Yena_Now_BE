@@ -24,13 +24,25 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
     @Override
     public OAuth2User loadUser(OAuth2UserRequest request) throws OAuth2AuthenticationException {
         OAuth2User oAuth2User = new DefaultOAuth2UserService().loadUser(request);
-
         User user = saveOrUpdate(request, oAuth2User);
 
+        String registrationId = request.getClientRegistration().getRegistrationId();
+        Map<String, Object> originalAttributes = oAuth2User.getAttributes();
+
+        Map<String, Object> attributes = new java.util.HashMap<>(originalAttributes);
+
+        // 카카오는 받아오는 꼬라지가 구글이랑 다름 ㅋㅋ
+        if ("kakao".equals(registrationId)) {
+            Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
+            if (kakaoAccount != null && kakaoAccount.get("email") != null) {
+                attributes.put("email", kakaoAccount.get("email"));
+            }
+        }
+
         return new DefaultOAuth2User(
-            null, // 권한 사용 안 함
-            oAuth2User.getAttributes(),
-            "email" // 기본 key
+            null,  // 권한 안씀
+            attributes,
+            "email"
         );
     }
 
@@ -42,13 +54,12 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         String name = null;
         String profileUrl = null;
 
-        if ("kakao".equals(registrationId)) {
-            Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get(
-                "kakao_account");
+        if (registrationId.equals("kakao")) {
+            Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
             Map<String, Object> profile = (Map<String, Object>) kakaoAccount.get("profile");
             email = (String) kakaoAccount.get("email");
-            name = (String) profile.get("nickname");
-            profileUrl = (String) profile.get("profile_image_url");
+            name = (String) profile.getOrDefault("nickname", "소셜유저");
+            profileUrl = (String) profile.getOrDefault("profile_image_url", "");
         } else {
             // 기본은 Google
             email = (String) attributes.get("email");
