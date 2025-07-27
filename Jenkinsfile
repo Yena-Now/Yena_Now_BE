@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    tools {
+        jdk 'jdk17'
+    }
+
     environment {
         DOCKER_IMAGE_NAME = "yena_now_be"
     }
