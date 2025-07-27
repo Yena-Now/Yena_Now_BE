@@ -53,12 +53,14 @@ pipeline {
                         sh "scp -o StrictHostKeyChecking=no app-image.tar ${DEPLOY_SERVER_USER}@${DEPLOY_SERVER_IP}:/tmp/app-image.tar"
 
                         sh """
-                            ssh -o StrictHostKeyChecking=no ${DEPLOY_SERVER_USER}@${DEPLOY_SERVER_IP} \
-                            'docker load -i /tmp/app-image.tar && \
-                            docker stop ${DOCKER_IMAGE_NAME} || true && \
-                            docker rm ${DOCKER_IMAGE_NAME} || true && \
-                            docker run -d --name ${DOCKER_IMAGE_NAME} -p 8080:8080 ${envOptionString} ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER}'
+                            ssh -o StrictHostKeyChecking=no ${DEPLOY_SERVER_USER}@${DEPLOY_SERVER_IP} '
+                                docker load -i /tmp/app-image.tar &&
+                                docker stop ${DOCKER_IMAGE_NAME} || true &&
+                                docker rm ${DOCKER_IMAGE_NAME} || true &&
+                                docker run -d --name ${DOCKER_IMAGE_NAME} -p 8080:8080 ${envOptionString} ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER}
+                            '
                         """
+
 
                         sh "rm -f app-image.tar"
                     }
