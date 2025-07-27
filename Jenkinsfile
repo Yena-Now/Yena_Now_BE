@@ -35,7 +35,7 @@ pipeline {
         stage('Deploy to Production') {
             steps {
                 echo '4. master 브랜치 배포 시작'
-                sshagent(credentials: ['ubuntu']) {
+                sshagent(credentials: ['server-ssh-key']) {
                     script {
                         // 이미지 tar 파일 생성 & 전송
                         sh "docker save -o app-image.tar ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER}"
