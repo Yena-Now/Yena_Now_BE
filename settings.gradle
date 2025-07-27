@@ -1,5 +1,6 @@
 rootProject.name = 'yenanow'
 
+/*
 toolchainManagement {
     jvm {
         javaRepositories {
@@ -9,3 +10,4 @@ toolchainManagement {
         }
     }
 }
+*/
