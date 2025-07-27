@@ -29,14 +29,20 @@ pipeline {
 
         stage('Deploy to Production') {
             when {
-                expression { return env.gitlabTargetBranch == 'master' }
+                anyOf {
+                    allOf {
+                        expression { env.gitlabActionType == 'MERGE' }
+                        expression { env.gitlabTargetBranch == 'master' }
+                    }
+                    expression { currentBuild.rawBuild.getCause(hudson.model.Cause$UserIdCause) != null }
+                }
             }
             steps {
-                echo '4. master 브랜치에 머지되었으므로 배포를 시작합니다.'
+                echo '4. master 브랜치에 머지되었거나, 수동 실행으로 인해 배포를 시작합니다.'
                 sshagent(credentials: ['server-ssh-key']) {
                     script {
                         // 'APP_'로 시작하는 모든 환경 변수를 찾아 docker -e 옵션으로 자동 변환
-                        def dockerEnvOpts = env.getEnvironment().findAll { key, value ->
+                        def dockerEnvOpts = env.findAll { key, value ->
                             key.startsWith('APP_')
                         }.collect { key, value ->
                             def containerEnvVar = key.substring(4)
