@@ -30,20 +30,20 @@ pipeline {
         stage('Deploy to Production') {
             when {
                 anyOf {
-                    expression { return env.gitlabTargetBranch == 'master' }  // GitLab MR → master
-                    expression { return currentBuild.rawBuild.getCause(hudson.model.Cause$UserIdCause) != null } // 수동 실행
+                    expression { return env.gitlabTargetBranch == 'master' }
+                    expression { return currentBuild.rawBuild.getCause(hudson.model.Cause$UserIdCause) != null }
                 }
             }
             steps {
                 echo '4. master 브랜치에 머지되었거나, 수동 실행으로 인해 배포를 시작합니다.'
                 sshagent(credentials: ['server-ssh-key']) {
                     script {
-                        // Sandbox-safe 방식으로 APP_ 환경 변수 수집
+                        // APP_ 환경 변수 처리 (Sandbox-safe)
                         def dockerEnvOpts = ""
-                        for (def key in env.keySet()) {
-                            if (key.startsWith("APP_")) {
-                                def containerEnvVar = key.substring(4)
-                                dockerEnvOpts += " -e ${containerEnvVar}='${env[key]}'"
+                        for (def e in System.getenv()) {
+                            if (e.key.startsWith("APP_")) {
+                                def containerEnvVar = e.key.substring(4)
+                                dockerEnvOpts += " -e ${containerEnvVar}='${e.value}'"
                             }
                         }
                         dockerEnvOpts += " -e SPRING_PROFILES_ACTIVE=prod"
@@ -52,7 +52,7 @@ pipeline {
                         sh "docker save -o app-image.tar ${env.DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}"
                         sh "scp -o StrictHostKeyChecking=no app-image.tar ${env.DEPLOY_SERVER_USER}@${env.DEPLOY_SERVER_IP}:/tmp/app-image.tar"
 
-                        // 배포 서버에 SSH로 접속하여 컨테이너 실행
+                        // 배포 서버에서 컨테이너 실행
                         sh """
                             ssh -o StrictHostKeyChecking=no ${DEPLOY_SERVER_USER}@${DEPLOY_SERVER_IP} "
                                 docker load -i /tmp/app-image.tar &&
@@ -62,7 +62,6 @@ pipeline {
                             "
                         """
 
-                        // 임시 파일 삭제
                         sh "rm -f app-image.tar"
                     }
                 }
