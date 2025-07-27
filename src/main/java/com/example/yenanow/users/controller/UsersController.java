@@ -18,13 +18,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class UsersController {
 
     private final UserService userService;
+    private final JwtUtil jwtUtil;
 
     @PostMapping("/signup")
     public ResponseEntity<SignupResponse> signup(@RequestBody SignupRequest signupRequest) {
 
         User savedUser = userService.addUser(signupRequest);
         String userUuid = savedUser.getUuid().toString();
-        String accessToken = JwtUtil.generateToken(userUuid);
+        String accessToken = jwtUtil.generateToken(userUuid);
 
         SignupResponse response = SignupResponse.builder()
             .accessToken(accessToken)

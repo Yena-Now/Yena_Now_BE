@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
+    private final JwtUtil jwtUtil;
 
     @Override
     public LoginResponse login(LoginRequest loginRequest) {
@@ -25,11 +26,11 @@ public class AuthServiceImpl implements AuthService {
             throw new RuntimeException("비밀번호가 일치하지 않습니다.");
         }
 
-        String token = JwtUtil.generateToken(user.getUuid().toString());
+        String token = jwtUtil.generateToken(user.getUuid());
 
         return LoginResponse.builder()
                 .accessToken(token)
-                .userUuid(user.getUuid().toString())
+                .userUuid(user.getUuid())
                 .nickname(user.getNickname())
                 .profileUrl(user.getProfileUrl())
                 .build();
