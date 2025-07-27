@@ -9,7 +9,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 echo '1. GitLab에서 소스 코드 가져오기'
-                git branch: env.gitlabSourceBranch, url: 'https://lab.ssafy.com/common-pjt-e203/yena_now_be.git', credentialsId: 'gitlab-access-token'
+                checkout scm
             }
         }
 
