@@ -28,40 +28,36 @@ pipeline {
         }
 
         stage('Deploy to Production') {
-            when {
-                anyOf {
-                    expression { return env.gitlabTargetBranch == 'master' }
-                    expression { return currentBuild.rawBuild.getCause(hudson.model.Cause$UserIdCause) != null }
-                }
-            }
             steps {
                 echo '4. master 브랜치에 머지되었거나, 수동 실행으로 인해 배포를 시작합니다.'
                 sshagent(credentials: ['server-ssh-key']) {
                     script {
-                        // APP_ 환경 변수 처리 (Sandbox-safe)
-                        def dockerEnvOpts = ""
-                        for (def e in System.getenv()) {
-                            if (e.key.startsWith("APP_")) {
-                                def containerEnvVar = e.key.substring(4)
-                                dockerEnvOpts += " -e ${containerEnvVar}='${e.value}'"
+                        // 'APP_'로 시작하는 모든 환경 변수를 docker -e 옵션으로 자동 변환
+                        def dockerEnvOpts = []
+                        env.getEnvironment().each { key, value ->
+                            if (key.startsWith('APP_')) {
+                                def containerEnvVar = key.substring(4)
+                                dockerEnvOpts.add("-e ${containerEnvVar}='${value}'")
                             }
                         }
-                        dockerEnvOpts += " -e SPRING_PROFILES_ACTIVE=prod"
+                        dockerEnvOpts.add("-e SPRING_PROFILES_ACTIVE=prod")
+                        def envOptionString = dockerEnvOpts.join(' ')
 
                         // 도커 이미지 저장 및 배포 서버로 전송
                         sh "docker save -o app-image.tar ${env.DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}"
-                        sh "scp -o StrictHostKeyChecking=no app-image.tar ${env.DEPLOY_SERVER_USER}@${env.DEPLOY_SERVER_IP}:/tmp/app-image.tar"
+                        sh "scp -o StrictHostKeyChecking=no app-image.tar ${DEPLOY_SERVER_USER}@${DEPLOY_SERVER_IP}:/tmp/app-image.tar"
 
-                        // 배포 서버에서 컨테이너 실행
+                        // 배포 서버에 SSH로 접속하여 컨테이너 실행
                         sh """
                             ssh -o StrictHostKeyChecking=no ${DEPLOY_SERVER_USER}@${DEPLOY_SERVER_IP} "
                                 docker load -i /tmp/app-image.tar &&
                                 docker stop ${DOCKER_IMAGE_NAME} || true &&
                                 docker rm ${DOCKER_IMAGE_NAME} || true &&
-                                docker run -d --name ${DOCKER_IMAGE_NAME} -p 8080:8080 ${dockerEnvOpts} ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER}
+                                docker run -d --name ${DOCKER_IMAGE_NAME} -p 8080:8080 ${envOptionString} ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER}
                             "
                         """
 
+                        // 임시 파일 삭제
                         sh "rm -f app-image.tar"
                     }
                 }
