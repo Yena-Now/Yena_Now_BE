@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    when {
+        expression { return env.gitlabTargetBranch == 'master' }
+    }
+
+
     environment {
         DOCKER_IMAGE_NAME = "yena_now_be"
     }
