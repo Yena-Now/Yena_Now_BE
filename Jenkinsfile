@@ -55,16 +55,14 @@ pipeline {
                         sh "docker save -o app-image.tar ${env.DOCKER_IMAGE_NAME}:${env.BUILD_NUMBER}"
                         sh "scp -o StrictHostKeyChecking=no app-image.tar ${DEPLOY_SERVER_USER}@${DEPLOY_SERVER_IP}:/tmp/app-image.tar"
 
-                        // 배포 서버에 SSH로 접속하여 컨테이너 실행
-                        sh """
-                            ssh -o StrictHostKeyChecking=no ${DEPLOY_SERVER_USER}@${DEPLOY_SERVER_IP} '
-                                docker load -i /tmp/app-image.tar &&
-                                docker stop ${DOCKER_IMAGE_NAME} || true &&
-                                docker rm ${DOCKER_IMAGE_NAME} || true &&
-                                docker run -d --name ${DOCKER_IMAGE_NAME} -p 8080:8080 \
-                                ${envOptionString} ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER}
-                            '
-                        """
+                        // SSH 원격 실행 - 한 줄 명령어로 처리
+                        def remoteCmd = """
+                            docker load -i /tmp/app-image.tar && \
+                            docker stop ${DOCKER_IMAGE_NAME} || true && \
+                            docker rm ${DOCKER_IMAGE_NAME} || true && \
+                            docker run -d --name ${DOCKER_IMAGE_NAME} -p 8080:8080 ${envOptionString} ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER}
+                        """.trim()
+                        sh "ssh -o StrictHostKeyChecking=no ${DEPLOY_SERVER_USER}@${DEPLOY_SERVER_IP} '${remoteCmd}'"
 
                         // 임시 파일 삭제
                         sh "rm -f app-image.tar"
