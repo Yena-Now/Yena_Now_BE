@@ -3,7 +3,6 @@ package com.example.yenanow.users.controller;
 import com.example.yenanow.common.util.JwtUtil;
 import com.example.yenanow.users.dto.request.SignupRequest;
 import com.example.yenanow.users.dto.response.SignupResponse;
-import com.example.yenanow.users.entity.User;
 import com.example.yenanow.users.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class UsersController {
 
     private final UserService userService;
-    private final JwtUtil jwtUtil;
 
     @PostMapping("/signup")
     public ResponseEntity<SignupResponse> signup(@RequestBody SignupRequest signupRequest) {

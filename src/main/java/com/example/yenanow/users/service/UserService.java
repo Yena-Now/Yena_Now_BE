@@ -5,5 +5,5 @@ import com.example.yenanow.users.dto.response.SignupResponse;
 
 public interface UserService {
 
-    public SignupResponse addUser(SignupRequest signupRequest);
+    SignupResponse addUser(SignupRequest signupRequest);
 }
