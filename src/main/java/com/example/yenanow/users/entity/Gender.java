@@ -6,7 +6,8 @@ import lombok.Getter;
 @AllArgsConstructor
 @Getter
 public enum Gender {
-    MALE, FEMALE;
+    MALE,
+    FEMALE;
 
     public static Gender from(String value) {
         if (value == null || value.isBlank()) {

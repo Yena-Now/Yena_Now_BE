@@ -1,6 +1,5 @@
 package com.example.yenanow.users.controller;
 
-import com.example.yenanow.common.util.JwtUtil;
 import com.example.yenanow.users.dto.request.SignupRequest;
 import com.example.yenanow.users.dto.response.SignupResponse;
 import com.example.yenanow.users.service.UserService;
@@ -21,7 +20,6 @@ public class UsersController {
     @PostMapping("/signup")
     public ResponseEntity<SignupResponse> signup(@RequestBody SignupRequest signupRequest) {
 
-        return ResponseEntity.ok(userService.addUser(signupRequest));
+        return ResponseEntity.ok(userService.createUser(signupRequest));
     }
-
 }

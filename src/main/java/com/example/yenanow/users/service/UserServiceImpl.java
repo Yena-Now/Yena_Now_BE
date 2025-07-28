@@ -5,11 +5,10 @@ import com.example.yenanow.users.dto.request.SignupRequest;
 import com.example.yenanow.users.dto.response.SignupResponse;
 import com.example.yenanow.users.entity.User;
 import com.example.yenanow.users.repository.UserRepository;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
 
 @RequiredArgsConstructor
 @Service
@@ -20,7 +19,7 @@ public class UserServiceImpl implements UserService {
     private final BCryptPasswordEncoder encoder;
 
     @Override
-    public SignupResponse addUser(SignupRequest signupRequest) {
+    public SignupResponse createUser(SignupRequest signupRequest) {
         User user = signupRequest.toEntity();
         user.encodePassword(encoder);
         user.setCreatedAt(LocalDateTime.now());
