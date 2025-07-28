@@ -3,7 +3,9 @@ package com.example.yenanow.gallery.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
-import java.util.UUID;
+import org.hibernate.annotations.GenericGenerator;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 
 @Entity
 @Table(name = "ncut")
@@ -15,6 +17,8 @@ import java.util.UUID;
 public class Ncut {
 
     @Id
+    @GeneratedValue(generator = "UUID")
+    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     @Column(name = "ncut_uuid", length = 36, nullable = false)
     private String ncutUuid;
 
@@ -24,7 +28,7 @@ public class Ncut {
     @Column(name = "thumbnail_url", length = 200, nullable = false)
     private String thumbnailUrl;
 
-    @Column(name = "content", columnDefinition = "TEXT")
+    @Column(name = "content", columnDefinition = "TEXT", nullable = true)
     private String content;
 
     @Enumerated(EnumType.STRING)
@@ -40,30 +44,15 @@ public class Ncut {
     @Column(name = "comment_cnt", nullable = false)
     private int commentCount = 0;
 
+    @CreatedDate
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     @Column(name = "user_uuid", length = 36, nullable = false)
     private String userUuid;
 
-    @PrePersist
-    public void prePersist() {
-        if (this.ncutUuid == null) {
-            this.ncutUuid = UUID.randomUUID().toString();
-        }
-        if (this.createdAt == null) {
-            this.createdAt = LocalDateTime.now();
-        }
-        if (this.updatedAt == null) {
-            this.updatedAt = LocalDateTime.now();
-        }
-    }
-
-    @PreUpdate
-    public void preUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
 }
