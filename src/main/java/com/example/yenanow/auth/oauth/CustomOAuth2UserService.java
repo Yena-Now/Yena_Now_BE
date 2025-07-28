@@ -31,7 +31,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
         Map<String, Object> attributes = new java.util.HashMap<>(originalAttributes);
 
-        // 카카오는 받아오는 꼬라지가 구글이랑 다름 ㅋㅋ
+        // 카카오는 받아오는 형식이 구글과 달라 flatten 처리
         if ("kakao".equals(registrationId)) {
             Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
             if (kakaoAccount != null && kakaoAccount.get("email") != null) {
@@ -40,7 +40,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         }
 
         return new DefaultOAuth2User(
-            null,  // 권한 안씀
+            null,
             attributes,
             "email"
         );
@@ -76,7 +76,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                     .email(finalEmail)
                     .name(finalName)
                     .nickname("user_" + UUID.randomUUID().toString().substring(0, 8))
-                    .password(UUID.randomUUID().toString()) // 소셜로그인한 사람 비밀번호는 걍 UUID 때려박음
+                    .password(UUID.randomUUID().toString()) // 소셜로그인 시 비밀번호는 필요없기 때문에 UUID생성해서 저장
                     .phoneNumber("010-0000-0000")
                     .profileUrl(finalProfileUrl)
                     .build();

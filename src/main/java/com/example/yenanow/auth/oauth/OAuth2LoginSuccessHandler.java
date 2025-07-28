@@ -4,6 +4,7 @@ import com.example.yenanow.common.util.JwtUtil;
 import com.example.yenanow.users.entity.User;
 import com.example.yenanow.users.repository.UserRepository;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -47,18 +48,26 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         String accessToken = jwtUtil.generateToken(user.getUuid());
         String refreshToken = jwtUtil.generateRefreshToken(user.getUuid());
 
+        // 쿠키에 refreshToken 저장
+        Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
+        refreshTokenCookie.setHttpOnly(true); // JS에서 접근 못하도록
+        refreshTokenCookie.setSecure(true); // HTTPS에서만 전송되도록
+        refreshTokenCookie.setPath("/"); // 모든 경로에서 접근 가능하도록
+        refreshTokenCookie.setMaxAge(7 * 24 * 60 * 60);
+
+        response.addCookie(refreshTokenCookie);
+
         // 클라이언트에 JSON으로 응답
         response.setContentType("application/json");
         response.setCharacterEncoding("utf-8");
         String json = String.format("""
             {
               "accessToken": "%s",
-              "refreshToken": "%s",
               "userUuid": "%s",
               "nickname": "%s",
               "profileUrl": "%s"
             }
-            """, accessToken, refreshToken, user.getUuid(), user.getNickname(), user.getProfileUrl());
+            """, accessToken, user.getUuid(), user.getNickname(), user.getProfileUrl());
         response.getWriter().write(json);
     }
 }
