@@ -8,6 +8,7 @@ pipeline {
     environment {
         DOCKER_IMAGE_NAME = "yena_now_be"
         DEPLOY_SERVER = "${DEPLOY_SERVER_USER}@${DEPLOY_SERVER_IP}"
+        BE_ENV_FILE = "${BE_ENV_FILE}"
     }
 
     stages {
@@ -20,7 +21,7 @@ pipeline {
 
         stage('Build & Test') {
             steps {
-                echo '2. Gradle로 프로젝트 빌드 및 테스트'
+                echo '2. Gradle로 프로젝트 빌드 및 테스트 (테스트 생략)'
                 sh './gradlew clean build -x test'
             }
         }
@@ -36,3 +37,27 @@ pipeline {
             steps {
                 script {
                     sh """
+                        echo '도커 이미지 저장'
+                        docker save -o app-image.tar ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER}
+
+                        echo '이전 컨테이너 중지 및 삭제'
+                        docker stop ${DOCKER_IMAGE_NAME} || true
+                        docker rm ${DOCKER_IMAGE_NAME} || true
+
+                        echo '도커 이미지 로드'
+                        docker load -i app-image.tar
+
+                        echo '새 컨테이너 실행 (서버: ${DEPLOY_SERVER})'
+                        docker run -d --name ${DOCKER_IMAGE_NAME} \
+                          --env-file ${BE_ENV_FILE} \
+                          -p 8080:8080 \
+                          ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER}
+
+                        echo '임시 tar 파일 삭제'
+                        rm -f app-image.tar
+                    """
+                }
+            }
+        }
+    }
+}
