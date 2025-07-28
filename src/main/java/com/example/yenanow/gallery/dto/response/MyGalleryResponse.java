@@ -4,20 +4,41 @@ import com.example.yenanow.gallery.entity.Ncut;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Page;
 
 @Getter
 @AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class MyGalleryResponse {
 
-    private int totalPages;
-    private List<MyNcutResponse> ncuts;
+  private int totalPages;
+  private List<MyNcutResponse> ncuts;
 
-    public static MyGalleryResponse fromPage(Page<Ncut> page) {
-        List<MyNcutResponse> ncutDtos = page.getContent().stream()
+  /**
+   * 유저 정보 없는 응답
+   */
+  public static MyGalleryResponse from(Page<Ncut> page) {
+    return MyGalleryResponse.builder()
+        .totalPages(page.getTotalPages())
+        .ncuts(page.getContent().stream()
             .map(MyNcutResponse::fromEntity)
-            .collect(Collectors.toList());
-        return new MyGalleryResponse(page.getTotalPages(), ncutDtos);
-    }
+            .collect(Collectors.toList()))
+        .build();
+  }
+
+  /**
+   * 유저 정보 포함 응답
+   */
+  public static MyGalleryResponse fromWithUser(Page<Ncut> page) {
+    return MyGalleryResponse.builder()
+        .totalPages(page.getTotalPages())
+        .ncuts(page.getContent().stream()
+            .map(MyNcutResponse::fromEntityWithUser)
+            .collect(Collectors.toList()))
+        .build();
+  }
 }

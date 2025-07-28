@@ -6,7 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface UserRepository extends JpaRepository<User, String> {
 
-    Optional<User> findById(String uuid);
+  Optional<User> findById(String uuid);
 
-    Optional<User> findByEmail(String email);
+  Optional<User> findByEmail(String email);
+
 }
