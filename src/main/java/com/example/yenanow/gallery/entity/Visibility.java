@@ -15,7 +15,7 @@ public enum Visibility {
             return null;
         }
         try {
-            return Visibility.valueOf(value.toLowerCase());
+            return Visibility.valueOf(value.toUpperCase());
         } catch (IllegalArgumentException e) {
             return null;
         }

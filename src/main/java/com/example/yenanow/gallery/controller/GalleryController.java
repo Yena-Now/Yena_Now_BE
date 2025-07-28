@@ -5,7 +5,10 @@ import com.example.yenanow.gallery.service.GalleryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/gallery")
@@ -16,11 +19,11 @@ public class GalleryController {
 
     @GetMapping("/me")
     public ResponseEntity<MyGalleryResponse> getMyGallery(
-            @AuthenticationPrincipal Object principal,  // JWT 필터에서 세팅한 UUID 문자열
-            @RequestParam(defaultValue = "0") int pageNum,
-            @RequestParam(defaultValue = "30") int display) {
+        @AuthenticationPrincipal Object principal,  // JWT 필터에서 세팅한 UUID 문자열
+        @RequestParam(defaultValue = "0") int pageNum,
+        @RequestParam(defaultValue = "30") int display) {
 
-        String userUuid = principal.toString(); //나중에 CustomUserDetails 리팩토링 할 예정 - 정훈
+        String userUuid = principal.toString();
         MyGalleryResponse response = galleryService.getMyGallery(userUuid, pageNum, display);
         return ResponseEntity.ok(response);
     }
