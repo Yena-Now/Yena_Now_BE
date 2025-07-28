@@ -1,5 +1,6 @@
 package com.example.yenanow.auth.controller;
 
+import com.example.yenanow.auth.dto.request.ForgotPasswordRequest;
 import com.example.yenanow.auth.dto.request.LoginRequest;
 import com.example.yenanow.auth.dto.request.VerificationEmailRequest;
 import com.example.yenanow.auth.dto.request.VerifyEmailRequest;
@@ -42,5 +43,11 @@ public class AuthController {
     public ResponseEntity<VerifyEmailResponse> verifyMessage(
         @RequestBody VerifyEmailRequest request) {
         return ResponseEntity.ok(authService.verifyEmailCode(request));
+    }
+
+    @PostMapping("/password")
+    public ResponseEntity<Void> sendPassword(@RequestBody ForgotPasswordRequest request) {
+        authService.sendTemporaryPassword(request);
+        return ResponseEntity.noContent().build(); // 204
     }
 }

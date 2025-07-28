@@ -1,5 +1,6 @@
 package com.example.yenanow.auth.service;
 
+import com.example.yenanow.auth.dto.request.ForgotPasswordRequest;
 import com.example.yenanow.auth.dto.request.LoginRequest;
 import com.example.yenanow.auth.dto.request.VerificationEmailRequest;
 import com.example.yenanow.auth.dto.request.VerifyEmailRequest;
@@ -75,15 +76,54 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public VerifyEmailResponse verifyEmailCode(VerifyEmailRequest request) {
-        String key = "email:" + request.getEmail();
+        String email = request.getEmail();
+        String key = "email:" + email;
         String code = redisTemplate.opsForValue().get(key);
 
-        boolean isVerified = code.equals(request.getCode());
+        boolean isVerified = code != null && code.equals(request.getCode());
 
         if (isVerified) {
-            redisTemplate.delete(key); // redis에 있던 값 삭제
+            // 인증했는지 여부 redis에 저장해 임시비밀번호 요청에 사용
+            redisTemplate.opsForValue().set("verified:" + email, "true", Duration.ofMinutes(5));
+            redisTemplate.delete(key); // 인증 성공 시 Redis에서 삭제
         }
 
         return new VerifyEmailResponse(isVerified);
+    }
+
+    @Override
+    public void sendTemporaryPassword(ForgotPasswordRequest request) {
+        String email = request.getEmail();
+
+        String key = "verified:" + email;
+        String verified = redisTemplate.opsForValue().get(key);
+
+        if (!verified.equals("true")) {
+            throw new RuntimeException("이메일 인증이 완료되지 않았습니다");
+        }
+
+        User user = userRepository.findByEmail(email) // 등록된 유저 이메일인지 여부
+            .orElseThrow(() -> new RuntimeException("존재하지 않는 이메일입니다."));
+
+        String tempPassword = generateRandomPassword(12);
+
+        user.setPassword(encoder.encode(tempPassword));
+        userRepository.save(user);
+
+        String subject = "[YenaNow] 임시 비밀번호 발급 안내";
+        String content = "임시 비밀번호: " + tempPassword + "\n로그인 후 반드시 비밀번호를 변경해주세요.";
+        mailService.sendEmail(email, subject, content);
+
+        redisTemplate.delete(key);
+    }
+
+    private String generateRandomPassword(int length) {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        StringBuilder sb = new StringBuilder();
+        Random random = new Random();
+        for (int i = 0; i < length; i++) {
+            sb.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        return sb.toString();
     }
 }

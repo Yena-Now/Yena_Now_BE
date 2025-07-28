@@ -1,6 +1,7 @@
 package com.example.yenanow.auth.service;
 
 
+import com.example.yenanow.auth.dto.request.ForgotPasswordRequest;
 import com.example.yenanow.auth.dto.request.LoginRequest;
 import com.example.yenanow.auth.dto.request.VerificationEmailRequest;
 import com.example.yenanow.auth.dto.request.VerifyEmailRequest;
@@ -15,4 +16,6 @@ public interface AuthService {
     void sendVerification(VerificationEmailRequest request);
 
     VerifyEmailResponse verifyEmailCode(VerifyEmailRequest request);
+
+    void sendTemporaryPassword(ForgotPasswordRequest request);
 }
