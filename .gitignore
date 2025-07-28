@@ -227,5 +227,12 @@ application.yml
 src/main/resources/application.properties
 src/main/resources/application.yml
 
+# DotEnv environment variable files
+.env
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
+
 # QueryDSL Q class files
 build/generated/
