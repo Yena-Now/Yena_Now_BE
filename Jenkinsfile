@@ -7,7 +7,7 @@ pipeline {
 
     environment {
         DOCKER_IMAGE_NAME = "yena_now_be"
-        DEPLOY_SERVER = "ubuntu@i13e203.p.ssafy.io"
+        DEPLOY_SERVER = "${DEPLOY_SERVER_USER}@${DEPLOY_SERVER_IP}"
     }
 
     stages {
@@ -34,26 +34,5 @@ pipeline {
 
         stage('Deploy to Production') {
             steps {
-                echo '4. master 브랜치 배포 시작'
-                sshagent(credentials: ['server-ssh-key']) {
+                script {
                     sh """
-                        docker save -o app-image.tar ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER}
-                        scp -o StrictHostKeyChecking=no app-image.tar ${DEPLOY_SERVER}:/tmp/app-image.tar
-                        ssh -o StrictHostKeyChecking=no ${DEPLOY_SERVER} '
-                            docker load -i /tmp/app-image.tar && \
-                            docker stop ${DOCKER_IMAGE_NAME} || true && \
-                            docker rm ${DOCKER_IMAGE_NAME} || true && \
-                            docker run -d --name ${DOCKER_IMAGE_NAME} -p 8080:8080 \
-                              -e DB_PASSWORD=${DB_PASSWORD} \
-                              -e DB_URL="${DB_URL}" \
-                              -e DB_USERNAME=${DB_USERNAME} \
-                              -e SPRING_PROFILES_ACTIVE=prod \
-                              ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER}
-                        '
-                        rm -f app-image.tar
-                    """
-                }
-            }
-        }
-    }
-}
