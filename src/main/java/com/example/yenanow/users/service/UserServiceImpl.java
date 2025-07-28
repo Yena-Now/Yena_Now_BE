@@ -20,6 +20,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public SignupResponse createUser(SignupRequest signupRequest) {
+        // 이메일 중복 검사
+        if (userRepository.existsByEmail(signupRequest.getEmail())) {
+            throw new RuntimeException("이미 사용 중인 이메일입니다.");
+        }
+        
         User user = signupRequest.toEntity();
         user.encodePassword(encoder);
         user.setCreatedAt(LocalDateTime.now());
