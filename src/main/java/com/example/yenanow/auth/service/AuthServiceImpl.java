@@ -10,6 +10,7 @@ import com.example.yenanow.common.util.JwtUtil;
 import com.example.yenanow.users.entity.User;
 import com.example.yenanow.users.repository.UserRepository;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.Duration;
 import java.util.Random;
@@ -99,13 +100,13 @@ public class AuthServiceImpl implements AuthService {
         String verified = redisTemplate.opsForValue().get(key);
 
         if (!verified.equals("true")) {
-            throw new RuntimeException("이메일 인증이 완료되지 않았습니다");
+            throw new RuntimeException("이메일 인증이 완료되지 않았습니다.");
         }
 
         User user = userRepository.findByEmail(email) // 등록된 유저 이메일인지 여부
             .orElseThrow(() -> new RuntimeException("존재하지 않는 이메일입니다."));
 
-        String tempPassword = generateRandomPassword(12);
+        String tempPassword = generatePassword(12);
 
         user.setPassword(encoder.encode(tempPassword));
         userRepository.save(user);
@@ -117,7 +118,34 @@ public class AuthServiceImpl implements AuthService {
         redisTemplate.delete(key);
     }
 
-    private String generateRandomPassword(int length) {
+    @Override
+    public String reissueAccessToken(HttpServletRequest request) {
+        String refreshToken = null;
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (cookie.getName().equals("refreshToken")) {
+                    refreshToken = cookie.getValue();
+                    break;
+                }
+            }
+        }
+
+        if (refreshToken == null || !jwtUtil.validateToken(refreshToken)) {
+            throw new RuntimeException("유효하지 않은 리프레시 토큰");
+        }
+
+        String userUuid = jwtUtil.getSubject(refreshToken); // 토큰에서 사용자 UUID 추출
+
+        String storedRefreshToken = redisTemplate.opsForValue().get("refresh_token:" + userUuid);
+        if (!refreshToken.equals(storedRefreshToken)) { // redis에 저장된 리프레시 토큰인지 검증
+            throw new RuntimeException("일치하지 않는 리프레시 토큰");
+        }
+
+        return jwtUtil.generateToken(userUuid);
+    }
+
+    private String generatePassword(int length) {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         StringBuilder sb = new StringBuilder();
         Random random = new Random();

@@ -5,8 +5,10 @@ import com.example.yenanow.auth.dto.request.LoginRequest;
 import com.example.yenanow.auth.dto.request.VerificationEmailRequest;
 import com.example.yenanow.auth.dto.request.VerifyEmailRequest;
 import com.example.yenanow.auth.dto.response.LoginResponse;
+import com.example.yenanow.auth.dto.response.ReissueTokenResponse;
 import com.example.yenanow.auth.dto.response.VerifyEmailResponse;
 import com.example.yenanow.auth.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -49,5 +51,11 @@ public class AuthController {
     public ResponseEntity<Void> sendPassword(@RequestBody ForgotPasswordRequest request) {
         authService.sendTemporaryPassword(request);
         return ResponseEntity.noContent().build(); // 204
+    }
+
+    @PostMapping("/tokens")
+    public ResponseEntity<ReissueTokenResponse> reissueToken(HttpServletRequest request) {
+        String accessToken = authService.reissueAccessToken(request);
+        return ResponseEntity.ok(new ReissueTokenResponse(accessToken));
     }
 }
