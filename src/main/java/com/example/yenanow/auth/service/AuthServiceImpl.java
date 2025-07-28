@@ -2,7 +2,9 @@ package com.example.yenanow.auth.service;
 
 import com.example.yenanow.auth.dto.request.LoginRequest;
 import com.example.yenanow.auth.dto.request.VerificationEmailRequest;
+import com.example.yenanow.auth.dto.request.VerifyEmailRequest;
 import com.example.yenanow.auth.dto.response.LoginResponse;
+import com.example.yenanow.auth.dto.response.VerifyEmailResponse;
 import com.example.yenanow.common.util.JwtUtil;
 import com.example.yenanow.users.entity.User;
 import com.example.yenanow.users.repository.UserRepository;
@@ -69,5 +71,19 @@ public class AuthServiceImpl implements AuthService {
         String content = "인증 코드: " + code + "\n5분 내로 인증을 완료해주세요.";
 
         mailService.sendEmail(email, subject, content);
+    }
+
+    @Override
+    public VerifyEmailResponse verifyEmailCode(VerifyEmailRequest request) {
+        String key = "email:" + request.getEmail();
+        String code = redisTemplate.opsForValue().get(key);
+
+        boolean isVerified = code.equals(request.getCode());
+
+        if (isVerified) {
+            redisTemplate.delete(key); // redis에 있던 값 삭제
+        }
+
+        return new VerifyEmailResponse(isVerified);
     }
 }

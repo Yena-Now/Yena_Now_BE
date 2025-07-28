@@ -2,7 +2,9 @@ package com.example.yenanow.auth.controller;
 
 import com.example.yenanow.auth.dto.request.LoginRequest;
 import com.example.yenanow.auth.dto.request.VerificationEmailRequest;
+import com.example.yenanow.auth.dto.request.VerifyEmailRequest;
 import com.example.yenanow.auth.dto.response.LoginResponse;
+import com.example.yenanow.auth.dto.response.VerifyEmailResponse;
 import com.example.yenanow.auth.service.AuthService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -34,5 +36,11 @@ public class AuthController {
     public ResponseEntity<Void> sendMessage(@RequestBody VerificationEmailRequest request) {
         authService.sendVerification(request);
         return ResponseEntity.noContent().build(); // 204
+    }
+
+    @PostMapping("/verify-email")
+    public ResponseEntity<VerifyEmailResponse> verifyMessage(
+        @RequestBody VerifyEmailRequest request) {
+        return ResponseEntity.ok(authService.verifyEmailCode(request));
     }
 }
