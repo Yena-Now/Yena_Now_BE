@@ -1,13 +1,17 @@
 package com.example.yenanow.auth.service;
 
 import com.example.yenanow.auth.dto.request.LoginRequest;
+import com.example.yenanow.auth.dto.request.VerificationEmailRequest;
 import com.example.yenanow.auth.dto.response.LoginResponse;
 import com.example.yenanow.common.util.JwtUtil;
 import com.example.yenanow.users.entity.User;
 import com.example.yenanow.users.repository.UserRepository;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import java.time.Duration;
+import java.util.Random;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -16,8 +20,12 @@ import org.springframework.stereotype.Service;
 public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
+    private final StringRedisTemplate redisTemplate;
     private final JwtUtil jwtUtil;
     private final BCryptPasswordEncoder encoder;
+    private final MailService mailService;
+
+    private static final long VERIFICATION_CODE_TTL_MINUTES = 5;
 
     @Override
     public LoginResponse login(LoginRequest loginRequest, HttpServletResponse response) {
@@ -46,5 +54,20 @@ public class AuthServiceImpl implements AuthService {
             .nickname(user.getNickname())
             .profileUrl(user.getProfileUrl())
             .build();
+    }
+
+    @Override
+    public void sendVerification(VerificationEmailRequest request) {
+        String email = request.getEmail();
+        String code = String.format("%06d", new Random().nextInt(999999));
+
+        String key = "email:" + email;
+        redisTemplate.opsForValue()
+            .set(key, code, Duration.ofMinutes(VERIFICATION_CODE_TTL_MINUTES));
+
+        String subject = "[YenaNow] 이메일 인증";
+        String content = "인증 코드: " + code + "\n5분 내로 인증을 완료해주세요.";
+
+        mailService.sendEmail(email, subject, content);
     }
 }

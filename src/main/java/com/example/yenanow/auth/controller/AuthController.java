@@ -1,6 +1,7 @@
 package com.example.yenanow.auth.controller;
 
 import com.example.yenanow.auth.dto.request.LoginRequest;
+import com.example.yenanow.auth.dto.request.VerificationEmailRequest;
 import com.example.yenanow.auth.dto.response.LoginResponse;
 import com.example.yenanow.auth.service.AuthService;
 import jakarta.servlet.http.HttpServletResponse;
@@ -27,5 +28,11 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<Void> logout() {
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/verification-email")
+    public ResponseEntity<Void> sendMessage(@RequestBody VerificationEmailRequest request) {
+        authService.sendVerification(request);
+        return ResponseEntity.noContent().build(); // 204
     }
 }
