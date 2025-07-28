@@ -3,19 +3,25 @@ package com.example.yenanow.auth.controller;
 import com.example.yenanow.auth.dto.request.LoginRequest;
 import com.example.yenanow.auth.dto.response.LoginResponse;
 import com.example.yenanow.auth.service.AuthService;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
 public class AuthController {
+
     private final AuthService authService;
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) {
-        return ResponseEntity.ok(authService.login(loginRequest));
+    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest,
+        HttpServletResponse response) {
+        return ResponseEntity.ok(authService.login(loginRequest, response));
     }
 
     @PostMapping("/logout")
