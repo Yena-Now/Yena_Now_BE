@@ -24,7 +24,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
     @Override
     public OAuth2User loadUser(OAuth2UserRequest request) throws OAuth2AuthenticationException {
         OAuth2User oAuth2User = new DefaultOAuth2UserService().loadUser(request);
-        User user = saveOrUpdate(request, oAuth2User);
+        saveOrUpdate(request, oAuth2User);
 
         String registrationId = request.getClientRegistration().getRegistrationId();
         Map<String, Object> originalAttributes = oAuth2User.getAttributes();
@@ -50,9 +50,9 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         String registrationId = request.getClientRegistration().getRegistrationId();
         Map<String, Object> attributes = oAuth2User.getAttributes();
 
-        String email = null;
-        String name = null;
-        String profileUrl = null;
+        String email;
+        String name;
+        String profileUrl;
 
         if (registrationId.equals("kakao")) {
             Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
