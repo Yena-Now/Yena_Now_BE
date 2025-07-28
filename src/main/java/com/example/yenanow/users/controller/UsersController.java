@@ -23,18 +23,7 @@ public class UsersController {
     @PostMapping("/signup")
     public ResponseEntity<SignupResponse> signup(@RequestBody SignupRequest signupRequest) {
 
-        User savedUser = userService.addUser(signupRequest);
-        String userUuid = savedUser.getUuid().toString();
-        String accessToken = jwtUtil.generateToken(userUuid);
-
-        SignupResponse response = SignupResponse.builder()
-            .accessToken(accessToken)
-            .userUuid(userUuid)
-            .nickname(signupRequest.getNickname())
-            .profileUrl(null)
-            .build();
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(userService.addUser(signupRequest));
     }
 
 }
