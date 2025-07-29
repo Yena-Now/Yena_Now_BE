@@ -26,15 +26,15 @@ public class GlobalExceptionHandler {
     /* 2) @Valid / @Validated 바인딩 오류 */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     protected ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException e) {
-        return ResponseEntity.status(ErrorCode.COMMON_BAD_REQUEST.getStatus())
-            .body(ErrorResponse.of(ErrorCode.COMMON_BAD_REQUEST));
+        return ResponseEntity.status(ErrorCode.BAD_REQUEST.getStatus())
+            .body(ErrorResponse.of(ErrorCode.BAD_REQUEST));
     }
 
     /* 3) 파라미터 제약 조건(@Size 등) 위반 */
     @ExceptionHandler(ConstraintViolationException.class)
     protected ResponseEntity<ErrorResponse> handleConstraintViolation(ConstraintViolationException e) {
-        return ResponseEntity.status(ErrorCode.COMMON_BAD_REQUEST.getStatus())
-            .body(ErrorResponse.of(ErrorCode.COMMON_BAD_REQUEST));
+        return ResponseEntity.status(ErrorCode.BAD_REQUEST.getStatus())
+            .body(ErrorResponse.of(ErrorCode.BAD_REQUEST));
     }
 
     /* 4) 그밖의 모든 예외 */
@@ -42,7 +42,7 @@ public class GlobalExceptionHandler {
     protected ResponseEntity<ErrorResponse> handleException(Exception e) {
         // 로그를 남겨 두면 디버깅에 좋습니다.
         // log.error("Unhandled exception", e);
-        return ResponseEntity.status(ErrorCode.COMMON_INTERNAL_SERVER_ERROR.getStatus())
-            .body(ErrorResponse.of(ErrorCode.COMMON_INTERNAL_SERVER_ERROR));
+        return ResponseEntity.status(ErrorCode.INTERNAL_SERVER_ERROR.getStatus())
+            .body(ErrorResponse.of(ErrorCode.INTERNAL_SERVER_ERROR));
     }
 }
