@@ -18,6 +18,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.time.Duration;
 import java.util.Random;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,9 @@ public class AuthServiceImpl implements AuthService {
 
     private static final long VERIFICATION_CODE_TTL_MINUTES = 5;
 
+    @Value("${jwt.refresh-token-expiration}")
+    private long refreshTokenExpiration;
+
     @Override
     public LoginResponse login(LoginRequest loginRequest, HttpServletResponse response) {
         User user = userRepository.findByEmail(loginRequest.getEmail())
@@ -47,7 +51,8 @@ public class AuthServiceImpl implements AuthService {
         String refreshToken = jwtUtil.generateRefreshToken(user.getUuid());
 
         // 쿠키에 refreshToken 저장
-        CookieUtil.addHttpOnlyCookie(response, "refresh_token", refreshToken, 7 * 24 * 60 * 60);
+        CookieUtil.addHttpOnlyCookie(response, "refresh_token", refreshToken,
+            (int) refreshTokenExpiration);
 
         return LoginResponse.builder()
             .accessToken(token)

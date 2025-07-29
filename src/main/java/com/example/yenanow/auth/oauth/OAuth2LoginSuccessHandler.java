@@ -1,14 +1,15 @@
 package com.example.yenanow.auth.oauth;
 
+import com.example.yenanow.common.util.CookieUtil;
 import com.example.yenanow.common.util.JwtUtil;
 import com.example.yenanow.users.entity.User;
 import com.example.yenanow.users.repository.UserRepository;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Optional;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -18,6 +19,9 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
+
+    @Value("${jwt.refresh-token-expiration}")
+    private long refreshTokenExpiration;
 
     public OAuth2LoginSuccessHandler(JwtUtil jwtUtil, UserRepository userRepository) {
         this.jwtUtil = jwtUtil;
@@ -33,7 +37,6 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         String email = ((org.springframework.security.oauth2.core.user.OAuth2User) authentication.getPrincipal())
             .getAttribute("email");
 
-
         Optional<User> userOpt = userRepository.findByEmail(email);
         if (userOpt.isEmpty()) {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "User not found");
@@ -47,13 +50,8 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         String refreshToken = jwtUtil.generateRefreshToken(user.getUuid());
 
         // 쿠키에 refreshToken 저장
-        Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
-        refreshTokenCookie.setHttpOnly(true); // JS에서 접근 못하도록
-        refreshTokenCookie.setSecure(true); // HTTPS에서만 전송되도록
-        refreshTokenCookie.setPath("/"); // 모든 경로에서 접근 가능하도록
-        refreshTokenCookie.setMaxAge(7 * 24 * 60 * 60);
-
-        response.addCookie(refreshTokenCookie);
+        CookieUtil.addHttpOnlyCookie(response, "refresh_token", refreshToken,
+            (int) refreshTokenExpiration);
 
         // 클라이언트에 JSON으로 응답
         response.setContentType("application/json");
