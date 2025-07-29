@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -27,6 +28,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+            .cors(Customizer.withDefaults())
             .csrf(csrf -> csrf.disable())
             .sessionManagement(
                 session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -36,6 +38,9 @@ public class SecurityConfig {
                     "/swagger-ui/**",
                     "/swagger-ui.html",
                     "/users/signup",
+                    "/users/nickname",
+                    "/users/verification-email",
+                    "/users/verify-email",
                     "/auth/**" // OAuth 경로 허용
                 ).permitAll()
                 .anyRequest().authenticated()
