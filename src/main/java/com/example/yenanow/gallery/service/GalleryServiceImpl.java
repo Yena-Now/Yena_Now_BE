@@ -23,29 +23,29 @@ public class GalleryServiceImpl implements GalleryService {
   private final FollowRepository followRepository;
 
   @Override
-  public MyGalleryResponse getMyGallery(String userUuid, int page, int size) {
-    Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+  public MyGalleryResponse getMyGallery(String userUuid, int pageNum, int display) {
+    Pageable pageable = PageRequest.of(pageNum, display, Sort.by(Sort.Direction.DESC, "createdAt"));
     Page<Ncut> ncutPage = ncutRepository.findByUserUuid(userUuid, pageable);
     return MyGalleryResponse.from(ncutPage);
   }
 
   @Override
-  public MyGalleryResponse getOtherGallery(String userUuid, int page, int size) {
-    Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-    Page<Ncut> ncutPage = ncutRepository.findByUserUuidAndVisibility(userUuid, Visibility.PUBLIC,
-        pageable);
+  public MyGalleryResponse getOtherGallery(String userUuid, int pageNum, int display) {
+    Pageable pageable = PageRequest.of(pageNum, display, Sort.by(Sort.Direction.DESC, "createdAt"));
+    Page<Ncut> ncutPage = ncutRepository.findByUserUuidAndVisibility(
+        userUuid, Visibility.PUBLIC, pageable);
     return MyGalleryResponse.from(ncutPage);
   }
 
   @Override
-  public MyGalleryResponse getPublicGallery(int page, int size) {
-    Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+  public MyGalleryResponse getPublicGallery(int pageNum, int display) {
+    Pageable pageable = PageRequest.of(pageNum, display, Sort.by(Sort.Direction.DESC, "createdAt"));
     Page<Ncut> ncutPage = ncutRepository.findByVisibility(Visibility.PUBLIC, pageable);
     return MyGalleryResponse.fromWithUser(ncutPage);
   }
 
   @Override
-  public MyGalleryResponse getFollowingsGallery(String userUuid, int page, int size) {
+  public MyGalleryResponse getFollowingsGallery(String userUuid, int pageNum, int display) {
     // 팔로잉한 유저 UUID 목록 조회
     List<String> followingUuids = followRepository.findFollowingUuids(userUuid);
 
@@ -56,14 +56,12 @@ public class GalleryServiceImpl implements GalleryService {
           .build();
     }
 
-    Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+    Pageable pageable = PageRequest.of(pageNum, display, Sort.by(Sort.Direction.DESC, "createdAt"));
 
     // PUBLIC + FOLLOW만 허용
     List<Visibility> allowedVisibilities = List.of(Visibility.PUBLIC, Visibility.FOLLOW);
-
-    Page<Ncut> ncutPage = ncutRepository.findByUserUuidInAndVisibilityIn(followingUuids,
-        allowedVisibilities, pageable);
-
+    Page<Ncut> ncutPage = ncutRepository.findByUserUuidInAndVisibilityIn(
+        followingUuids, allowedVisibilities, pageable);
     return MyGalleryResponse.fromWithUser(ncutPage);
   }
 }

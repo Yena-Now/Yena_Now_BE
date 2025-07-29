@@ -17,6 +17,7 @@ public class MyNcutResponse {
   private String nickname;
   private String ncutUuid;
   private String thumbnailUrl;
+  private String ncutUrl;
   private int likeCount;
   private boolean isRelay;
 
@@ -27,6 +28,7 @@ public class MyNcutResponse {
     return MyNcutResponse.builder()
         .ncutUuid(ncut.getNcutUuid())
         .thumbnailUrl(ncut.getThumbnailUrl())
+        .ncutUrl(ncut.getNcutUrl())
         .likeCount(ncut.getLikeCount())
         .isRelay(ncut.isRelay())
         .build();
@@ -42,6 +44,7 @@ public class MyNcutResponse {
         .nickname(ncut.getUser().getNickname())
         .ncutUuid(ncut.getNcutUuid())
         .thumbnailUrl(ncut.getThumbnailUrl())
+        .ncutUrl(ncut.getNcutUrl())
         .likeCount(ncut.getLikeCount())
         .isRelay(ncut.isRelay())
         .build();
