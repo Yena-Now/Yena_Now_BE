@@ -1,5 +1,6 @@
 package com.example.yenanow.users.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -7,5 +8,6 @@ import lombok.Getter;
 @AllArgsConstructor
 public class NicknameResponse {
 
-    private boolean verified;
+    @JsonProperty("isDuplicated")
+    private boolean duplicated;
 }

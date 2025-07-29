@@ -47,7 +47,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public NicknameResponse validateNickname(NicknameRequest nicknameRequest) {
         String nickname = nicknameRequest.getNickname();
-        boolean isDuplicated = userRepository.existByNickname(nickname);
+        boolean isDuplicated = userRepository.existsByNickname(nickname);
 
         return new NicknameResponse(isDuplicated);
     }
