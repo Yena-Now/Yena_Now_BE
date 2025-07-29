@@ -2,12 +2,12 @@ package com.example.yenanow.auth.controller;
 
 import com.example.yenanow.auth.dto.request.ForgotPasswordRequest;
 import com.example.yenanow.auth.dto.request.LoginRequest;
-import com.example.yenanow.auth.dto.request.VerificationEmailRequest;
-import com.example.yenanow.auth.dto.request.VerifyEmailRequest;
 import com.example.yenanow.auth.dto.response.LoginResponse;
 import com.example.yenanow.auth.dto.response.ReissueTokenResponse;
-import com.example.yenanow.auth.dto.response.VerifyEmailResponse;
 import com.example.yenanow.auth.service.AuthService;
+import com.example.yenanow.common.smtp.request.VerificationEmailRequest;
+import com.example.yenanow.common.smtp.request.VerifyEmailRequest;
+import com.example.yenanow.common.smtp.response.VerifyEmailResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

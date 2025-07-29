@@ -2,10 +2,11 @@ package com.example.yenanow.auth.service;
 
 import com.example.yenanow.auth.dto.request.ForgotPasswordRequest;
 import com.example.yenanow.auth.dto.request.LoginRequest;
-import com.example.yenanow.auth.dto.request.VerificationEmailRequest;
-import com.example.yenanow.auth.dto.request.VerifyEmailRequest;
 import com.example.yenanow.auth.dto.response.LoginResponse;
-import com.example.yenanow.auth.dto.response.VerifyEmailResponse;
+import com.example.yenanow.common.smtp.MailService;
+import com.example.yenanow.common.smtp.request.VerificationEmailRequest;
+import com.example.yenanow.common.smtp.request.VerifyEmailRequest;
+import com.example.yenanow.common.smtp.response.VerifyEmailResponse;
 import com.example.yenanow.common.util.JwtUtil;
 import com.example.yenanow.users.entity.User;
 import com.example.yenanow.users.repository.UserRepository;
@@ -96,15 +97,15 @@ public class AuthServiceImpl implements AuthService {
     public void sendTemporaryPassword(ForgotPasswordRequest request) {
         String email = request.getEmail();
 
+        User user = userRepository.findByEmail(email) // 등록된 유저 이메일인지 여부
+            .orElseThrow(() -> new RuntimeException("존재하지 않는 이메일입니다."));
+
         String key = "verified:" + email;
         String verified = redisTemplate.opsForValue().get(key);
 
         if (!verified.equals("true")) {
             throw new RuntimeException("이메일 인증이 만료되었거나 완료되지 않았습니다.");
         }
-
-        User user = userRepository.findByEmail(email) // 등록된 유저 이메일인지 여부
-            .orElseThrow(() -> new RuntimeException("존재하지 않는 이메일입니다."));
 
         String tempPassword = generatePassword(12);
 

@@ -37,6 +37,8 @@ public class SecurityConfig {
                     "/swagger-ui.html",
                     "/users/signup",
                     "/users/nickname",
+                    "/users/verification-email",
+                    "/users/verify-email",
                     "/auth/**" // OAuth 경로 허용
                 ).permitAll()
                 .anyRequest().authenticated()
