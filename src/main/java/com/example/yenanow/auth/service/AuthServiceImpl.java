@@ -3,6 +3,8 @@ package com.example.yenanow.auth.service;
 import com.example.yenanow.auth.dto.request.ForgotPasswordRequest;
 import com.example.yenanow.auth.dto.request.LoginRequest;
 import com.example.yenanow.auth.dto.response.LoginResponse;
+import com.example.yenanow.common.exception.BusinessException;
+import com.example.yenanow.common.exception.ErrorCode;
 import com.example.yenanow.common.smtp.MailService;
 import com.example.yenanow.common.smtp.request.VerificationEmailRequest;
 import com.example.yenanow.common.smtp.request.VerifyEmailRequest;
@@ -35,10 +37,10 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public LoginResponse login(LoginRequest loginRequest, HttpServletResponse response) {
         User user = userRepository.findByEmail(loginRequest.getEmail())
-            .orElseThrow(() -> new RuntimeException("아이디 또는 비밀번호가 일치하지 않습니다."));
+            .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_SIGNIN));
 
         if (!encoder.matches(loginRequest.getPassword(), user.getPassword())) {
-            throw new RuntimeException("아이디 또는 비밀번호가 일치하지 않습니다.");
+            throw new BusinessException(ErrorCode.INVALID_SIGNIN);
         }
 
         String token = jwtUtil.generateToken(user.getUuid());
@@ -98,13 +100,13 @@ public class AuthServiceImpl implements AuthService {
         String email = request.getEmail();
 
         User user = userRepository.findByEmail(email) // 등록된 유저 이메일인지 여부
-            .orElseThrow(() -> new RuntimeException("존재하지 않는 이메일입니다."));
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
         String key = "verified:" + email;
         String verified = redisTemplate.opsForValue().get(key);
 
         if (!verified.equals("true")) {
-            throw new RuntimeException("이메일 인증이 만료되었거나 완료되지 않았습니다.");
+            throw new BusinessException(ErrorCode.PERMISSION_DENIED);
         }
 
         String tempPassword = generatePassword(12);
@@ -133,14 +135,14 @@ public class AuthServiceImpl implements AuthService {
         }
 
         if (refreshToken == null || !jwtUtil.validateToken(refreshToken)) {
-            throw new RuntimeException("유효하지 않은 리프레시 토큰");
+            throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
 
         String userUuid = jwtUtil.getSubject(refreshToken); // 토큰에서 사용자 UUID 추출
 
         String storedRefreshToken = redisTemplate.opsForValue().get("refresh_token:" + userUuid);
         if (!refreshToken.equals(storedRefreshToken)) { // redis에 저장된 리프레시 토큰인지 검증
-            throw new RuntimeException("일치하지 않는 리프레시 토큰");
+            throw new BusinessException(ErrorCode.DUPLICATE_SIGNIN_DETECTED);
         }
 
         return jwtUtil.generateToken(userUuid);
