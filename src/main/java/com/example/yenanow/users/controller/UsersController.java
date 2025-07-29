@@ -1,6 +1,8 @@
 package com.example.yenanow.users.controller;
 
+import com.example.yenanow.users.dto.request.NicknameRequest;
 import com.example.yenanow.users.dto.request.SignupRequest;
+import com.example.yenanow.users.dto.response.NicknameResponse;
 import com.example.yenanow.users.dto.response.SignupResponse;
 import com.example.yenanow.users.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +21,12 @@ public class UsersController {
 
     @PostMapping("/signup")
     public ResponseEntity<SignupResponse> signup(@RequestBody SignupRequest signupRequest) {
-
         return ResponseEntity.ok(userService.createUser(signupRequest));
+    }
+
+    @PostMapping("/nickname")
+    public ResponseEntity<NicknameResponse> validateNickname(
+        @RequestBody NicknameRequest nicknameRequest) {
+        return ResponseEntity.ok(userService.validateNickname(nicknameRequest));
     }
 }

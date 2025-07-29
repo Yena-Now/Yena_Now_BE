@@ -1,7 +1,9 @@
 package com.example.yenanow.users.service;
 
 import com.example.yenanow.common.util.JwtUtil;
+import com.example.yenanow.users.dto.request.NicknameRequest;
 import com.example.yenanow.users.dto.request.SignupRequest;
+import com.example.yenanow.users.dto.response.NicknameResponse;
 import com.example.yenanow.users.dto.response.SignupResponse;
 import com.example.yenanow.users.entity.User;
 import com.example.yenanow.users.repository.UserRepository;
@@ -24,7 +26,7 @@ public class UserServiceImpl implements UserService {
         if (userRepository.existsByEmail(signupRequest.getEmail())) {
             throw new RuntimeException("이미 사용 중인 이메일입니다.");
         }
-        
+
         User user = signupRequest.toEntity();
         user.encodePassword(encoder);
         user.setCreatedAt(LocalDateTime.now());
@@ -40,5 +42,13 @@ public class UserServiceImpl implements UserService {
             .nickname(user.getNickname())
             .profileUrl(user.getProfileUrl())
             .build();
+    }
+
+    @Override
+    public NicknameResponse validateNickname(NicknameRequest nicknameRequest) {
+        String nickname = nicknameRequest.getNickname();
+        boolean isDuplicated = userRepository.existByNickname(nickname);
+
+        return new NicknameResponse(isDuplicated);
     }
 }

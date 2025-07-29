@@ -100,7 +100,7 @@ public class AuthServiceImpl implements AuthService {
         String verified = redisTemplate.opsForValue().get(key);
 
         if (!verified.equals("true")) {
-            throw new RuntimeException("이메일 인증이 완료되지 않았습니다.");
+            throw new RuntimeException("이메일 인증이 만료되었거나 완료되지 않았습니다.");
         }
 
         User user = userRepository.findByEmail(email) // 등록된 유저 이메일인지 여부
