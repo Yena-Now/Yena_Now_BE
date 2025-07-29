@@ -9,10 +9,10 @@ import com.example.yenanow.common.smtp.MailService;
 import com.example.yenanow.common.smtp.request.VerificationEmailRequest;
 import com.example.yenanow.common.smtp.request.VerifyEmailRequest;
 import com.example.yenanow.common.smtp.response.VerifyEmailResponse;
+import com.example.yenanow.common.util.CookieUtil;
 import com.example.yenanow.common.util.JwtUtil;
 import com.example.yenanow.users.entity.User;
 import com.example.yenanow.users.repository.UserRepository;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.Duration;
@@ -28,9 +28,9 @@ public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
     private final StringRedisTemplate redisTemplate;
-    private final JwtUtil jwtUtil;
     private final BCryptPasswordEncoder encoder;
     private final MailService mailService;
+    private final JwtUtil jwtUtil;
 
     private static final long VERIFICATION_CODE_TTL_MINUTES = 5;
 
@@ -47,13 +47,7 @@ public class AuthServiceImpl implements AuthService {
         String refreshToken = jwtUtil.generateRefreshToken(user.getUuid());
 
         // 쿠키에 refreshToken 저장
-        Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
-        refreshTokenCookie.setHttpOnly(true); // JS에서 접근 못하도록
-        refreshTokenCookie.setSecure(true); // HTTPS에서만 전송되도록
-        refreshTokenCookie.setPath("/"); // 모든 경로에서 접근 가능하도록
-        refreshTokenCookie.setMaxAge(7 * 24 * 60 * 60);
-
-        response.addCookie(refreshTokenCookie);
+        CookieUtil.addHttpOnlyCookie(response, "refresh_token", refreshToken, 7 * 24 * 60 * 60);
 
         return LoginResponse.builder()
             .accessToken(token)
@@ -61,6 +55,14 @@ public class AuthServiceImpl implements AuthService {
             .nickname(user.getNickname())
             .profileUrl(user.getProfileUrl())
             .build();
+    }
+
+    @Override
+    public void logout(HttpServletRequest request, HttpServletResponse response) {
+        String userUuid = (String) request.getAttribute("userUuid");
+        String key = "refresh_token:" + userUuid;
+        redisTemplate.delete(key); // redis에서 리프레시 토큰 삭제
+        CookieUtil.deleteCookie(request, response, "refresh_token"); // 쿠키에 저장된 리프레시 토큰 삭제
     }
 
     @Override
@@ -123,16 +125,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public String reissueAccessToken(HttpServletRequest request) {
-        String refreshToken = null;
-        Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                if (cookie.getName().equals("refreshToken")) {
-                    refreshToken = cookie.getValue();
-                    break;
-                }
-            }
-        }
+        String refreshToken = CookieUtil.getCookieValue(request, "refresh_token");
 
         if (refreshToken == null || !jwtUtil.validateToken(refreshToken)) {
             throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN);

@@ -14,6 +14,8 @@ public interface AuthService {
 
     LoginResponse login(LoginRequest loginRequest, HttpServletResponse response);
 
+    void logout(HttpServletRequest request, HttpServletResponse response);
+
     void sendVerification(VerificationEmailRequest request);
 
     VerifyEmailResponse verifyEmailCode(VerifyEmailRequest request);
