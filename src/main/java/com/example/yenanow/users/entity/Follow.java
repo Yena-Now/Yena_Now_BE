@@ -32,4 +32,9 @@ public class Follow {
 
   @Column(name = "to_user", length = 36, nullable = false)
   private String toUser;     // 팔로우 대상 사용자 UUID
+
+  public Follow(String fromUser, String toUser) {
+    this.fromUser = fromUser;
+    this.toUser = toUser;
+  }
 }
