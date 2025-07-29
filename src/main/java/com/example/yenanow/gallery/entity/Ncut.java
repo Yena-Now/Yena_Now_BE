@@ -49,7 +49,7 @@ public class Ncut {
   @Column(name = "visibility", nullable = false)
   private Visibility visibility = Visibility.PUBLIC;
 
-  @Column(name = "is_relay", nullable = false)
+  @Column(name = "is_relay",columnDefinition = "TINYINT(1) DEFAULT 0", nullable = false)
   private boolean isRelay = false;
 
   @Column(name = "like_count", nullable = false)
