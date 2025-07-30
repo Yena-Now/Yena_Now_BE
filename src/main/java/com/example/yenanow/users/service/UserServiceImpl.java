@@ -7,6 +7,7 @@ import com.example.yenanow.common.smtp.request.VerificationEmailRequest;
 import com.example.yenanow.common.smtp.request.VerifyEmailRequest;
 import com.example.yenanow.common.smtp.response.VerifyEmailResponse;
 import com.example.yenanow.common.util.JwtUtil;
+import com.example.yenanow.users.dto.request.ModifyMyInfoRequest;
 import com.example.yenanow.users.dto.request.ModifyPasswordRequest;
 import com.example.yenanow.users.dto.request.NicknameRequest;
 import com.example.yenanow.users.dto.request.SignupRequest;
@@ -148,5 +149,24 @@ public class UserServiceImpl implements UserService {
             .phoneNumber(user.getPhoneNumber())
             .profileUrl(user.getProfileUrl())
             .build();
+    }
+
+    @Transactional
+    @Override
+    public void modifyMyInfo(ModifyMyInfoRequest request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userUuid = authentication.getName();
+
+        String newName = request.getName();
+        String newNickname = request.getNickname();
+
+        User user = userRepository.findByUserUuid(userUuid)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER));
+
+        user.setName(newName);
+        user.setNickname(newNickname);
+        user.setUpdatedAt(LocalDateTime.now());
+
+        userRepository.save(user);
     }
 }

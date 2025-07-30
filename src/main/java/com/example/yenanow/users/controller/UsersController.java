@@ -3,6 +3,7 @@ package com.example.yenanow.users.controller;
 import com.example.yenanow.common.smtp.request.VerificationEmailRequest;
 import com.example.yenanow.common.smtp.request.VerifyEmailRequest;
 import com.example.yenanow.common.smtp.response.VerifyEmailResponse;
+import com.example.yenanow.users.dto.request.ModifyMyInfoRequest;
 import com.example.yenanow.users.dto.request.ModifyPasswordRequest;
 import com.example.yenanow.users.dto.request.NicknameRequest;
 import com.example.yenanow.users.dto.request.SignupRequest;
@@ -67,5 +68,12 @@ public class UsersController {
     @GetMapping("/me")
     public ResponseEntity<MyInfoResponse> getMyInfo() {
         return ResponseEntity.ok(userService.getMyInfo());
+    }
+
+    @Operation(summary = "내 정보 수정", description = "로그인한 사용자의 정보를 수정합니다.")
+    @PatchMapping("/me")
+    public ResponseEntity<MyInfoResponse> modifyMyInfo(@RequestBody ModifyMyInfoRequest request) {
+        userService.modifyMyInfo(request);
+        return ResponseEntity.noContent().build(); // 204;
     }
 }

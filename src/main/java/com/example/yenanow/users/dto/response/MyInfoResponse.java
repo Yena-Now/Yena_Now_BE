@@ -12,16 +12,10 @@ import lombok.Getter;
 public class MyInfoResponse {
 
     private String email;
-
     private String name;
-
     private String nickname;
-
     private Gender gender;
-
     private LocalDate birthdate;
-
     private String phoneNumber;
-
     private String profileUrl;
 }
