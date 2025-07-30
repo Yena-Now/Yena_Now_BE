@@ -30,44 +30,44 @@ import org.springframework.data.annotation.LastModifiedDate;
 @Builder
 public class Ncut {
 
-  @Id
-  @GeneratedValue(generator = "UUID")
-  @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
-  @Column(name = "ncut_uuid", length = 36, nullable = false)
-  private String ncutUuid;
+    @Id
+    @GeneratedValue(generator = "UUID")
+    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
+    @Column(name = "ncut_uuid", length = 36, nullable = false)
+    private String ncutUuid;
 
-  @Column(name = "ncut_url", length = 200, nullable = false)
-  private String ncutUrl;
+    @Column(name = "ncut_url", length = 200, nullable = false)
+    private String ncutUrl;
 
-  @Column(name = "thumbnail_url", length = 200, nullable = false)
-  private String thumbnailUrl;
+    @Column(name = "thumbnail_url", length = 200, nullable = false)
+    private String thumbnailUrl;
 
-  @Column(name = "content", columnDefinition = "TEXT", nullable = true)
-  private String content;
+    @Column(name = "content", columnDefinition = "TEXT", nullable = true)
+    private String content;
 
-  @Enumerated(EnumType.STRING)
-  @Column(name = "visibility", nullable = false)
-  private Visibility visibility = Visibility.PUBLIC;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "visibility", nullable = false)
+    private Visibility visibility = Visibility.PUBLIC;
 
-  @Column(name = "is_relay",columnDefinition = "TINYINT(1) DEFAULT 0", nullable = false)
-  private boolean isRelay = false;
+    @Column(name = "is_relay", columnDefinition = "TINYINT(1) DEFAULT 0", nullable = false)
+    private boolean isRelay = false;
 
-  @Column(name = "like_count", nullable = false)
-  private int likeCount = 0;
+    @Column(name = "like_count", nullable = false)
+    private int likeCount = 0;
 
-  @Column(name = "comment_cnt", nullable = false)
-  private int commentCount = 0;
+    @Column(name = "comment_cnt", nullable = false)
+    private int commentCount = 0;
 
-  @CreatedDate
-  @Column(name = "created_at", nullable = false)
-  private LocalDateTime createdAt;
+    @CreatedDate
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
 
-  @LastModifiedDate
-  @Column(name = "updated_at", nullable = false)
-  private LocalDateTime updatedAt;
+    @LastModifiedDate
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
 
-  //유저 연관관계 (FK: user_uuid)
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "user_uuid")  // referencedColumnName 제거
-  private User user;
+    // 유저 연관관계 (FK: user_uuid)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_uuid")  // referencedColumnName 제거
+    private User user;
 }
