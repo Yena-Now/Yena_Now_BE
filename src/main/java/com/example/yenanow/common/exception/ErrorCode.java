@@ -23,8 +23,15 @@ public enum ErrorCode {
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR,
         "서버 내부 오류가 발생했습니다."),
 
-    // USER
-    NOT_FOUND_USER(HttpStatus.NOT_FOUND, "이미 존재하는 사용자"),
+    // USERS DOMAIN
+    NOT_FOUND_USER(HttpStatus.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."),
+
+    // NCUT DOMAIN
+    NOT_FOUND_NCUT(HttpStatus.NOT_FOUND, "해당 NCUT을 찾을 수 없습니다."),
+
+    // COMMENT DOMAIN
+    NOT_FOUND_COMMENT(HttpStatus.NOT_FOUND, "해당 댓글을 찾을 수 없습니다."),
+    FORBIDDEN_COMMENT(HttpStatus.FORBIDDEN, "댓글 수정 또는 삭제 권한이 없습니다."),
 
     // FOLLOW DOMAIN
     SELF_FOLLOW_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "자기 자신을 팔로우할 수 없습니다."),
