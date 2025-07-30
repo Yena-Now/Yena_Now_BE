@@ -44,17 +44,17 @@ public class UserServiceImpl implements UserService {
         user.setUpdatedAt(LocalDateTime.now());
 
         user = userRepository.save(user); // 저장 후 UUID 획득
-        String token = jwtUtil.generateToken(user.getUuid());
+        String token = jwtUtil.generateToken(user.getUserUuid());
 
         // Redis에 팔로워, 팔로잉 수 및 게시글(N컷) 수 초기값 0 저장
-        String key = "user:" + user.getUuid();
+        String key = "user:" + user.getUserUuid();
         redisTemplate.opsForHash().put(key, "follower_count", "0");
         redisTemplate.opsForHash().put(key, "following_count", "0");
         redisTemplate.opsForHash().put(key, "total_cut", "0");
 
         return SignupResponse.builder()
             .accessToken(token)
-            .userUuid(user.getUuid())
+            .userUuid(user.getUserUuid())
             .nickname(user.getNickname())
             .profileUrl(user.getProfileUrl())
             .build();
@@ -109,8 +109,8 @@ public class UserServiceImpl implements UserService {
         String oldPassword = request.getOldPassword();
         String newPassword = request.getNewPassword();
 
-        String uuid = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByUuid(uuid) // 존재하는 사용자인지
+        String userUuid = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUserUuid(userUuid) // 존재하는 사용자인지
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER));
 
         if (!encoder.matches(oldPassword, user.getPassword())) {

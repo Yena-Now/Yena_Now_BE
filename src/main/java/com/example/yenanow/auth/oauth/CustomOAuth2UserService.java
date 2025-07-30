@@ -86,7 +86,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                 User savedUser = userRepository.save(user);
 
                 // Redis에 팔로워, 팔로잉 수 및 게시글(N컷) 수 초기값 0 저장
-                String key = "user:" + savedUser.getUuid();
+                String key = "user:" + savedUser.getUserUuid();
                 redisTemplate.opsForHash().put(key, "follower_count", "0");
                 redisTemplate.opsForHash().put(key, "following_count", "0");
                 redisTemplate.opsForHash().put(key, "total_cut", "0");

@@ -47,8 +47,8 @@ public class AuthServiceImpl implements AuthService {
             throw new BusinessException(ErrorCode.INVALID_SIGNIN);
         }
 
-        String token = jwtUtil.generateToken(user.getUuid());
-        String refreshToken = jwtUtil.generateRefreshToken(user.getUuid());
+        String token = jwtUtil.generateToken(user.getUserUuid());
+        String refreshToken = jwtUtil.generateRefreshToken(user.getUserUuid());
 
         // 쿠키에 refreshToken 저장
         CookieUtil.addHttpOnlyCookie(response, "refresh_token", refreshToken,
@@ -56,7 +56,7 @@ public class AuthServiceImpl implements AuthService {
 
         return LoginResponse.builder()
             .accessToken(token)
-            .userUuid(user.getUuid())
+            .userUuid(user.getUserUuid())
             .nickname(user.getNickname())
             .profileUrl(user.getProfileUrl())
             .build();
