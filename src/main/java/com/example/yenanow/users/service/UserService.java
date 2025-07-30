@@ -14,7 +14,7 @@ public interface UserService {
 
     NicknameResponse validateNickname(NicknameRequest nicknameRequest);
 
-    void sendVerification(VerificationEmailRequest request);
+    void sendMessage(VerificationEmailRequest request);
 
-    VerifyEmailResponse verifyEmailCode(VerifyEmailRequest request);
+    VerifyEmailResponse verifyMessage(VerifyEmailRequest request);
 }

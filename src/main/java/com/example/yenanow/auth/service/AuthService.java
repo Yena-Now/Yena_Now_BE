@@ -16,11 +16,11 @@ public interface AuthService {
 
     void logout(HttpServletRequest request, HttpServletResponse response);
 
-    void sendVerification(VerificationEmailRequest request);
+    void sendMessage(VerificationEmailRequest request);
 
-    VerifyEmailResponse verifyEmailCode(VerifyEmailRequest request);
+    VerifyEmailResponse verifyMessage(VerifyEmailRequest request);
 
-    void sendTemporaryPassword(ForgotPasswordRequest request);
+    void sendPassword(ForgotPasswordRequest request);
 
-    String reissueAccessToken(HttpServletRequest request);
+    String reissueToken(HttpServletRequest request);
 }

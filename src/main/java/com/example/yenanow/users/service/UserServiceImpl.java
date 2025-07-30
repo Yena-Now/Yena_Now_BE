@@ -66,7 +66,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void sendVerification(VerificationEmailRequest request) {
+    public void sendMessage(VerificationEmailRequest request) {
         String email = request.getEmail();
 
         if (userRepository.existsByEmail(email)) { // 이메일 중복 검사
@@ -86,7 +86,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public VerifyEmailResponse verifyEmailCode(VerifyEmailRequest request) {
+    public VerifyEmailResponse verifyMessage(VerifyEmailRequest request) {
         String email = request.getEmail();
         String key = "email:" + email;
         String code = redisTemplate.opsForValue().get(key);

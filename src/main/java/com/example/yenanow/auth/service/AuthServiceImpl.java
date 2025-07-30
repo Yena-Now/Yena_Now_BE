@@ -36,7 +36,7 @@ public class AuthServiceImpl implements AuthService {
     private static final long VERIFICATION_CODE_TTL_MINUTES = 5;
 
     @Value("${jwt.refresh-token-expiration}")
-    private long refreshTokenExpiration;
+    private int refreshTokenExpiration;
 
     @Override
     public LoginResponse login(LoginRequest loginRequest, HttpServletResponse response) {
@@ -52,7 +52,7 @@ public class AuthServiceImpl implements AuthService {
 
         // 쿠키에 refreshToken 저장
         CookieUtil.addHttpOnlyCookie(response, "refresh_token", refreshToken,
-            (int) refreshTokenExpiration);
+            refreshTokenExpiration);
 
         return LoginResponse.builder()
             .accessToken(token)
@@ -71,7 +71,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public void sendVerification(VerificationEmailRequest request) {
+    public void sendMessage(VerificationEmailRequest request) {
         String email = request.getEmail();
         String code = String.format("%06d", new Random().nextInt(999999));
 
@@ -86,7 +86,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public VerifyEmailResponse verifyEmailCode(VerifyEmailRequest request) {
+    public VerifyEmailResponse verifyMessage(VerifyEmailRequest request) {
         String email = request.getEmail();
         String key = "email:" + email;
         String code = redisTemplate.opsForValue().get(key);
@@ -103,7 +103,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public void sendTemporaryPassword(ForgotPasswordRequest request) {
+    public void sendPassword(ForgotPasswordRequest request) {
         String email = request.getEmail();
 
         User user = userRepository.findByEmail(email) // 등록된 유저 이메일인지 여부
@@ -129,7 +129,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public String reissueAccessToken(HttpServletRequest request) {
+    public String reissueToken(HttpServletRequest request) {
         String refreshToken = CookieUtil.getCookieValue(request, "refresh_token");
 
         if (refreshToken == null || !jwtUtil.validateToken(refreshToken)) {
