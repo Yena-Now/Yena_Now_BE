@@ -1,5 +1,7 @@
 package com.example.yenanow.users.service;
 
+import com.example.yenanow.common.exception.BusinessException;
+import com.example.yenanow.common.exception.ErrorCode;
 import com.example.yenanow.common.smtp.MailService;
 import com.example.yenanow.common.smtp.request.VerificationEmailRequest;
 import com.example.yenanow.common.smtp.request.VerifyEmailRequest;
@@ -39,8 +41,13 @@ public class UserServiceImpl implements UserService {
         user.setUpdatedAt(LocalDateTime.now());
 
         user = userRepository.save(user); // 저장 후 UUID 획득
-
         String token = jwtUtil.generateToken(user.getUuid());
+
+        // Redis에 팔로워, 팔로잉 수 및 게시글(N컷) 수 초기값 0 저장
+        String key = "user:" + user.getUuid();
+        redisTemplate.opsForHash().put(key, "follower_count", "0");
+        redisTemplate.opsForHash().put(key, "following_count", "0");
+        redisTemplate.opsForHash().put(key, "total_cut", "0");
 
         return SignupResponse.builder()
             .accessToken(token)
@@ -59,11 +66,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void sendVerification(VerificationEmailRequest request) {
+    public void sendMessage(VerificationEmailRequest request) {
         String email = request.getEmail();
 
         if (userRepository.existsByEmail(email)) { // 이메일 중복 검사
-            throw new RuntimeException("이미 가입된 이메일입니다.");
+            throw new BusinessException(ErrorCode.ALREADY_EXISTS);
         }
 
         String code = String.format("%06d", new Random().nextInt(999999));
@@ -79,7 +86,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public VerifyEmailResponse verifyEmailCode(VerifyEmailRequest request) {
+    public VerifyEmailResponse verifyMessage(VerifyEmailRequest request) {
         String email = request.getEmail();
         String key = "email:" + email;
         String code = redisTemplate.opsForValue().get(key);
