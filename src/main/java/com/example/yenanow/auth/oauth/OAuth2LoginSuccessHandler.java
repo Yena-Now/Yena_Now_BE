@@ -21,7 +21,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     private final UserRepository userRepository;
 
     @Value("${client.origin}")
-    private String clientOrigin = "http://localhost:5173/auth/callback";
+    private String clientOrigin;
 
     public OAuth2LoginSuccessHandler(JwtUtil jwtUtil, UserRepository userRepository) {
         this.jwtUtil = jwtUtil;
