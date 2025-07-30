@@ -24,8 +24,8 @@ public enum ErrorCode {
         "서버 내부 오류가 발생했습니다."),
 
     // USER
-    NOT_FOUND_USER(HttpStatus.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."),
-    
+    NOT_FOUND_USER(HttpStatus.NOT_FOUND, "이미 존재하는 사용자"),
+
     // FOLLOW DOMAIN
     SELF_FOLLOW_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "자기 자신을 팔로우할 수 없습니다."),
     FOLLOW_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 팔로우 중입니다.");
