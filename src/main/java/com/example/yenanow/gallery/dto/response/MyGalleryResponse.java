@@ -18,9 +18,7 @@ public class MyGalleryResponse {
   private int totalPages;
   private List<MyNcutResponse> ncuts;
 
-  /**
-   * 유저 정보 없는 응답 - ex) 내 갤러리, 타인 갤러리
-   */
+   // 유저 정보 없는 응답 - ex) 내 갤러리, 타인 갤러리
   public static MyGalleryResponse from(Page<Ncut> page) {
     return MyGalleryResponse.builder()
         .totalPages(page.getTotalPages())
@@ -30,9 +28,7 @@ public class MyGalleryResponse {
         .build();
   }
 
-  /**
-   * 유저 정보 포함 응답 - ex) 공개 갤러리, 친구 갤러리
-   */
+   // 유저 정보 포함 응답 - ex) 공개 갤러리, 친구 갤러리
   public static MyGalleryResponse fromWithUser(Page<Ncut> page) {
     return MyGalleryResponse.builder()
         .totalPages(page.getTotalPages())
