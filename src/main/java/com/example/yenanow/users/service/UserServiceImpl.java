@@ -7,6 +7,7 @@ import com.example.yenanow.common.smtp.request.VerificationEmailRequest;
 import com.example.yenanow.common.smtp.request.VerifyEmailRequest;
 import com.example.yenanow.common.smtp.response.VerifyEmailResponse;
 import com.example.yenanow.common.util.JwtUtil;
+import com.example.yenanow.users.dto.request.ModifyPasswordRequest;
 import com.example.yenanow.users.dto.request.NicknameRequest;
 import com.example.yenanow.users.dto.request.SignupRequest;
 import com.example.yenanow.users.dto.response.NicknameResponse;
@@ -18,8 +19,10 @@ import java.time.LocalDateTime;
 import java.util.Random;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Service
@@ -98,5 +101,31 @@ public class UserServiceImpl implements UserService {
         }
 
         return new VerifyEmailResponse(isVerified);
+    }
+
+    @Transactional
+    @Override
+    public void modifyPassword(ModifyPasswordRequest request) {
+        String oldPassword = request.getOldPassword();
+        String newPassword = request.getNewPassword();
+
+        String uuid = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUuid(uuid)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+
+        if (!encoder.matches(oldPassword, user.getPassword())) {
+            throw new BusinessException(
+                ErrorCode.INVALID_PASSWORD);
+        }
+
+        // 새 비밀번호와 현재 비밀번호가 같으면
+        if (encoder.matches(newPassword, user.getPassword())) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST); // 400
+        }
+
+        user.setPassword(encoder.encode(newPassword));
+        user.setUpdatedAt(LocalDateTime.now());
+
+        userRepository.save(user);
     }
 }

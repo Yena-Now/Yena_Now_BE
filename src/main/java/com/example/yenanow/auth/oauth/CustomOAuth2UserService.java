@@ -4,6 +4,8 @@ import com.example.yenanow.users.entity.User;
 import com.example.yenanow.users.repository.UserRepository;
 import java.util.Map;
 import java.util.UUID;
+import lombok.AllArgsConstructor;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
@@ -12,14 +14,12 @@ import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Component;
 
+@AllArgsConstructor
 @Component
 public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
 
     private final UserRepository userRepository;
-
-    public CustomOAuth2UserService(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
+    private final StringRedisTemplate redisTemplate;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest request) throws OAuth2AuthenticationException {
@@ -33,7 +33,8 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
         // 카카오는 받아오는 형식이 구글과 달라 flatten 처리
         if ("kakao".equals(registrationId)) {
-            Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
+            Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get(
+                "kakao_account");
             if (kakaoAccount != null && kakaoAccount.get("email") != null) {
                 attributes.put("email", kakaoAccount.get("email"));
             }
@@ -55,7 +56,8 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         String profileUrl;
 
         if (registrationId.equals("kakao")) {
-            Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
+            Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get(
+                "kakao_account");
             Map<String, Object> profile = (Map<String, Object>) kakaoAccount.get("profile");
             email = (String) kakaoAccount.get("email");
             name = (String) profile.getOrDefault("nickname", "소셜유저");
@@ -72,7 +74,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         String finalProfileUrl = profileUrl;
         return userRepository.findByEmail(email)
             .orElseGet(() -> {
-                User newUser = User.builder()
+                User user = User.builder()
                     .email(finalEmail)
                     .name(finalName)
                     .nickname("user_" + UUID.randomUUID().toString().substring(0, 8))
@@ -80,7 +82,16 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                     .phoneNumber("010-0000-0000")
                     .profileUrl(finalProfileUrl)
                     .build();
-                return userRepository.save(newUser);
+
+                User savedUser = userRepository.save(user);
+
+                // Redis에 팔로워, 팔로잉 수 및 게시글(N컷) 수 초기값 0 저장
+                String key = "user:" + savedUser.getUuid();
+                redisTemplate.opsForHash().put(key, "follower_count", "0");
+                redisTemplate.opsForHash().put(key, "following_count", "0");
+                redisTemplate.opsForHash().put(key, "total_cut", "0");
+
+                return savedUser;
             });
     }
 }
