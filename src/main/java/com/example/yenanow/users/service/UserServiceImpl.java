@@ -10,6 +10,7 @@ import com.example.yenanow.common.util.JwtUtil;
 import com.example.yenanow.users.dto.request.ModifyPasswordRequest;
 import com.example.yenanow.users.dto.request.NicknameRequest;
 import com.example.yenanow.users.dto.request.SignupRequest;
+import com.example.yenanow.users.dto.response.MyInfoResponse;
 import com.example.yenanow.users.dto.response.NicknameResponse;
 import com.example.yenanow.users.dto.response.SignupResponse;
 import com.example.yenanow.users.entity.User;
@@ -19,6 +20,7 @@ import java.time.LocalDateTime;
 import java.util.Random;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -127,5 +129,24 @@ public class UserServiceImpl implements UserService {
         user.setUpdatedAt(LocalDateTime.now());
 
         userRepository.save(user);
+    }
+
+    @Override
+    public MyInfoResponse getMyInfo() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userUuid = authentication.getName();
+
+        User user = userRepository.findByUserUuid(userUuid)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER));
+
+        return MyInfoResponse.builder()
+            .email(user.getEmail())
+            .name(user.getName())
+            .nickname(user.getNickname())
+            .gender(user.getGender())
+            .birthdate(user.getBirthdate())
+            .phoneNumber(user.getPhoneNumber())
+            .profileUrl(user.getProfileUrl())
+            .build();
     }
 }

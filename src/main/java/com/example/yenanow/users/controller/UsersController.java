@@ -6,6 +6,7 @@ import com.example.yenanow.common.smtp.response.VerifyEmailResponse;
 import com.example.yenanow.users.dto.request.ModifyPasswordRequest;
 import com.example.yenanow.users.dto.request.NicknameRequest;
 import com.example.yenanow.users.dto.request.SignupRequest;
+import com.example.yenanow.users.dto.response.MyInfoResponse;
 import com.example.yenanow.users.dto.response.NicknameResponse;
 import com.example.yenanow.users.dto.response.SignupResponse;
 import com.example.yenanow.users.service.UserService;
@@ -13,6 +14,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -59,5 +61,11 @@ public class UsersController {
     public ResponseEntity<Void> modifyPassword(@RequestBody ModifyPasswordRequest request) {
         userService.modifyPassword(request);
         return ResponseEntity.noContent().build(); // 204
+    }
+
+    @Operation(summary = "내 정보 조회", description = "로그인한 사용자의 정보를 확인합니다.")
+    @GetMapping("/me")
+    public ResponseEntity<MyInfoResponse> getMyInfo() {
+        return ResponseEntity.ok(userService.getMyInfo());
     }
 }
