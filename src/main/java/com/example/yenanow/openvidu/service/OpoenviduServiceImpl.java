@@ -10,9 +10,11 @@ import com.example.yenanow.users.repository.UserQueryRepository;
 import io.livekit.server.AccessToken;
 import io.livekit.server.RoomJoin;
 import io.livekit.server.RoomName;
+import io.livekit.server.WebhookReceiver;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import livekit.LivekitWebhook.WebhookEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.HashOperations;
@@ -89,5 +91,23 @@ public class OpoenviduServiceImpl implements OpenviduService {
         Integer timeLimit = Integer.parseInt(roomData.get("time_limit").toString());
 
         return new TokenResponse(token.toJwt(), backgroundUrl, takeCnt, cutCnt, timeLimit);
+    }
+
+    @Override
+    public void reciveWebhook(String authHeader, String body) {
+        WebhookReceiver webhookReceiver = new WebhookReceiver(LIVEKIT_API_KEY, LIVEKIT_API_SECRET);
+        try {
+            WebhookEvent event = webhookReceiver.receive(body, authHeader);
+            // log.info("LiveKit Webhook Received: {}", event.getEvent());
+
+            if ("room_finished".equals(event.getEvent())) {
+                String roomCode = event.getRoom().getName();
+                String key = "room:" + roomCode;
+                redisTemplate.delete(key);
+            }
+        } catch (Exception e) {
+            // log.error("Error validating webhook event: {}", e.getMessage());
+            throw new BusinessException(ErrorCode.BAD_REQUEST);
+        }
     }
 }

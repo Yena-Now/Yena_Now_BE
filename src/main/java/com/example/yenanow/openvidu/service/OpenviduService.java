@@ -10,4 +10,6 @@ public interface OpenviduService {
     CodeResponse createCode(String userUuid, CodeRequest codeRequest);
 
     TokenResponse createToken(String userUuid, TokenRequest tokenRequest);
+
+    void reciveWebhook(String authHeader, String body);
 }

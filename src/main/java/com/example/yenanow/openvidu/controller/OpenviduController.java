@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -36,5 +37,13 @@ public class OpenviduController {
         String userUuid = principal.toString();
         TokenResponse tokenResponse = openviduService.createToken(userUuid, tokenRequest);
         return ResponseEntity.ok(tokenResponse);
+    }
+
+    @PostMapping(value = "/livekit/webhook", consumes = "application/webhook+json")
+    public ResponseEntity<String> receiveWebhook(
+        @RequestHeader("Authorization") String authHeader,
+        @RequestBody String body) {
+        openviduService.reciveWebhook(authHeader, body);
+        return ResponseEntity.ok("ok");
     }
 }
