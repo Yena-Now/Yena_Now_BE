@@ -3,7 +3,9 @@ package com.example.yenanow.openvidu.service;
 import com.example.yenanow.common.exception.BusinessException;
 import com.example.yenanow.common.exception.ErrorCode;
 import com.example.yenanow.openvidu.dto.request.CodeRequest;
+import com.example.yenanow.openvidu.dto.request.TokenRequest;
 import com.example.yenanow.openvidu.dto.response.CodeResponse;
+import com.example.yenanow.openvidu.dto.response.TokenResponse;
 import com.example.yenanow.users.repository.UserQueryRepository;
 import io.livekit.server.AccessToken;
 import io.livekit.server.RoomJoin;
@@ -35,14 +37,14 @@ public class OpoenviduServiceImpl implements OpenviduService {
         String nickname = userQueryRepository.findNicknameById(userUuid)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
         Random random = new Random();
-        String code;
+        String roomCode;
 
         while (true) {
-            code = String.format("%06d", random.nextInt(999999));
-            String redisKey = "room:" + code;
+            roomCode = String.format("%06d", random.nextInt(999999));
+            String key = "room:" + roomCode;
 
-            if (!redisTemplate.hasKey(redisKey)) {
-                HashOperations<String, Object, Object> hashOps = redisTemplate.opsForHash();
+            if (!redisTemplate.hasKey(key)) {
+                HashOperations<String, String, Object> hashOps = redisTemplate.opsForHash();
 
                 Map<String, String> roomDataMap = new HashMap<>();
                 roomDataMap.put("background_url", codeRequest.getBackgroundUrl());
@@ -50,7 +52,7 @@ public class OpoenviduServiceImpl implements OpenviduService {
                 roomDataMap.put("cut_cnt", String.valueOf(codeRequest.getCutCnt()));
                 roomDataMap.put("time_limit", String.valueOf(codeRequest.getTimeLimit()));
 
-                hashOps.putAll(redisKey, roomDataMap);
+                hashOps.putAll(key, roomDataMap);
                 break;
             }
         }
@@ -58,8 +60,34 @@ public class OpoenviduServiceImpl implements OpenviduService {
         AccessToken token = new AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET);
         token.setName(nickname);
         token.setIdentity(userUuid);
-        token.addGrants(new RoomJoin(true), new RoomName(code));
+        token.addGrants(new RoomJoin(true), new RoomName(roomCode));
 
-        return new CodeResponse(code, token.toJwt());
+        return new CodeResponse(roomCode, token.toJwt());
+    }
+
+    @Override
+    public TokenResponse createToken(String userUuid, TokenRequest tokenRequest) {
+        String nickname = userQueryRepository.findNicknameById(userUuid)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+        String roomCode = tokenRequest.getRoomCode();
+        String key = "room:" + roomCode;
+        HashOperations<String, String, Object> hashOps = redisTemplate.opsForHash();
+
+        Map<String, Object> roomData = hashOps.entries(key);
+        if (roomData.isEmpty()) {
+            throw new BusinessException(ErrorCode.NOT_FOUND);
+        }
+
+        AccessToken token = new AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET);
+        token.setName(nickname);
+        token.setIdentity(userUuid);
+        token.addGrants(new RoomJoin(true), new RoomName(roomCode));
+
+        String backgroundUrl = (String) roomData.get("background_url");
+        Integer takeCnt = Integer.parseInt(roomData.get("take_cnt").toString());
+        Integer cutCnt = Integer.parseInt(roomData.get("cut_cnt").toString());
+        Integer timeLimit = Integer.parseInt(roomData.get("time_limit").toString());
+
+        return new TokenResponse(token.toJwt(), backgroundUrl, takeCnt, cutCnt, timeLimit);
     }
 }

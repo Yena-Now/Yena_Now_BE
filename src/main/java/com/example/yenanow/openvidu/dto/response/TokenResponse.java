@@ -8,4 +8,8 @@ import lombok.Getter;
 public class TokenResponse {
 
     String token;
+    String backgoundUrl;
+    Integer takeCnt;
+    Integer cutCnt;
+    Integer timeLimit;
 }
