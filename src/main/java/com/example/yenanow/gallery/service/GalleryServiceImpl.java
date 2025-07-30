@@ -37,7 +37,7 @@ public class GalleryServiceImpl implements GalleryService {
                 .ncuts(List.of())
                 .build();
         }
-        return MyGalleryResponse.from(ncutPage);
+        return MyGalleryResponse.fromEntity(ncutPage);
     }
 
     @Override
@@ -55,7 +55,7 @@ public class GalleryServiceImpl implements GalleryService {
                 .ncuts(List.of())
                 .build();
         }
-        return MyGalleryResponse.from(ncutPage);
+        return MyGalleryResponse.fromEntity(ncutPage);
     }
 
     @Override
@@ -69,7 +69,7 @@ public class GalleryServiceImpl implements GalleryService {
                 .ncuts(List.of())
                 .build();
         }
-        return MyGalleryResponse.fromWithUser(ncutPage);
+        return MyGalleryResponse.fromEntityWithUser(ncutPage);
     }
 
     @Override
@@ -97,7 +97,7 @@ public class GalleryServiceImpl implements GalleryService {
                 .ncuts(List.of())
                 .build();
         }
-        return MyGalleryResponse.fromWithUser(ncutPage);
+        return MyGalleryResponse.fromEntityWithUser(ncutPage);
     }
 
     private void validateUserUuid(String userUuid) {

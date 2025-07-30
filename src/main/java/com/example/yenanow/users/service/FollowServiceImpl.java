@@ -3,6 +3,7 @@ package com.example.yenanow.users.service;
 import com.example.yenanow.common.exception.BusinessException;
 import com.example.yenanow.common.exception.ErrorCode;
 import com.example.yenanow.users.entity.Follow;
+import com.example.yenanow.users.entity.User;
 import com.example.yenanow.users.repository.FollowRepository;
 import com.example.yenanow.users.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,16 +22,18 @@ public class FollowServiceImpl implements FollowService {
     public void follow(String followerUuid, String followingUuid) {
         validateUuid(followerUuid);
         validateUuid(followingUuid);
-        validateUsersExist(followerUuid, followingUuid);
 
-        if (followerUuid.equals(followingUuid)) {
+        User fromUser = getUserByUuid(followerUuid);
+        User toUser = getUserByUuid(followingUuid);
+
+        if (fromUser.equals(toUser)) {
             throw new BusinessException(ErrorCode.SELF_FOLLOW_NOT_ALLOWED);
         }
-        if (followRepository.existsByFromUserAndToUser(followerUuid, followingUuid)) {
+        if (followRepository.existsByFromUserAndToUser(fromUser, toUser)) {
             throw new BusinessException(ErrorCode.FOLLOW_ALREADY_EXISTS);
         }
 
-        followRepository.save(new Follow(followerUuid, followingUuid));
+        followRepository.save(new Follow(fromUser, toUser));
     }
 
     @Override
@@ -38,10 +41,12 @@ public class FollowServiceImpl implements FollowService {
     public void unfollow(String followerUuid, String followingUuid) {
         validateUuid(followerUuid);
         validateUuid(followingUuid);
-        validateUsersExist(followerUuid, followingUuid);
 
-        // 언팔로우는 멱등성을 보장
-        followRepository.deleteByFromUserAndToUser(followerUuid, followingUuid);
+        User fromUser = getUserByUuid(followerUuid);
+        User toUser = getUserByUuid(followingUuid);
+
+        // 언팔로우는 멱등성 보장
+        followRepository.deleteByFromUserAndToUser(fromUser, toUser);
     }
 
     @Override
@@ -49,9 +54,11 @@ public class FollowServiceImpl implements FollowService {
     public boolean isFollowing(String followerUuid, String followingUuid) {
         validateUuid(followerUuid);
         validateUuid(followingUuid);
-        validateUsersExist(followerUuid, followingUuid);
 
-        return followRepository.existsByFromUserAndToUser(followerUuid, followingUuid);
+        User fromUser = getUserByUuid(followerUuid);
+        User toUser = getUserByUuid(followingUuid);
+
+        return followRepository.existsByFromUserAndToUser(fromUser, toUser);
     }
 
     /**
@@ -64,12 +71,10 @@ public class FollowServiceImpl implements FollowService {
     }
 
     /**
-     * 두 사용자 모두 DB에 존재하는지 검증
+     * UUID로 User 조회 (없으면 예외)
      */
-    private void validateUsersExist(String followerUuid, String followingUuid) {
-        if (!userRepository.existsByUuid(followerUuid) || !userRepository.existsByUuid(
-            followingUuid)) {
-            throw new BusinessException(ErrorCode.NOT_FOUND_USER);
-        }
+    private User getUserByUuid(String uuid) {
+        return userRepository.findByUuid(uuid)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER));
     }
 }

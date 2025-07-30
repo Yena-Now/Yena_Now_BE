@@ -2,10 +2,9 @@ package com.example.yenanow.users.repository;
 
 import com.example.yenanow.users.entity.QFollow;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
 
 @Repository
 @RequiredArgsConstructor
@@ -18,9 +17,9 @@ public class FollowQueryRepositoryImpl implements FollowQueryRepository {
         QFollow follow = QFollow.follow;
 
         return queryFactory
-            .select(follow.toUser)  // toUser가 String UUID일 경우
+            .select(follow.toUser.uuid)  // toUser가 String UUID일 경우
             .from(follow)
-            .where(follow.fromUser.eq(userUuid))
+            .where(follow.fromUser.uuid.eq(userUuid))
             .fetch();
     }
 }
