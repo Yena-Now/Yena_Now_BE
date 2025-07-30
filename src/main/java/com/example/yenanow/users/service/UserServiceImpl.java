@@ -110,8 +110,8 @@ public class UserServiceImpl implements UserService {
         String newPassword = request.getNewPassword();
 
         String uuid = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByUuid(uuid)
-            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+        User user = userRepository.findByUuid(uuid) // 존재하는 사용자인지
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER));
 
         if (!encoder.matches(oldPassword, user.getPassword())) {
             throw new BusinessException(

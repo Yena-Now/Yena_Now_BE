@@ -107,7 +107,7 @@ public class AuthServiceImpl implements AuthService {
         String email = request.getEmail();
 
         User user = userRepository.findByEmail(email) // 등록된 유저 이메일인지 여부
-            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER));
 
         String key = "verified:" + email;
         String verified = redisTemplate.opsForValue().get(key);
