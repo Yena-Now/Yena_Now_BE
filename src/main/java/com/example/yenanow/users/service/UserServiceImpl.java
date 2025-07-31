@@ -159,12 +159,14 @@ public class UserServiceImpl implements UserService {
 
         String newName = request.getName();
         String newNickname = request.getNickname();
+        String newPhoneNumber = request.getPhoneNumber();
 
         User user = userRepository.findByUserUuid(userUuid)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER));
 
         user.setName(newName);
         user.setNickname(newNickname);
+        user.setPhoneNumber(newPhoneNumber);
         user.setUpdatedAt(LocalDateTime.now());
 
         userRepository.save(user);
