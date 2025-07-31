@@ -2,6 +2,7 @@ package com.example.yenanow.openvidu.service;
 
 import com.example.yenanow.common.exception.BusinessException;
 import com.example.yenanow.common.exception.ErrorCode;
+import com.example.yenanow.common.util.UuidUtil;
 import com.example.yenanow.openvidu.dto.request.CodeRequest;
 import com.example.yenanow.openvidu.dto.request.TokenRequest;
 import com.example.yenanow.openvidu.dto.response.CodeResponse;
@@ -36,6 +37,8 @@ public class OpoenviduServiceImpl implements OpenviduService {
 
     @Override
     public CodeResponse createCode(String userUuid, CodeRequest codeRequest) {
+        UuidUtil.validateUuid(userUuid);
+        
         String nickname = userQueryRepository.findNicknameById(userUuid)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER));
         Random random = new Random();
@@ -69,6 +72,8 @@ public class OpoenviduServiceImpl implements OpenviduService {
 
     @Override
     public TokenResponse createToken(String userUuid, TokenRequest tokenRequest) {
+        UuidUtil.validateUuid(userUuid);
+
         String nickname = userQueryRepository.findNicknameById(userUuid)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER));
         String roomCode = tokenRequest.getRoomCode();
