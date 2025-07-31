@@ -8,8 +8,10 @@ import org.springframework.data.domain.Pageable;
 
 public interface NcutQueryRepository {
 
-  Page<Ncut> findPublicGalleryWithUser(Pageable pageable);
+    Page<Ncut> findPublicGalleryWithUser(Pageable pageable);
 
-  Page<Ncut> findFollowingsGalleryWithUser(List<String> userUuids, List<Visibility> visibilities,
-      Pageable pageable);
+    Page<Ncut> findFollowingsGalleryWithUser(List<String> userUuids, List<Visibility> visibilities,
+        Pageable pageable);
+
+    void updateCommentCount(String ncutUuid, int commentCount);
 }
