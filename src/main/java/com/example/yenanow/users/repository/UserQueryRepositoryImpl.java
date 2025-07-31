@@ -19,7 +19,7 @@ public class UserQueryRepositoryImpl implements UserQueryRepository {
         String nickname = queryFactory
             .select(user.nickname)
             .from(user)
-            .where(user.uuid.eq(userUuid))
+            .where(user.userUuid.eq(userUuid))
             .fetchOne();
 
         return Optional.ofNullable(nickname);
