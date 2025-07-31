@@ -7,6 +7,7 @@ import com.example.yenanow.common.smtp.request.VerificationEmailRequest;
 import com.example.yenanow.common.smtp.request.VerifyEmailRequest;
 import com.example.yenanow.common.smtp.response.VerifyEmailResponse;
 import com.example.yenanow.common.util.JwtUtil;
+import com.example.yenanow.common.util.UuidUtil;
 import com.example.yenanow.users.dto.request.ModifyMyInfoRequest;
 import com.example.yenanow.users.dto.request.ModifyPasswordRequest;
 import com.example.yenanow.users.dto.request.NicknameRequest;
@@ -107,8 +108,8 @@ public class UserServiceImpl implements UserService {
         String oldPassword = request.getOldPassword();
         String newPassword = request.getNewPassword();
 
-        validateUuid(userUuid);
-        User user = getUserByUuid(userUuid);
+        UuidUtil.validateUuid(userUuid);
+        User user = UuidUtil.getUserByUuid(userRepository, userUuid);
 
         if (!encoder.matches(oldPassword, user.getPassword())) {
             throw new BusinessException(
@@ -127,8 +128,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public MyInfoResponse getMyInfo(String userUuid) {
-        validateUuid(userUuid);
-        User user = getUserByUuid(userUuid);
+        UuidUtil.validateUuid(userUuid);
+        User user = UuidUtil.getUserByUuid(userRepository, userUuid);
 
         return MyInfoResponse.builder()
             .email(user.getEmail())
@@ -144,8 +145,8 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @Override
     public void modifyMyInfo(ModifyMyInfoRequest request, String userUuid) {
-        validateUuid(userUuid);
-        User user = getUserByUuid(userUuid);
+        UuidUtil.validateUuid(userUuid);
+        User user = UuidUtil.getUserByUuid(userRepository, userUuid);
 
         String newName = request.getName();
         String newNickname = request.getNickname();
@@ -161,30 +162,12 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @Override
     public void deleteMyInfo(String userUuid) {
-        validateUuid(userUuid);
-
-        User user = getUserByUuid(userUuid);
-
+        UuidUtil.validateUuid(userUuid);
+        User user = UuidUtil.getUserByUuid(userRepository, userUuid);
+        
         redisTemplate.delete("user:" + userUuid);
         redisTemplate.delete("refresh_token:" + userUuid);
 
         userRepository.delete(user);
-    }
-
-    /**
-     * UUID 값 유효성 검증
-     */
-    private void validateUuid(String userUuid) {
-        if (userUuid == null || userUuid.isBlank()) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST);
-        }
-    }
-
-    /**
-     * UUID로 User 조회 (없으면 예외)
-     */
-    private User getUserByUuid(String userUuid) {
-        return userRepository.findByUserUuid(userUuid)
-            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER));
     }
 }
