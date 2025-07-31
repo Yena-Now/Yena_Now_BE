@@ -43,8 +43,6 @@ public class UserServiceImpl implements UserService {
     public SignupResponse createUser(SignupRequest signupRequest) {
         User user = signupRequest.toEntity();
         user.encodePassword(encoder);
-        user.setCreatedAt(LocalDateTime.now());
-        user.setUpdatedAt(LocalDateTime.now());
 
         user = userRepository.save(user); // 저장 후 UUID 획득
         String token = jwtUtil.generateToken(user.getUserUuid());
@@ -113,8 +111,7 @@ public class UserServiceImpl implements UserService {
         String newPassword = request.getNewPassword();
 
         String userUuid = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByUserUuid(userUuid) // 존재하는 사용자인지
-            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER));
+        User user = getUserByUuid(userUuid);
 
         if (!encoder.matches(oldPassword, user.getPassword())) {
             throw new BusinessException(
@@ -137,8 +134,9 @@ public class UserServiceImpl implements UserService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String userUuid = authentication.getName();
 
-        User user = userRepository.findByUserUuid(userUuid)
-            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER));
+        validateUuid(userUuid);
+
+        User user = getUserByUuid(userUuid);
 
         return MyInfoResponse.builder()
             .email(user.getEmail())
@@ -161,8 +159,7 @@ public class UserServiceImpl implements UserService {
         String newNickname = request.getNickname();
         String newPhoneNumber = request.getPhoneNumber();
 
-        User user = userRepository.findByUserUuid(userUuid)
-            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER));
+        User user = getUserByUuid(userUuid);
 
         user.setName(newName);
         user.setNickname(newNickname);
@@ -170,5 +167,35 @@ public class UserServiceImpl implements UserService {
         user.setUpdatedAt(LocalDateTime.now());
 
         userRepository.save(user);
+    }
+
+    @Transactional
+    @Override
+    public void deleteMyInfo(String userUuid) {
+        validateUuid(userUuid);
+
+        User user = getUserByUuid(userUuid);
+
+        redisTemplate.delete("user:" + userUuid);
+        redisTemplate.delete("refresh_token:" + userUuid);
+
+        userRepository.delete(user);
+    }
+
+    /**
+     * UUID 값 유효성 검증
+     */
+    private void validateUuid(String uuid) {
+        if (uuid == null || uuid.isBlank()) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST);
+        }
+    }
+
+    /**
+     * UUID로 User 조회 (없으면 예외)
+     */
+    private User getUserByUuid(String uuid) {
+        return userRepository.findByUserUuid(uuid)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER));
     }
 }

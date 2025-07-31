@@ -26,4 +26,6 @@ public interface UserService {
     MyInfoResponse getMyInfo();
 
     void modifyMyInfo(ModifyMyInfoRequest request);
+
+    void deleteMyInfo(String userUuid);
 }

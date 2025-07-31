@@ -15,6 +15,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -75,5 +77,13 @@ public class UsersController {
     public ResponseEntity<MyInfoResponse> modifyMyInfo(@RequestBody ModifyMyInfoRequest request) {
         userService.modifyMyInfo(request);
         return ResponseEntity.noContent().build(); // 204;
+    }
+
+    @Operation(summary = "회원 탈퇴", description = "회원 탈퇴를 진행합니다.")
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> deleteMyInfo(@AuthenticationPrincipal Object principal) {
+        String currentUserUuid = principal.toString();
+        userService.deleteMyInfo(currentUserUuid);
+        return ResponseEntity.noContent().build();
     }
 }
