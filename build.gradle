@@ -18,14 +18,21 @@ repositories {
 }
 
 dependencies {
+    // Spring Boot Starter Dependencies
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-    implementation 'org.springframework.session:spring-session-data-redis'
     implementation 'org.springframework.boot:spring-boot-starter-security'
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'
-    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+
+    // Spring Session
+    implementation 'org.springframework.session:spring-session-data-redis'
+
+    // REST API Documentation
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'
+
+    // JWT
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
 
     // QueryDSL
     implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
@@ -34,11 +41,19 @@ dependencies {
     annotationProcessor "jakarta.annotation:jakarta.annotation-api"
     annotationProcessor "jakarta.persistence:jakarta.persistence-api"
 
+    // LiveKit
+    implementation 'io.livekit:livekit-server:0.8.2'
+
+    // Runtime Only Dependencies
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
-    compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'com.mysql:mysql-connector-j'
+
+    // Annotation Processors
+    compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
+
+    // Test Dependencies
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'io.projectreactor:reactor-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'

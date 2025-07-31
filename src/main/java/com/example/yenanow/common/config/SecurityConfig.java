@@ -7,8 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -41,7 +41,8 @@ public class SecurityConfig {
                     "/users/nickname",
                     "/users/verification-email",
                     "/users/verify-email",
-                    "/auth/**" // OAuth 경로 허용
+                    "/auth/**", // OAuth 경로 허용
+                    "/film/livekit/webhook"
                 ).permitAll()
                 .anyRequest().authenticated()
             )
@@ -69,5 +70,4 @@ public class SecurityConfig {
     public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
 }
