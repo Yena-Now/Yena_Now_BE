@@ -37,7 +37,7 @@ public class OpoenviduServiceImpl implements OpenviduService {
     @Override
     public CodeResponse createCode(String userUuid, CodeRequest codeRequest) {
         String nickname = userQueryRepository.findNicknameById(userUuid)
-            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER));
         Random random = new Random();
         String roomCode;
 
@@ -70,14 +70,14 @@ public class OpoenviduServiceImpl implements OpenviduService {
     @Override
     public TokenResponse createToken(String userUuid, TokenRequest tokenRequest) {
         String nickname = userQueryRepository.findNicknameById(userUuid)
-            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER));
         String roomCode = tokenRequest.getRoomCode();
         String key = "room:" + roomCode;
         HashOperations<String, String, Object> hashOps = redisTemplate.opsForHash();
 
         Map<String, Object> roomData = hashOps.entries(key);
         if (roomData.isEmpty()) {
-            throw new BusinessException(ErrorCode.NOT_FOUND);
+            throw new BusinessException(ErrorCode.NOT_FOUND_CODE);
         }
 
         AccessToken token = new AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET);
