@@ -32,28 +32,28 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @EntityListeners(AuditingEntityListener.class)  // Auditing 활성화
 public class Comment {
 
-  @Id
-  @GeneratedValue(generator = "UUID")
-  @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
-  @Column(name = "comment_uuid", length = 36, nullable = false)
-  private String commentUuid;
+    @Id
+    @GeneratedValue(generator = "UUID")
+    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
+    @Column(name = "comment_uuid", length = 36, nullable = false)
+    private String commentUuid;
 
-  @Column(name = "content", length = 255, nullable = false)
-  private String content;
+    @Column(name = "content", length = 255, nullable = false)
+    private String content;
 
-  @CreatedDate
-  @Column(name = "created_at", nullable = false, updatable = false)
-  private LocalDateTime createdAt;
+    @CreatedDate
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
-  @LastModifiedDate
-  @Column(name = "updated_at", nullable = false)
-  private LocalDateTime updatedAt;
+    @LastModifiedDate
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "ncut_uuid", nullable = false)
-  private Ncut ncut;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ncut_uuid", nullable = false)
+    private Ncut ncut;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "user_uuid", nullable = false)
-  private User user;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_uuid", nullable = false)
+    private User user;
 }

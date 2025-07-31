@@ -27,67 +27,67 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class CommentController {
 
-  private final CommentService commentService;
+    private final CommentService commentService;
 
-  @Operation(summary = "댓글 목록 조회", description = "특정 N컷에 작성된 댓글 목록을 조회합니다.")
-  @GetMapping
-  public ResponseEntity<CommentListResponse> getComments(
-      @Parameter(description = "댓글을 조회할 N컷 UUID", required = true)
-      @PathVariable String ncutUuid,
-      @Parameter(description = "페이지 번호 (기본값: 0)")
-      @RequestParam(defaultValue = "0") int pageNum,
-      @Parameter(description = "페이지당 개수 (기본값: 30)")
-      @RequestParam(defaultValue = "30") int display) {
+    @Operation(summary = "댓글 목록 조회", description = "특정 N컷에 작성된 댓글 목록을 조회합니다.")
+    @GetMapping
+    public ResponseEntity<CommentListResponse> getComments(
+        @Parameter(description = "댓글을 조회할 N컷 UUID", required = true)
+        @PathVariable String ncutUuid,
+        @Parameter(description = "페이지 번호 (기본값: 0)")
+        @RequestParam(defaultValue = "0") int pageNum,
+        @Parameter(description = "페이지당 개수 (기본값: 30)")
+        @RequestParam(defaultValue = "30") int display) {
 
-    return ResponseEntity.ok(commentService.getComments(ncutUuid, pageNum, display));
-  }
+        return ResponseEntity.ok(commentService.getComments(ncutUuid, pageNum, display));
+    }
 
-  @Operation(summary = "댓글 작성", description = "특정 N컷에 새로운 댓글을 작성합니다.")
-  @PostMapping
-  public ResponseEntity<CommentListResponse> addComment(
-      @Parameter(description = "댓글을 작성할 N컷 UUID", required = true)
-      @PathVariable String ncutUuid,
-      @Parameter(hidden = true)
-      @AuthenticationPrincipal Object principal,
-      @RequestBody CommentCreateRequest request,
-      @Parameter(description = "페이지 번호 (기본값: 0)")
-      @RequestParam(defaultValue = "0") int pageNum,
-      @Parameter(description = "페이지당 개수 (기본값: 30)")
-      @RequestParam(defaultValue = "30") int display) {
+    @Operation(summary = "댓글 작성", description = "특정 N컷에 새로운 댓글을 작성합니다.")
+    @PostMapping
+    public ResponseEntity<CommentListResponse> addComment(
+        @Parameter(description = "댓글을 작성할 N컷 UUID", required = true)
+        @PathVariable String ncutUuid,
+        @Parameter(hidden = true)
+        @AuthenticationPrincipal Object principal,
+        @RequestBody CommentCreateRequest request,
+        @Parameter(description = "페이지 번호 (기본값: 0)")
+        @RequestParam(defaultValue = "0") int pageNum,
+        @Parameter(description = "페이지당 개수 (기본값: 30)")
+        @RequestParam(defaultValue = "30") int display) {
 
-    String userUuid = principal.toString();
-    return ResponseEntity.status(HttpStatus.CREATED)
-        .body(commentService.addComment(ncutUuid, userUuid, request, pageNum, display));
-  }
+        String userUuid = principal.toString();
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .body(commentService.addComment(ncutUuid, userUuid, request, pageNum, display));
+    }
 
-  @Operation(summary = "댓글 수정", description = "본인이 작성한 댓글 내용을 수정합니다.")
-  @PutMapping("/{commentUuid}")
-  public ResponseEntity<Void> updateComment(
-      @Parameter(description = "댓글이 속한 N컷 UUID", required = true)
-      @PathVariable String ncutUuid,
-      @Parameter(description = "수정할 댓글 UUID", required = true)
-      @PathVariable String commentUuid,
-      @Parameter(hidden = true)
-      @AuthenticationPrincipal Object principal,
-      @RequestBody CommentUpdateRequest request) {
+    @Operation(summary = "댓글 수정", description = "본인이 작성한 댓글 내용을 수정합니다.")
+    @PutMapping("/{commentUuid}")
+    public ResponseEntity<Void> updateComment(
+        @Parameter(description = "댓글이 속한 N컷 UUID", required = true)
+        @PathVariable String ncutUuid,
+        @Parameter(description = "수정할 댓글 UUID", required = true)
+        @PathVariable String commentUuid,
+        @Parameter(hidden = true)
+        @AuthenticationPrincipal Object principal,
+        @RequestBody CommentUpdateRequest request) {
 
-    String userUuid = principal.toString();
-    commentService.updateComment(commentUuid, request, userUuid);
-    return ResponseEntity.noContent().build();
-  }
+        String userUuid = principal.toString();
+        commentService.updateComment(commentUuid, request, userUuid);
+        return ResponseEntity.noContent().build();
+    }
 
-  @Operation(summary = "댓글 삭제", description = "본인이 작성한 댓글을 삭제합니다.")
-  @DeleteMapping("/{commentUuid}")
-  public ResponseEntity<Void> deleteComment(
-      @Parameter(description = "댓글이 속한 N컷 UUID", required = true)
-      @PathVariable String ncutUuid,
-      @Parameter(description = "삭제할 댓글 UUID", required = true)
-      @PathVariable String commentUuid,
-      @Parameter(hidden = true)
-      @AuthenticationPrincipal Object principal) {
+    @Operation(summary = "댓글 삭제", description = "본인이 작성한 댓글을 삭제합니다.")
+    @DeleteMapping("/{commentUuid}")
+    public ResponseEntity<Void> deleteComment(
+        @Parameter(description = "댓글이 속한 N컷 UUID", required = true)
+        @PathVariable String ncutUuid,
+        @Parameter(description = "삭제할 댓글 UUID", required = true)
+        @PathVariable String commentUuid,
+        @Parameter(hidden = true)
+        @AuthenticationPrincipal Object principal) {
 
-    String userUuid = principal.toString();
-    commentService.deleteComment(commentUuid, userUuid);
-    return ResponseEntity.noContent().build();
-  }
+        String userUuid = principal.toString();
+        commentService.deleteComment(commentUuid, userUuid);
+        return ResponseEntity.noContent().build();
+    }
 }
