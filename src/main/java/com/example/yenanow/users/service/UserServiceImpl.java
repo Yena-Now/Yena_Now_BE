@@ -17,7 +17,6 @@ import com.example.yenanow.users.dto.response.SignupResponse;
 import com.example.yenanow.users.entity.User;
 import com.example.yenanow.users.repository.UserRepository;
 import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.Random;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -122,7 +121,6 @@ public class UserServiceImpl implements UserService {
         }
 
         user.setPassword(encoder.encode(newPassword));
-        user.setUpdatedAt(LocalDateTime.now());
 
         userRepository.save(user);
     }
@@ -156,7 +154,6 @@ public class UserServiceImpl implements UserService {
         user.setName(newName);
         user.setNickname(newNickname);
         user.setPhoneNumber(newPhoneNumber);
-        user.setUpdatedAt(LocalDateTime.now());
 
         userRepository.save(user);
     }
