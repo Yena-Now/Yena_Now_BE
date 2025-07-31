@@ -21,11 +21,11 @@ public interface UserService {
 
     VerifyEmailResponse verifyMessage(VerifyEmailRequest request);
 
-    void modifyPassword(ModifyPasswordRequest request);
+    void modifyPassword(ModifyPasswordRequest request, String userUuid);
 
-    MyInfoResponse getMyInfo();
+    MyInfoResponse getMyInfo(String userUuid);
 
-    void modifyMyInfo(ModifyMyInfoRequest request);
+    void modifyMyInfo(ModifyMyInfoRequest request, String userUuid);
 
     void deleteMyInfo(String userUuid);
 }

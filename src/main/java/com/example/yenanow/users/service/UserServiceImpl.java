@@ -21,8 +21,6 @@ import java.time.LocalDateTime;
 import java.util.Random;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -106,11 +104,11 @@ public class UserServiceImpl implements UserService {
 
     @Transactional
     @Override
-    public void modifyPassword(ModifyPasswordRequest request) {
+    public void modifyPassword(ModifyPasswordRequest request, String userUuid) {
         String oldPassword = request.getOldPassword();
         String newPassword = request.getNewPassword();
 
-        String userUuid = SecurityContextHolder.getContext().getAuthentication().getName();
+        validateUuid(userUuid);
         User user = getUserByUuid(userUuid);
 
         if (!encoder.matches(oldPassword, user.getPassword())) {
@@ -130,12 +128,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public MyInfoResponse getMyInfo() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String userUuid = authentication.getName();
-
+    public MyInfoResponse getMyInfo(String userUuid) {
         validateUuid(userUuid);
-
         User user = getUserByUuid(userUuid);
 
         return MyInfoResponse.builder()
@@ -151,15 +145,13 @@ public class UserServiceImpl implements UserService {
 
     @Transactional
     @Override
-    public void modifyMyInfo(ModifyMyInfoRequest request) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String userUuid = authentication.getName();
+    public void modifyMyInfo(ModifyMyInfoRequest request, String userUuid) {
+        validateUuid(userUuid);
+        User user = getUserByUuid(userUuid);
 
         String newName = request.getName();
         String newNickname = request.getNickname();
         String newPhoneNumber = request.getPhoneNumber();
-
-        User user = getUserByUuid(userUuid);
 
         user.setName(newName);
         user.setNickname(newNickname);
@@ -185,8 +177,8 @@ public class UserServiceImpl implements UserService {
     /**
      * UUID 값 유효성 검증
      */
-    private void validateUuid(String uuid) {
-        if (uuid == null || uuid.isBlank()) {
+    private void validateUuid(String userUuid) {
+        if (userUuid == null || userUuid.isBlank()) {
             throw new BusinessException(ErrorCode.BAD_REQUEST);
         }
     }
@@ -194,8 +186,8 @@ public class UserServiceImpl implements UserService {
     /**
      * UUID로 User 조회 (없으면 예외)
      */
-    private User getUserByUuid(String uuid) {
-        return userRepository.findByUserUuid(uuid)
+    private User getUserByUuid(String userUuid) {
+        return userRepository.findByUserUuid(userUuid)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER));
     }
 }
