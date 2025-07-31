@@ -4,13 +4,14 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.stereotype.Component;
-
+import jakarta.servlet.http.HttpServletRequest;
 import java.security.Key;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
@@ -20,39 +21,42 @@ public class JwtUtil {
 
     private Key key;
 
+    @Value("${jwt.access-token-expiration}")
+    private long accessTokenExpiration;
+
+    @Value("${jwt.refresh-token-expiration}")
+    private long refreshTokenExpiration;
+
     @PostConstruct
     public void initKey() {
         this.key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
     }
 
-    private final long ACCESS_TOKEN_EXPIRATION = 1000L * 60 * 60;         // 1시간
-    private final long REFRESH_TOKEN_EXPIRATION = 1000L * 60 * 60 * 24 * 7; // 7일
-
     public String generateToken(String userUuid) {
         long now = System.currentTimeMillis();
         return Jwts.builder()
-                .setSubject(userUuid)
-                .setIssuedAt(new Date(now))
-                .setExpiration(new Date(now + ACCESS_TOKEN_EXPIRATION))
-                .signWith(key)
-                .compact();
+            .setSubject(userUuid)
+            .setIssuedAt(new Date(now))
+            .setExpiration(new Date(now + accessTokenExpiration))
+            .signWith(key)
+            .compact();
     }
 
     public String generateRefreshToken(String userUuid) {
         long now = System.currentTimeMillis();
         String refreshToken = Jwts.builder()
-                .setSubject(userUuid)
-                .setIssuedAt(new Date(now))
-                .setExpiration(new Date(now + REFRESH_TOKEN_EXPIRATION))
-                .signWith(key)
-                .compact();
+            .setSubject(userUuid)
+            .setIssuedAt(new Date(now))
+            .setExpiration(new Date(now + refreshTokenExpiration))
+            .signWith(key)
+            .compact();
 
         // Redis에 저장
         redisTemplate.opsForValue().set(
-                "refresh_token:" + userUuid,
-                refreshToken,
-                REFRESH_TOKEN_EXPIRATION,
-                TimeUnit.MILLISECONDS
+            "refresh_token:" + userUuid,
+            refreshToken,
+            refreshTokenExpiration,
+            TimeUnit.MILLISECONDS
         );
 
         return refreshToken;
@@ -60,22 +64,40 @@ public class JwtUtil {
 
     public String getSubject(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(key)
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
+            .setSigningKey(key)
+            .build()
+            .parseClaimsJws(token)
+            .getBody()
+            .getSubject();
     }
 
     public boolean validateToken(String token) {
         try {
             Jwts.parserBuilder()
-                    .setSigningKey(key)
-                    .build()
-                    .parseClaimsJws(token);
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token);
             return true;
         } catch (Exception e) {
             return false;
         }
+    }
+
+    public static String extractAccessToken(HttpServletRequest request) {
+        String header = request.getHeader("Authorization");
+        if (header != null && header.startsWith("Bearer ")) {
+            return header.substring(7);
+        }
+        return null;
+    }
+
+    public long getRemainingExpiration(String token) {
+        return Jwts.parserBuilder()
+            .setSigningKey(key)
+            .build()
+            .parseClaimsJws(token)
+            .getBody()
+            .getExpiration()
+            .getTime() - System.currentTimeMillis();
     }
 }

@@ -1,5 +1,7 @@
 package com.example.yenanow.common.smtp;
 
+import com.example.yenanow.common.exception.BusinessException;
+import com.example.yenanow.common.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.SimpleMailMessage;
@@ -22,7 +24,7 @@ public class MailServiceImpl implements MailService {
             javaMailSender.send(emailForm);
         } catch (RuntimeException e) {
             log.warn("메일 전송 실패: to={}, title={}, text={}", toEmail, title, text, e);
-            throw new RuntimeException("이메일 전송에 실패했습니다.");
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR); // 500
         }
     }
 

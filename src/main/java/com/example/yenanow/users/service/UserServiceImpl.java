@@ -1,23 +1,29 @@
 package com.example.yenanow.users.service;
 
+import com.example.yenanow.common.exception.BusinessException;
+import com.example.yenanow.common.exception.ErrorCode;
 import com.example.yenanow.common.smtp.MailService;
 import com.example.yenanow.common.smtp.request.VerificationEmailRequest;
 import com.example.yenanow.common.smtp.request.VerifyEmailRequest;
 import com.example.yenanow.common.smtp.response.VerifyEmailResponse;
 import com.example.yenanow.common.util.JwtUtil;
+import com.example.yenanow.common.util.UuidUtil;
+import com.example.yenanow.users.dto.request.ModifyMyInfoRequest;
+import com.example.yenanow.users.dto.request.ModifyPasswordRequest;
 import com.example.yenanow.users.dto.request.NicknameRequest;
 import com.example.yenanow.users.dto.request.SignupRequest;
+import com.example.yenanow.users.dto.response.MyInfoResponse;
 import com.example.yenanow.users.dto.response.NicknameResponse;
 import com.example.yenanow.users.dto.response.SignupResponse;
 import com.example.yenanow.users.entity.User;
 import com.example.yenanow.users.repository.UserRepository;
 import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.Random;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Service
@@ -35,16 +41,19 @@ public class UserServiceImpl implements UserService {
     public SignupResponse createUser(SignupRequest signupRequest) {
         User user = signupRequest.toEntity();
         user.encodePassword(encoder);
-        user.setCreatedAt(LocalDateTime.now());
-        user.setUpdatedAt(LocalDateTime.now());
 
         user = userRepository.save(user); // 저장 후 UUID 획득
+        String token = jwtUtil.generateToken(user.getUserUuid());
 
-        String token = jwtUtil.generateToken(user.getUuid());
+        // Redis에 팔로워, 팔로잉 수 및 게시글(N컷) 수 초기값 0 저장
+        String key = "user:" + user.getUserUuid();
+        redisTemplate.opsForHash().put(key, "follower_count", "0");
+        redisTemplate.opsForHash().put(key, "following_count", "0");
+        redisTemplate.opsForHash().put(key, "total_cut", "0");
 
         return SignupResponse.builder()
             .accessToken(token)
-            .userUuid(user.getUuid())
+            .userUuid(user.getUserUuid())
             .nickname(user.getNickname())
             .profileUrl(user.getProfileUrl())
             .build();
@@ -59,11 +68,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void sendVerification(VerificationEmailRequest request) {
+    public void sendMessage(VerificationEmailRequest request) {
         String email = request.getEmail();
 
         if (userRepository.existsByEmail(email)) { // 이메일 중복 검사
-            throw new RuntimeException("이미 가입된 이메일입니다.");
+            throw new BusinessException(ErrorCode.ALREADY_EXISTS);
         }
 
         String code = String.format("%06d", new Random().nextInt(999999));
@@ -79,7 +88,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public VerifyEmailResponse verifyEmailCode(VerifyEmailRequest request) {
+    public VerifyEmailResponse verifyMessage(VerifyEmailRequest request) {
         String email = request.getEmail();
         String key = "email:" + email;
         String code = redisTemplate.opsForValue().get(key);
@@ -91,5 +100,74 @@ public class UserServiceImpl implements UserService {
         }
 
         return new VerifyEmailResponse(isVerified);
+    }
+
+    @Transactional
+    @Override
+    public void modifyPassword(ModifyPasswordRequest request, String userUuid) {
+        String oldPassword = request.getOldPassword();
+        String newPassword = request.getNewPassword();
+
+        UuidUtil.validateUuid(userUuid);
+        User user = UuidUtil.getUserByUuid(userRepository, userUuid);
+
+        if (!encoder.matches(oldPassword, user.getPassword())) {
+            throw new BusinessException(
+                ErrorCode.INVALID_PASSWORD);
+        }
+
+        // 새 비밀번호와 현재 비밀번호가 같으면
+        if (encoder.matches(newPassword, user.getPassword())) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST); // 400
+        }
+
+        user.setPassword(encoder.encode(newPassword));
+
+        userRepository.save(user);
+    }
+
+    @Override
+    public MyInfoResponse getMyInfo(String userUuid) {
+        UuidUtil.validateUuid(userUuid);
+        User user = UuidUtil.getUserByUuid(userRepository, userUuid);
+
+        return MyInfoResponse.builder()
+            .email(user.getEmail())
+            .name(user.getName())
+            .nickname(user.getNickname())
+            .gender(user.getGender())
+            .birthdate(user.getBirthdate())
+            .phoneNumber(user.getPhoneNumber())
+            .profileUrl(user.getProfileUrl())
+            .build();
+    }
+
+    @Transactional
+    @Override
+    public void modifyMyInfo(ModifyMyInfoRequest request, String userUuid) {
+        UuidUtil.validateUuid(userUuid);
+        User user = UuidUtil.getUserByUuid(userRepository, userUuid);
+
+        String newName = request.getName();
+        String newNickname = request.getNickname();
+        String newPhoneNumber = request.getPhoneNumber();
+
+        user.setName(newName);
+        user.setNickname(newNickname);
+        user.setPhoneNumber(newPhoneNumber);
+
+        userRepository.save(user);
+    }
+
+    @Transactional
+    @Override
+    public void deleteMyInfo(String userUuid) {
+        UuidUtil.validateUuid(userUuid);
+        User user = UuidUtil.getUserByUuid(userRepository, userUuid);
+        
+        redisTemplate.delete("user:" + userUuid);
+        redisTemplate.delete("refresh_token:" + userUuid);
+
+        userRepository.delete(user);
     }
 }

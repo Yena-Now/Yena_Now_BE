@@ -55,6 +55,7 @@ build/
 # Gradle
 .idea/**/gradle.xml
 .idea/**/libraries
+.gradle/
 
 # Gradle and Maven with auto-import
 # When using Gradle or Maven with auto-import, you should exclude module files,
@@ -235,4 +236,4 @@ src/main/resources/application.yml
 .env.local
 
 # QueryDSL Q class files
-build/generated/
+src/main/generated/
