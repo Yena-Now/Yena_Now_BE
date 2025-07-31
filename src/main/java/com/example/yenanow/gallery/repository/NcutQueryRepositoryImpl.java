@@ -16,54 +16,54 @@ import org.springframework.stereotype.Repository;
 @RequiredArgsConstructor
 public class NcutQueryRepositoryImpl implements NcutQueryRepository {
 
-  private final JPAQueryFactory queryFactory;
+    private final JPAQueryFactory queryFactory;
 
-  @Override
-  public Page<Ncut> findPublicGalleryWithUser(Pageable pageable) {
-    QNcut ncut = QNcut.ncut;
-    QUser user = QUser.user;
+    @Override
+    public Page<Ncut> findPublicGalleryWithUser(Pageable pageable) {
+        QNcut ncut = QNcut.ncut;
+        QUser user = QUser.user;
 
-    List<Ncut> content = queryFactory
-        .selectFrom(ncut)
-        .join(ncut.user, user).fetchJoin()
-        .where(ncut.visibility.eq(Visibility.PUBLIC))
-        .orderBy(ncut.createdAt.desc())
-        .offset(pageable.getOffset())
-        .limit(pageable.getPageSize())
-        .fetch();
+        List<Ncut> content = queryFactory
+            .selectFrom(ncut)
+            .join(ncut.user, user).fetchJoin()
+            .where(ncut.visibility.eq(Visibility.PUBLIC))
+            .orderBy(ncut.createdAt.desc())
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
 
-    long total = queryFactory
-        .select(ncut.count())
-        .from(ncut)
-        .where(ncut.visibility.eq(Visibility.PUBLIC))
-        .fetchOne();
+        long total = queryFactory
+            .select(ncut.count())
+            .from(ncut)
+            .where(ncut.visibility.eq(Visibility.PUBLIC))
+            .fetchOne();
 
-    return new PageImpl<>(content, pageable, total);
-  }
+        return new PageImpl<>(content, pageable, total);
+    }
 
-  @Override
-  public Page<Ncut> findFollowingsGalleryWithUser(List<String> userUuids,
-      List<Visibility> visibilities, Pageable pageable) {
-    QNcut ncut = QNcut.ncut;
-    QUser user = QUser.user;
+    @Override
+    public Page<Ncut> findFollowingsGalleryWithUser(List<String> userUuids,
+        List<Visibility> visibilities, Pageable pageable) {
+        QNcut ncut = QNcut.ncut;
+        QUser user = QUser.user;
 
-    List<Ncut> content = queryFactory
-        .selectFrom(ncut)
-        .join(ncut.user, user).fetchJoin()
-        .where(ncut.user.uuid.in(userUuids)
-            .and(ncut.visibility.in(visibilities)))
-        .orderBy(ncut.createdAt.desc())
-        .offset(pageable.getOffset())
-        .limit(pageable.getPageSize())
-        .fetch();
+        List<Ncut> content = queryFactory
+            .selectFrom(ncut)
+            .join(ncut.user, user).fetchJoin()
+            .where(ncut.user.userUuid.in(userUuids)
+                .and(ncut.visibility.in(visibilities)))
+            .orderBy(ncut.createdAt.desc())
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
 
-    long total = queryFactory
-        .select(ncut.count())
-        .from(ncut)
-        .where(ncut.user.uuid.in(userUuids)
-            .and(ncut.visibility.in(visibilities)))
-        .fetchOne();
+        long total = queryFactory
+            .select(ncut.count())
+            .from(ncut)
+            .where(ncut.user.userUuid.in(userUuids)
+                .and(ncut.visibility.in(visibilities)))
+            .fetchOne();
 
-    return new PageImpl<>(content, pageable, total);
-  }
+        return new PageImpl<>(content, pageable, total);
+    }
 }

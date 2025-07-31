@@ -17,9 +17,9 @@ public class FollowQueryRepositoryImpl implements FollowQueryRepository {
         QFollow follow = QFollow.follow;
 
         return queryFactory
-            .select(follow.toUser.uuid)  // toUser가 String UUID일 경우
+            .select(follow.toUser.userUuid)  // toUser가 String UUID일 경우
             .from(follow)
-            .where(follow.fromUser.uuid.eq(userUuid))
+            .where(follow.fromUser.userUuid.eq(userUuid))
             .fetch();
     }
 }

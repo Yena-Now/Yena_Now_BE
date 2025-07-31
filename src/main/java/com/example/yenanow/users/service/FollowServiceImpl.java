@@ -86,7 +86,7 @@ public class FollowServiceImpl implements FollowService {
      * UUID로 User 조회 (없으면 예외)
      */
     private User getUserByUuid(String uuid) {
-        return userRepository.findByUuid(uuid)
+        return userRepository.findByUserUuid(uuid)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER));
     }
 

@@ -46,8 +46,8 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         User user = userOpt.get();
 
         // JWT 생성
-        String accessToken = jwtUtil.generateToken(user.getUuid());
-        String refreshToken = jwtUtil.generateRefreshToken(user.getUuid());
+        String accessToken = jwtUtil.generateToken(user.getUserUuid());
+        String refreshToken = jwtUtil.generateRefreshToken(user.getUserUuid());
 
         // 쿠키에 refreshToken 저장
         Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
@@ -68,11 +68,11 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 //              "nickname": "%s",
 //              "profileUrl": "%s"
 //            }
-//            """, accessToken, user.getUuid(), user.getNickname(), user.getProfileUrl());
+//            """, accessToken, user.getUserUuid(), user.getNickname(), user.getProfileUrl());
 //        response.getWriter().write(json);
 
         String redirectUrl = clientOrigin + "?accessToken=" + accessToken +
-            "&userUuid=" + user.getUuid() +
+            "&userUuid=" + user.getUserUuid() +
             "&nickname=" + user.getNickname() +
             "&profileUrl=" + user.getProfileUrl();
         response.sendRedirect(redirectUrl);

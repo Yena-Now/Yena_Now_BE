@@ -28,7 +28,7 @@ public class GalleryServiceImpl implements GalleryService {
         validateUserUuid(userUuid);
 
         Pageable pageable = PageRequest.of(pageNum, display);
-        Page<Ncut> ncutPage = ncutRepository.findByUserUuid(userUuid, pageable);
+        Page<Ncut> ncutPage = ncutRepository.findByUserUserUuid(userUuid, pageable);
 
         // 데이터가 없으면 빈 응답 반환
         if (ncutPage.isEmpty()) {
@@ -39,13 +39,13 @@ public class GalleryServiceImpl implements GalleryService {
         }
         return MyGalleryResponse.fromEntity(ncutPage);
     }
-
+    
     @Override
     public MyGalleryResponse getOtherGallery(String userUuid, int pageNum, int display) {
         validateUserUuid(userUuid);
 
         Pageable pageable = PageRequest.of(pageNum, display);
-        Page<Ncut> ncutPage = ncutRepository.findByUserUuidAndVisibility(
+        Page<Ncut> ncutPage = ncutRepository.findByUserUserUuidAndVisibility(
             userUuid, Visibility.PUBLIC, pageable
         );
 

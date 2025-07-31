@@ -47,8 +47,8 @@ public class AuthServiceImpl implements AuthService {
             throw new BusinessException(ErrorCode.INVALID_SIGNIN);
         }
 
-        String token = jwtUtil.generateToken(user.getUuid());
-        String refreshToken = jwtUtil.generateRefreshToken(user.getUuid());
+        String token = jwtUtil.generateToken(user.getUserUuid());
+        String refreshToken = jwtUtil.generateRefreshToken(user.getUserUuid());
 
         // 쿠키에 refreshToken 저장
         CookieUtil.addHttpOnlyCookie(response, "refresh_token", refreshToken,
@@ -56,7 +56,7 @@ public class AuthServiceImpl implements AuthService {
 
         return LoginResponse.builder()
             .accessToken(token)
-            .userUuid(user.getUuid())
+            .userUuid(user.getUserUuid())
             .nickname(user.getNickname())
             .profileUrl(user.getProfileUrl())
             .build();
@@ -107,7 +107,7 @@ public class AuthServiceImpl implements AuthService {
         String email = request.getEmail();
 
         User user = userRepository.findByEmail(email) // 등록된 유저 이메일인지 여부
-            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER));
 
         String key = "verified:" + email;
         String verified = redisTemplate.opsForValue().get(key);
