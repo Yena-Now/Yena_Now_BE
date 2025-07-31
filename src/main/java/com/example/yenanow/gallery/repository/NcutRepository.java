@@ -2,10 +2,13 @@ package com.example.yenanow.gallery.repository;
 
 import com.example.yenanow.gallery.entity.Ncut;
 import com.example.yenanow.gallery.entity.Visibility;
+import jakarta.transaction.Transactional;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 
 public interface NcutRepository extends JpaRepository<Ncut, String>, NcutQueryRepository {
 
@@ -23,4 +26,10 @@ public interface NcutRepository extends JpaRepository<Ncut, String>, NcutQueryRe
     Page<Ncut> findByUser_UserUuidInAndVisibilityIn(List<String> userUuids,
         List<Visibility> visibilities,
         Pageable pageable);
+
+    // CommentCount 백업 메서드
+    @Modifying(clearAutomatically = true)
+    @Transactional
+    @Query("UPDATE Ncut n SET n.commentCount = :commentCount WHERE n.ncutUuid = :ncutUuid")
+    void updateCommentCount(String ncutUuid, int commentCount);
 }

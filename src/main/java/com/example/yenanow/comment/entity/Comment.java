@@ -1,11 +1,10 @@
-package com.example.yenanow.gallery.entity;
+package com.example.yenanow.comment.entity;
 
+import com.example.yenanow.gallery.entity.Ncut;
 import com.example.yenanow.users.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
@@ -24,53 +23,37 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
-@Table(name = "ncut")
+@Table(name = "ncut_comment")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@EntityListeners(AuditingEntityListener.class)
 @Builder
-public class Ncut {
+@EntityListeners(AuditingEntityListener.class)  // Auditing 활성화
+public class Comment {
 
     @Id
     @GeneratedValue(generator = "UUID")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
-    @Column(name = "ncut_uuid", length = 36, nullable = false)
-    private String ncutUuid;
+    @Column(name = "comment_uuid", length = 36, nullable = false)
+    private String commentUuid;
 
-    @Column(name = "ncut_url", length = 200, nullable = false)
-    private String ncutUrl;
-
-    @Column(name = "thumbnail_url", length = 200, nullable = false)
-    private String thumbnailUrl;
-
-    @Column(name = "content", columnDefinition = "TEXT", nullable = true)
+    @Column(name = "content", length = 255, nullable = false)
     private String content;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "visibility", nullable = false)
-    private Visibility visibility = Visibility.PUBLIC;
-
-    @Column(name = "is_relay", columnDefinition = "TINYINT(1) DEFAULT 0", nullable = false)
-    private boolean isRelay = false;
-
-    @Column(name = "like_count", nullable = false)
-    private int likeCount = 0;
-
-    @Column(name = "comment_cnt", nullable = false)
-    private int commentCount = 0;
-
     @CreatedDate
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    // 유저 연관관계 (FK: user_uuid)
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_uuid")  // referencedColumnName 제거
+    @JoinColumn(name = "ncut_uuid", nullable = false)
+    private Ncut ncut;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_uuid", nullable = false)
     private User user;
 }
