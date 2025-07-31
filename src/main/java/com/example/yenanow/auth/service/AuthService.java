@@ -14,11 +14,13 @@ public interface AuthService {
 
     LoginResponse login(LoginRequest loginRequest, HttpServletResponse response);
 
-    void sendVerification(VerificationEmailRequest request);
+    void logout(HttpServletRequest request, HttpServletResponse response);
 
-    VerifyEmailResponse verifyEmailCode(VerifyEmailRequest request);
+    void sendMessage(VerificationEmailRequest request);
 
-    void sendTemporaryPassword(ForgotPasswordRequest request);
+    VerifyEmailResponse verifyMessage(VerifyEmailRequest request);
 
-    String reissueAccessToken(HttpServletRequest request);
+    void sendPassword(ForgotPasswordRequest request);
+
+    String reissueToken(HttpServletRequest request);
 }

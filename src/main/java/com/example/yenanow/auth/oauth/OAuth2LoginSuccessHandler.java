@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Optional;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -18,6 +19,9 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
+
+    @Value("${client.origin}")
+    private String clientOrigin;
 
     public OAuth2LoginSuccessHandler(JwtUtil jwtUtil, UserRepository userRepository) {
         this.jwtUtil = jwtUtil;
@@ -33,7 +37,6 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         String email = ((org.springframework.security.oauth2.core.user.OAuth2User) authentication.getPrincipal())
             .getAttribute("email");
 
-
         Optional<User> userOpt = userRepository.findByEmail(email);
         if (userOpt.isEmpty()) {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "User not found");
@@ -43,8 +46,8 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         User user = userOpt.get();
 
         // JWT 생성
-        String accessToken = jwtUtil.generateToken(user.getUuid());
-        String refreshToken = jwtUtil.generateRefreshToken(user.getUuid());
+        String accessToken = jwtUtil.generateToken(user.getUserUuid());
+        String refreshToken = jwtUtil.generateRefreshToken(user.getUserUuid());
 
         // 쿠키에 refreshToken 저장
         Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
@@ -56,16 +59,22 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         response.addCookie(refreshTokenCookie);
 
         // 클라이언트에 JSON으로 응답
-        response.setContentType("application/json");
-        response.setCharacterEncoding("utf-8");
-        String json = String.format("""
-            {
-              "accessToken": "%s",
-              "userUuid": "%s",
-              "nickname": "%s",
-              "profileUrl": "%s"
-            }
-            """, accessToken, user.getUuid(), user.getNickname(), user.getProfileUrl());
-        response.getWriter().write(json);
+//        response.setContentType("application/json");
+//        response.setCharacterEncoding("utf-8");
+//        String json = String.format("""
+//            {
+//              "accessToken": "%s",
+//              "userUuid": "%s",
+//              "nickname": "%s",
+//              "profileUrl": "%s"
+//            }
+//            """, accessToken, user.getUserUuid(), user.getNickname(), user.getProfileUrl());
+//        response.getWriter().write(json);
+
+        String redirectUrl = clientOrigin + "?accessToken=" + accessToken +
+            "&userUuid=" + user.getUserUuid() +
+            "&nickname=" + user.getNickname() +
+            "&profileUrl=" + user.getProfileUrl();
+        response.sendRedirect(redirectUrl);
     }
 }
