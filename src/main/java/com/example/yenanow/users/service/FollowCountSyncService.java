@@ -1,6 +1,6 @@
 package com.example.yenanow.users.service;
 
-import com.example.yenanow.users.repository.FollowRepository;
+import com.example.yenanow.users.repository.UserQueryRepository;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 public class FollowCountSyncService {
 
     private final StringRedisTemplate redisTemplate;
-    private final FollowRepository followRepository;
+    private final UserQueryRepository userCustomRepository;
 
     @Async
     public void syncFollowCountToDB(String userUuid) {
@@ -25,6 +25,6 @@ public class FollowCountSyncService {
         int followingCount = Integer.parseInt(
             counts.getOrDefault("following_count", "0").toString());
 
-        followRepository.updateFollowCount(userUuid, followerCount, followingCount);
+        userCustomRepository.updateFollowCount(userUuid, followerCount, followingCount);
     }
 }
