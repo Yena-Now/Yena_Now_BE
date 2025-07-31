@@ -61,7 +61,7 @@ public class CommentServiceImpl implements CommentService {
         Comment comment = commentRepository.findById(commentUuid)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_COMMENT));
 
-        if (!comment.getUser().getUuid().equals(userUuid)) {
+        if (!comment.getUser().getUserUuid().equals(userUuid)) {
             throw new BusinessException(ErrorCode.PERMISSION_DENIED);
         }
 
@@ -73,7 +73,7 @@ public class CommentServiceImpl implements CommentService {
         Comment comment = commentRepository.findById(commentUuid)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_COMMENT));
 
-        if (!comment.getUser().getUuid().equals(userUuid)) {
+        if (!comment.getUser().getUserUuid().equals(userUuid)) {
             throw new BusinessException(ErrorCode.PERMISSION_DENIED);
         }
 

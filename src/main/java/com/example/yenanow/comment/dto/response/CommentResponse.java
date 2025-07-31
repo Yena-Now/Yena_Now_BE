@@ -25,7 +25,7 @@ public class CommentResponse {
         return CommentResponse.builder()
             .commentUuid(entity.getCommentUuid())
             .comment(entity.getContent())
-            .userUuid(entity.getUser().getUuid())
+            .userUuid(entity.getUser().getUserUuid())
             .nickname(entity.getUser().getNickname())
             .profileUrl(entity.getUser().getProfileUrl())
             .createdAt(entity.getCreatedAt())
