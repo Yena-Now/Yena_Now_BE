@@ -7,19 +7,20 @@ import com.example.yenanow.common.smtp.request.VerificationEmailRequest;
 import com.example.yenanow.common.smtp.request.VerifyEmailRequest;
 import com.example.yenanow.common.smtp.response.VerifyEmailResponse;
 import com.example.yenanow.common.util.JwtUtil;
+import com.example.yenanow.common.util.UuidUtil;
+import com.example.yenanow.users.dto.request.ModifyMyInfoRequest;
 import com.example.yenanow.users.dto.request.ModifyPasswordRequest;
 import com.example.yenanow.users.dto.request.NicknameRequest;
 import com.example.yenanow.users.dto.request.SignupRequest;
+import com.example.yenanow.users.dto.response.MyInfoResponse;
 import com.example.yenanow.users.dto.response.NicknameResponse;
 import com.example.yenanow.users.dto.response.SignupResponse;
 import com.example.yenanow.users.entity.User;
 import com.example.yenanow.users.repository.UserRepository;
 import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.Random;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,8 +41,6 @@ public class UserServiceImpl implements UserService {
     public SignupResponse createUser(SignupRequest signupRequest) {
         User user = signupRequest.toEntity();
         user.encodePassword(encoder);
-        user.setCreatedAt(LocalDateTime.now());
-        user.setUpdatedAt(LocalDateTime.now());
 
         user = userRepository.save(user); // 저장 후 UUID 획득
         String token = jwtUtil.generateToken(user.getUserUuid());
@@ -105,13 +104,12 @@ public class UserServiceImpl implements UserService {
 
     @Transactional
     @Override
-    public void modifyPassword(ModifyPasswordRequest request) {
+    public void modifyPassword(ModifyPasswordRequest request, String userUuid) {
         String oldPassword = request.getOldPassword();
         String newPassword = request.getNewPassword();
 
-        String userUuid = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByUserUuid(userUuid) // 존재하는 사용자인지
-            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER));
+        UuidUtil.validateUuid(userUuid);
+        User user = UuidUtil.getUserByUuid(userRepository, userUuid);
 
         if (!encoder.matches(oldPassword, user.getPassword())) {
             throw new BusinessException(
@@ -124,8 +122,52 @@ public class UserServiceImpl implements UserService {
         }
 
         user.setPassword(encoder.encode(newPassword));
-        user.setUpdatedAt(LocalDateTime.now());
 
         userRepository.save(user);
+    }
+
+    @Override
+    public MyInfoResponse getMyInfo(String userUuid) {
+        UuidUtil.validateUuid(userUuid);
+        User user = UuidUtil.getUserByUuid(userRepository, userUuid);
+
+        return MyInfoResponse.builder()
+            .email(user.getEmail())
+            .name(user.getName())
+            .nickname(user.getNickname())
+            .gender(user.getGender())
+            .birthdate(user.getBirthdate())
+            .phoneNumber(user.getPhoneNumber())
+            .profileUrl(user.getProfileUrl())
+            .build();
+    }
+
+    @Transactional
+    @Override
+    public void modifyMyInfo(ModifyMyInfoRequest request, String userUuid) {
+        UuidUtil.validateUuid(userUuid);
+        User user = UuidUtil.getUserByUuid(userRepository, userUuid);
+
+        String newName = request.getName();
+        String newNickname = request.getNickname();
+        String newPhoneNumber = request.getPhoneNumber();
+
+        user.setName(newName);
+        user.setNickname(newNickname);
+        user.setPhoneNumber(newPhoneNumber);
+
+        userRepository.save(user);
+    }
+
+    @Transactional
+    @Override
+    public void deleteMyInfo(String userUuid) {
+        UuidUtil.validateUuid(userUuid);
+        User user = UuidUtil.getUserByUuid(userRepository, userUuid);
+        
+        redisTemplate.delete("user:" + userUuid);
+        redisTemplate.delete("refresh_token:" + userUuid);
+
+        userRepository.delete(user);
     }
 }

@@ -3,9 +3,11 @@ package com.example.yenanow.users.controller;
 import com.example.yenanow.common.smtp.request.VerificationEmailRequest;
 import com.example.yenanow.common.smtp.request.VerifyEmailRequest;
 import com.example.yenanow.common.smtp.response.VerifyEmailResponse;
+import com.example.yenanow.users.dto.request.ModifyMyInfoRequest;
 import com.example.yenanow.users.dto.request.ModifyPasswordRequest;
 import com.example.yenanow.users.dto.request.NicknameRequest;
 import com.example.yenanow.users.dto.request.SignupRequest;
+import com.example.yenanow.users.dto.response.MyInfoResponse;
 import com.example.yenanow.users.dto.response.NicknameResponse;
 import com.example.yenanow.users.dto.response.SignupResponse;
 import com.example.yenanow.users.service.UserService;
@@ -13,6 +15,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -56,8 +61,34 @@ public class UsersController {
 
     @Operation(summary = "비밀번호 변경", description = "기존 비밀번호를 확인 후 비밀번호를 변경합니다.")
     @PatchMapping("/password")
-    public ResponseEntity<Void> modifyPassword(@RequestBody ModifyPasswordRequest request) {
-        userService.modifyPassword(request);
+    public ResponseEntity<Void> modifyPassword(@AuthenticationPrincipal Object principal,
+        @RequestBody ModifyPasswordRequest request) {
+        String currentUserUuid = principal.toString();
+        userService.modifyPassword(request, currentUserUuid);
         return ResponseEntity.noContent().build(); // 204
+    }
+
+    @Operation(summary = "내 정보 조회", description = "로그인한 사용자의 정보를 확인합니다.")
+    @GetMapping("/me")
+    public ResponseEntity<MyInfoResponse> getMyInfo(@AuthenticationPrincipal Object principal) {
+        String currentUserUuid = principal.toString();
+        return ResponseEntity.ok(userService.getMyInfo(currentUserUuid));
+    }
+
+    @Operation(summary = "내 정보 수정", description = "로그인한 사용자의 정보를 수정합니다.")
+    @PatchMapping("/me")
+    public ResponseEntity<MyInfoResponse> modifyMyInfo(@AuthenticationPrincipal Object principal,
+        @RequestBody ModifyMyInfoRequest request) {
+        String currentUserUuid = principal.toString();
+        userService.modifyMyInfo(request, currentUserUuid);
+        return ResponseEntity.noContent().build(); // 204;
+    }
+
+    @Operation(summary = "회원 탈퇴", description = "회원 탈퇴를 진행합니다.")
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> deleteMyInfo(@AuthenticationPrincipal Object principal) {
+        String currentUserUuid = principal.toString();
+        userService.deleteMyInfo(currentUserUuid);
+        return ResponseEntity.noContent().build();
     }
 }

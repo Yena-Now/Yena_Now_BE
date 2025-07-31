@@ -4,6 +4,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
+import jakarta.servlet.http.HttpServletRequest;
 import java.security.Key;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
@@ -19,7 +20,7 @@ public class JwtUtil {
     private final StringRedisTemplate redisTemplate;
 
     private Key key;
-    
+
     @Value("${jwt.access-token-expiration}")
     private long accessTokenExpiration;
 
@@ -80,5 +81,23 @@ public class JwtUtil {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    public static String extractAccessToken(HttpServletRequest request) {
+        String header = request.getHeader("Authorization");
+        if (header != null && header.startsWith("Bearer ")) {
+            return header.substring(7);
+        }
+        return null;
+    }
+
+    public long getRemainingExpiration(String token) {
+        return Jwts.parserBuilder()
+            .setSigningKey(key)
+            .build()
+            .parseClaimsJws(token)
+            .getBody()
+            .getExpiration()
+            .getTime() - System.currentTimeMillis();
     }
 }
