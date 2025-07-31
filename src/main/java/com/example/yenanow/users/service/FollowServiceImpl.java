@@ -19,6 +19,7 @@ public class FollowServiceImpl implements FollowService {
     private final FollowRepository followRepository;
     private final UserRepository userRepository;
     private final StringRedisTemplate redisTemplate;
+    private final FollowCountSyncService followCountSyncService;
 
     @Override
     @Transactional
@@ -42,6 +43,11 @@ public class FollowServiceImpl implements FollowService {
         // Redis 카운트 증가
         UuidUtil.incrementCounter(redisTemplate, "user:" + followerUuid, "following_count", 1);
         UuidUtil.incrementCounter(redisTemplate, "user:" + followingUuid, "follower_count", 1);
+
+        // 비동기 DB 백업
+        followCountSyncService.syncFollowCountToDB(followerUuid);
+        followCountSyncService.syncFollowCountToDB(followingUuid);
+
     }
 
     @Override
@@ -60,6 +66,10 @@ public class FollowServiceImpl implements FollowService {
             UuidUtil.incrementCounter(redisTemplate, "user:" + followerUuid, "following_count", -1);
             UuidUtil.incrementCounter(redisTemplate, "user:" + followingUuid, "follower_count", -1);
         }
+
+        // 비동기 DB 백업
+        followCountSyncService.syncFollowCountToDB(followerUuid);
+        followCountSyncService.syncFollowCountToDB(followingUuid);
     }
 
     @Override

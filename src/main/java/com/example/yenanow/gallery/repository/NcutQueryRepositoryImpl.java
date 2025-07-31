@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 @RequiredArgsConstructor
@@ -65,5 +66,15 @@ public class NcutQueryRepositoryImpl implements NcutQueryRepository {
             .fetchOne();
 
         return new PageImpl<>(content, pageable, total);
+    }
+
+    @Override
+    @Transactional
+    public void updateCommentCount(String ncutUuid, int commentCount) {
+        QNcut ncut = QNcut.ncut;
+        queryFactory.update(ncut)
+            .set(ncut.commentCount, commentCount)
+            .where(ncut.ncutUuid.eq(ncutUuid))
+            .execute();
     }
 }
