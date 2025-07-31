@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Comment", description = "N컷 댓글 관련 API")
 @RestController
-@RequestMapping("/api/ncuts/{ncutUuid}/comments")
+@RequestMapping("/gallery/{ncutUuid}/comments")
 @RequiredArgsConstructor
 public class CommentController {
 
