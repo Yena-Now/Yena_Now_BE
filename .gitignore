@@ -236,4 +236,4 @@ src/main/resources/application.yml
 .env.local
 
 # QueryDSL Q class files
-build/generated/
+src/main/generated/
