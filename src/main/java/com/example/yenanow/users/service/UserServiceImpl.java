@@ -14,13 +14,16 @@ import com.example.yenanow.users.dto.request.NicknameRequest;
 import com.example.yenanow.users.dto.request.SignupRequest;
 import com.example.yenanow.users.dto.response.MyInfoResponse;
 import com.example.yenanow.users.dto.response.NicknameResponse;
+import com.example.yenanow.users.dto.response.ProfileResponse;
 import com.example.yenanow.users.dto.response.SignupResponse;
 import com.example.yenanow.users.entity.User;
+import com.example.yenanow.users.repository.FollowRepository;
 import com.example.yenanow.users.repository.UserRepository;
 import java.time.Duration;
 import java.util.Random;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final FollowRepository followRepository;
     private final JwtUtil jwtUtil;
     private final BCryptPasswordEncoder encoder;
     private final StringRedisTemplate redisTemplate;
@@ -164,10 +168,34 @@ public class UserServiceImpl implements UserService {
     public void deleteMyInfo(String userUuid) {
         UuidUtil.validateUuid(userUuid);
         User user = UuidUtil.getUserByUuid(userRepository, userUuid);
-        
+
         redisTemplate.delete("user:" + userUuid);
         redisTemplate.delete("refresh_token:" + userUuid);
 
         userRepository.delete(user);
+    }
+
+    @Override
+    public ProfileResponse getProfile(String userUuid) {
+        UuidUtil.validateUuid(userUuid);
+        User toUser = UuidUtil.getUserByUuid(userRepository, userUuid);
+
+        String currentUserUuid = SecurityContextHolder.getContext().getAuthentication().getName();
+        User fromUser = UuidUtil.getUserByUuid(userRepository, currentUserUuid);
+
+        boolean isFollowing = followRepository.existsByFromUserAndToUser(fromUser, toUser);
+        boolean isMine = userUuid.equals(currentUserUuid);
+
+        return ProfileResponse.builder()
+            .name(toUser.getName())
+            .nickname(toUser.getNickname())
+            .gender(toUser.getGender())
+            .profileUrl(toUser.getProfileUrl())
+            .followingCount(toUser.getFollowingCount())
+            .followerCount(toUser.getFollowerCount())
+            .totalCut(toUser.getTotalCut())
+            .isFollowing(isFollowing)
+            .isMine(isMine)
+            .build();
     }
 }
