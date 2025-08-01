@@ -1,9 +1,17 @@
 package com.example.yenanow.users.repository;
 
+import com.example.yenanow.users.dto.response.FollowingResponseItem;
 import com.example.yenanow.users.entity.QFollow;
+import com.example.yenanow.users.entity.QUser;
+import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -21,5 +29,51 @@ public class FollowQueryRepositoryImpl implements FollowQueryRepository {
             .from(follow)
             .where(follow.fromUser.userUuid.eq(userUuid))
             .fetch();
+    }
+
+    @Override
+    public Page<FollowingResponseItem> findFollowings(
+        String targetUserUuid,
+        String currentUserUuid,
+        Pageable pageable
+    ) {
+        QFollow follow = QFollow.follow;
+        QFollow followByMe = new QFollow("followByMe"); // alias
+        QUser toUser = QUser.user;
+
+        // isFollowing 서브쿼리로 처리
+        BooleanExpression isFollowing = JPAExpressions
+            .selectOne()
+            .from(followByMe)
+            .where(
+                followByMe.fromUser.userUuid.eq(currentUserUuid),
+                followByMe.toUser.userUuid.eq(toUser.userUuid)
+            )
+            .exists();
+
+        List<FollowingResponseItem> content = queryFactory
+            .select(Projections.constructor( // Projection: Entity에서 생성자 기반으로 일부 필드만 선택해 dto로 매핑
+                FollowingResponseItem.class,
+                toUser.userUuid,
+                toUser.name,
+                toUser.nickname,
+                toUser.profileUrl,
+                isFollowing
+            ))
+            .from(follow)
+            .join(follow.toUser, toUser)
+            .where(follow.fromUser.userUuid.eq(targetUserUuid))
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .orderBy(follow.followUuid.desc())
+            .fetch();
+
+        long total = queryFactory
+            .select(follow.count())
+            .from(follow)
+            .where(follow.fromUser.userUuid.eq(targetUserUuid))
+            .fetchOne();
+
+        return new PageImpl<>(content, pageable, total);
     }
 }
