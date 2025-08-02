@@ -3,6 +3,8 @@ package com.example.yenanow.users.service;
 import com.example.yenanow.common.exception.BusinessException;
 import com.example.yenanow.common.exception.ErrorCode;
 import com.example.yenanow.common.util.UuidUtil;
+import com.example.yenanow.users.dto.response.FollowerResponse;
+import com.example.yenanow.users.dto.response.FollowerResponseItem;
 import com.example.yenanow.users.dto.response.FollowingResponse;
 import com.example.yenanow.users.dto.response.FollowingResponseItem;
 import com.example.yenanow.users.entity.Follow;
@@ -93,15 +95,28 @@ public class FollowServiceImpl implements FollowService {
     }
 
     @Override
-    public FollowingResponse getFollowings(String targetUserUuid, String currentUserUuid,
+    public FollowingResponse getFollowings(String userUuid, String currentUserUuid,
         int pageNum, int display) {
         Pageable pageable = PageRequest.of(pageNum, display);
         Page<FollowingResponseItem> page = followQueryRepository
-            .findFollowings(targetUserUuid, currentUserUuid, pageable);
+            .findFollowings(userUuid, currentUserUuid, pageable);
 
         return FollowingResponse.builder()
             .totalPages(page.getTotalPages())
             .followings(page.getContent())
+            .build();
+    }
+
+    @Override
+    public FollowerResponse getFollowers(String userUuid, String currentUserUuid,
+        int pageNum, int display) {
+        Pageable pageable = PageRequest.of(pageNum, display);
+        Page<FollowerResponseItem> page = followQueryRepository
+            .findFollowers(userUuid, currentUserUuid, pageable);
+
+        return FollowerResponse.builder()
+            .totalPages(page.getTotalPages())
+            .followers(page.getContent())
             .build();
     }
 }
