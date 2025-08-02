@@ -7,8 +7,6 @@ import com.example.yenanow.users.dto.request.ModifyMyInfoRequest;
 import com.example.yenanow.users.dto.request.ModifyPasswordRequest;
 import com.example.yenanow.users.dto.request.NicknameRequest;
 import com.example.yenanow.users.dto.request.SignupRequest;
-import com.example.yenanow.users.dto.response.FollowerResponse;
-import com.example.yenanow.users.dto.response.FollowingResponse;
 import com.example.yenanow.users.dto.response.MyInfoResponse;
 import com.example.yenanow.users.dto.response.NicknameResponse;
 import com.example.yenanow.users.dto.response.ProfileResponse;
@@ -27,7 +25,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Users", description = "사용자 관련 API")
@@ -103,29 +100,5 @@ public class UsersController {
     @GetMapping("/profile/{userUuid}")
     public ResponseEntity<ProfileResponse> getMyProfile(@PathVariable String userUuid) {
         return ResponseEntity.ok(userService.getProfile(userUuid));
-    }
-
-    @Operation(summary = "타인 팔로잉 목록 조회", description = "사용자의 팔로잉 목록을 조회합니다.")
-    @GetMapping("/{userUuid}/followings")
-    public ResponseEntity<FollowingResponse> getFollowings(
-        @AuthenticationPrincipal Object principal,
-        @PathVariable String userUuid,
-        @RequestParam int pageNum,
-        @RequestParam int display) {
-        String currentUserUuid = principal.toString();
-        return ResponseEntity.ok(
-            followService.getFollowings(userUuid, currentUserUuid, pageNum, display));
-    }
-
-    @Operation(summary = "타인 팔로워 목록 조회", description = "사용자의 팔로워 목록을 조회합니다.")
-    @GetMapping("/{userUuid}/followers")
-    public ResponseEntity<FollowerResponse> getFollowers(
-        @AuthenticationPrincipal Object principal,
-        @PathVariable String userUuid,
-        @RequestParam int pageNum,
-        @RequestParam int display) {
-        String currentUserUuid = principal.toString();
-        return ResponseEntity.ok(
-            followService.getFollowers(userUuid, currentUserUuid, pageNum, display));
     }
 }
