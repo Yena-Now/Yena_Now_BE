@@ -63,7 +63,7 @@ public class FollowController {
         boolean result = followService.isFollowing(currentUserUuid, userUuid);
         return ResponseEntity.ok(result);
     }
-    
+
     @Operation(summary = "타인 팔로잉 목록 조회", description = "사용자의 팔로잉 목록을 조회합니다.")
     @GetMapping("/{userUuid}/followings")
     public ResponseEntity<FollowingResponse> getFollowings(
@@ -86,5 +86,27 @@ public class FollowController {
         String currentUserUuid = principal.toString();
         return ResponseEntity.ok(
             followService.getFollowers(userUuid, currentUserUuid, pageNum, display));
+    }
+
+    @Operation(summary = "내 팔로잉 목록 조회", description = "로그인한 사용자의 팔로잉 목록을 조회합니다.")
+    @GetMapping("/me/followings")
+    public ResponseEntity<FollowingResponse> getMyFollowings(
+        @AuthenticationPrincipal Object principal,
+        @RequestParam int pageNum,
+        @RequestParam int display) {
+        String currentUserUuid = principal.toString();
+        return ResponseEntity.ok(
+            followService.getFollowings(currentUserUuid, currentUserUuid, pageNum, display));
+    }
+
+    @Operation(summary = "내 팔로워 목록 조회", description = "로그인한 사용자의 팔로워 목록을 조회합니다.")
+    @GetMapping("/me/followers")
+    public ResponseEntity<FollowerResponse> getMyFollowers(
+        @AuthenticationPrincipal Object principal,
+        @RequestParam int pageNum,
+        @RequestParam int display) {
+        String currentUserUuid = principal.toString();
+        return ResponseEntity.ok(
+            followService.getFollowers(currentUserUuid, currentUserUuid, pageNum, display));
     }
 }
