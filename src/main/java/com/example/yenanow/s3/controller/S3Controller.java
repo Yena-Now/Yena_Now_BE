@@ -33,11 +33,6 @@ public class S3Controller {
             throw new BusinessException(ErrorCode.INVALID_TOKEN);
         }
 
-        log.info(
-            "Presigned URL request: type={}, fileName={}, contentType={}, relayUuid={}, ncutUuid={}, userUuid={}",
-            request.getType(), request.getFileName(), request.getContentType(),
-            request.getRelayUuid(), request.getNcutUuid(), userUuid);
-
         // Key 생성
         String key = s3KeyFactory.createKey(
             request.getType(), request.getFileName(), userUuid, request.getRelayUuid());
