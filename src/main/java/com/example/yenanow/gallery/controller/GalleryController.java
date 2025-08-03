@@ -1,9 +1,11 @@
 package com.example.yenanow.gallery.controller;
 
 import com.example.yenanow.gallery.dto.request.UpdateNcutContentRequest;
+import com.example.yenanow.gallery.dto.request.UpdateNcutVisibilityRequest;
 import com.example.yenanow.gallery.dto.response.MyGalleryResponse;
 import com.example.yenanow.gallery.dto.response.NcutDetailResponse;
 import com.example.yenanow.gallery.dto.response.UpdateNcutContentResponse;
+import com.example.yenanow.gallery.dto.response.UpdateNcutVisibilityResponse;
 import com.example.yenanow.gallery.service.GalleryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -115,5 +117,17 @@ public class GalleryController {
         UpdateNcutContentResponse updateNcutContentResponse = galleryService.updateNcutContent(
             userUuid, ncutUuid, updateNcutContentRequest);
         return ResponseEntity.ok(updateNcutContentResponse);
+    }
+
+    @PatchMapping("/ncuts/{ncutUuid}/visibility")
+    public ResponseEntity<UpdateNcutVisibilityResponse> updateNcutvisibility(
+        @AuthenticationPrincipal Object principal,
+        @PathVariable("ncutUuid") String ncutUuid,
+        @RequestBody UpdateNcutVisibilityRequest updateNcutVisibilityRequest) {
+
+        String userUuid = principal.toString();
+        UpdateNcutVisibilityResponse updateNcutVisibilityResponse = galleryService.updateNcutVisibility(
+            userUuid, ncutUuid, updateNcutVisibilityRequest);
+        return ResponseEntity.ok(updateNcutVisibilityResponse);
     }
 }

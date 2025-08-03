@@ -3,13 +3,16 @@ package com.example.yenanow.gallery.service;
 import com.example.yenanow.common.exception.BusinessException;
 import com.example.yenanow.common.exception.ErrorCode;
 import com.example.yenanow.gallery.dto.request.UpdateNcutContentRequest;
+import com.example.yenanow.gallery.dto.request.UpdateNcutVisibilityRequest;
 import com.example.yenanow.gallery.dto.response.MyGalleryResponse;
 import com.example.yenanow.gallery.dto.response.NcutDetailResponse;
 import com.example.yenanow.gallery.dto.response.UpdateNcutContentResponse;
+import com.example.yenanow.gallery.dto.response.UpdateNcutVisibilityResponse;
 import com.example.yenanow.gallery.entity.Ncut;
 import com.example.yenanow.gallery.entity.Visibility;
 import com.example.yenanow.gallery.repository.NcutRepository;
 import com.example.yenanow.users.repository.FollowQueryRepository;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -160,7 +163,25 @@ public class GalleryServiceImpl implements GalleryService {
         return UpdateNcutContentResponse.builder()
             .ncutUuid(ncut.getNcutUuid())
             .content(ncut.getContent())
-            .updatedAt(ncut.getUpdatedAt())
+            .updatedAt(LocalDateTime.now())
+            .build();
+    }
+
+    @Override
+    @Transactional
+    public UpdateNcutVisibilityResponse updateNcutVisibility(String userUuid, String ncutUuid,
+        UpdateNcutVisibilityRequest updateNcutVisibilityRequest) {
+        Ncut ncut = ncutRepository.findById(ncutUuid)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_NCUT));
+        if (!ncut.getUser().getUserUuid().equals(userUuid)) {
+            throw new BusinessException(ErrorCode.PERMISSION_DENIED);
+        }
+        ncut.setVisibility(updateNcutVisibilityRequest.getVisibility());
+
+        return UpdateNcutVisibilityResponse.builder()
+            .ncutUuid(ncut.getNcutUuid())
+            .visibility(ncut.getVisibility())
+            .updatedAt(LocalDateTime.now())
             .build();
     }
 
