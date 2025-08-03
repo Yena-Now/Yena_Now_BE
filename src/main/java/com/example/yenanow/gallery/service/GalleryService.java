@@ -1,6 +1,7 @@
 package com.example.yenanow.gallery.service;
 
 import com.example.yenanow.gallery.dto.response.MyGalleryResponse;
+import com.example.yenanow.gallery.dto.response.NcutDetailResponse;
 
 public interface GalleryService {
 
@@ -15,4 +16,6 @@ public interface GalleryService {
 
     // 친구 갤러리
     MyGalleryResponse getFollowingsGallery(String userUuid, int page, int size);
+
+    NcutDetailResponse getNcutDetail(String userUuid, String ncutUuid);
 }

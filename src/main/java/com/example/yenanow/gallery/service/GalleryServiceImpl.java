@@ -3,15 +3,19 @@ package com.example.yenanow.gallery.service;
 import com.example.yenanow.common.exception.BusinessException;
 import com.example.yenanow.common.exception.ErrorCode;
 import com.example.yenanow.gallery.dto.response.MyGalleryResponse;
+import com.example.yenanow.gallery.dto.response.NcutDetailResponse;
 import com.example.yenanow.gallery.entity.Ncut;
 import com.example.yenanow.gallery.entity.Visibility;
 import com.example.yenanow.gallery.repository.NcutRepository;
 import com.example.yenanow.users.repository.FollowQueryRepository;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.HashOperations;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +26,7 @@ public class GalleryServiceImpl implements GalleryService {
 
     private final NcutRepository ncutRepository;
     private final FollowQueryRepository followQueryRepository;
+    private final StringRedisTemplate redisTemplate;
 
     @Override
     public MyGalleryResponse getMyGallery(String userUuid, int pageNum, int display) {
@@ -39,7 +44,7 @@ public class GalleryServiceImpl implements GalleryService {
         }
         return MyGalleryResponse.fromEntity(ncutPage);
     }
-    
+
     @Override
     public MyGalleryResponse getOtherGallery(String userUuid, int pageNum, int display) {
         validateUserUuid(userUuid);
@@ -98,6 +103,34 @@ public class GalleryServiceImpl implements GalleryService {
                 .build();
         }
         return MyGalleryResponse.fromEntityWithUser(ncutPage);
+    }
+
+    @Override
+    public NcutDetailResponse getNcutDetail(String userUuid, String ncutUuid) {
+        NcutDetailResponse ncutDetailResponse = ncutRepository.findNcutById(ncutUuid)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_NCUT));
+
+        HashOperations<String, String, Object> hashOps = redisTemplate.opsForHash();
+        String key = "ncut:" + ncutUuid;
+        Map<String, Object> ncutData = hashOps.entries(key);
+        Integer likeCount = Integer.parseInt(ncutData.get("like_count").toString());
+        Integer commentCount = Integer.parseInt(ncutData.get("comment_count").toString());
+        Boolean isMine = ncutDetailResponse.getUserUuid().equals(userUuid);
+
+        return NcutDetailResponse.builder()
+            .ncutUuid(ncutDetailResponse.getNcutUuid())
+            .ncutUrl(ncutDetailResponse.getNcutUrl())
+            .userUuid(ncutDetailResponse.getUserUuid())
+            .nickname(ncutDetailResponse.getNickname())
+            .profileUrl(ncutDetailResponse.getProfileUrl())
+            .content(ncutDetailResponse.getContent())
+            .createdAt(ncutDetailResponse.getCreatedAt())
+            .isRelay(ncutDetailResponse.getIsRelay())
+            .visibility(ncutDetailResponse.getVisibility())
+            .likeCount(likeCount)
+            .commentCount(commentCount)
+            .isMine(isMine)
+            .build();
     }
 
     private void validateUserUuid(String userUuid) {

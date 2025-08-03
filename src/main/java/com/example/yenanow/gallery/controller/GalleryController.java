@@ -1,6 +1,7 @@
 package com.example.yenanow.gallery.controller;
 
 import com.example.yenanow.gallery.dto.response.MyGalleryResponse;
+import com.example.yenanow.gallery.dto.response.NcutDetailResponse;
 import com.example.yenanow.gallery.service.GalleryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -20,61 +21,72 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class GalleryController {
 
-  private final GalleryService galleryService;
+    private final GalleryService galleryService;
 
-  @Operation(summary = "내 갤러리 조회", description = "로그인한 사용자의 개인 갤러리를 조회합니다.")
-  @GetMapping("/me")
-  public ResponseEntity<MyGalleryResponse> getMyGallery(
-      @Parameter(hidden = true)
-      @AuthenticationPrincipal Object principal,
-      @Parameter(description = "페이지 번호 (기본값: 0)")
-      @RequestParam(defaultValue = "0") int pageNum,
-      @Parameter(description = "페이지당 표시할 개수 (기본값: 30)")
-      @RequestParam(defaultValue = "30") int display) {
+    @Operation(summary = "내 갤러리 조회", description = "로그인한 사용자의 개인 갤러리를 조회합니다.")
+    @GetMapping("/me")
+    public ResponseEntity<MyGalleryResponse> getMyGallery(
+        @Parameter(hidden = true)
+        @AuthenticationPrincipal Object principal,
+        @Parameter(description = "페이지 번호 (기본값: 0)")
+        @RequestParam(defaultValue = "0") int pageNum,
+        @Parameter(description = "페이지당 표시할 개수 (기본값: 30)")
+        @RequestParam(defaultValue = "30") int display) {
 
-    String userUuid = principal.toString();
-    MyGalleryResponse response = galleryService.getMyGallery(userUuid, pageNum, display);
-    return ResponseEntity.ok(response);
-  }
+        String userUuid = principal.toString();
+        MyGalleryResponse response = galleryService.getMyGallery(userUuid, pageNum, display);
+        return ResponseEntity.ok(response);
+    }
 
-  @Operation(summary = "특정 유저 공개 갤러리 조회", description = "지정한 사용자 UUID의 공개된 갤러리를 조회합니다.")
-  @GetMapping("/{userUuid}")
-  public ResponseEntity<MyGalleryResponse> getOtherGallery(
-      @Parameter(description = "조회할 대상 사용자 UUID", required = true)
-      @PathVariable String userUuid,
-      @Parameter(description = "페이지 번호 (기본값: 0)")
-      @RequestParam(defaultValue = "0") int pageNum,
-      @Parameter(description = "페이지당 표시할 개수 (기본값: 30)")
-      @RequestParam(defaultValue = "30") int display) {
+    @Operation(summary = "특정 유저 공개 갤러리 조회", description = "지정한 사용자 UUID의 공개된 갤러리를 조회합니다.")
+    @GetMapping("/{userUuid}")
+    public ResponseEntity<MyGalleryResponse> getOtherGallery(
+        @Parameter(description = "조회할 대상 사용자 UUID", required = true)
+        @PathVariable String userUuid,
+        @Parameter(description = "페이지 번호 (기본값: 0)")
+        @RequestParam(defaultValue = "0") int pageNum,
+        @Parameter(description = "페이지당 표시할 개수 (기본값: 30)")
+        @RequestParam(defaultValue = "30") int display) {
 
-    MyGalleryResponse response = galleryService.getOtherGallery(userUuid, pageNum, display);
-    return ResponseEntity.ok(response);
-  }
+        MyGalleryResponse response = galleryService.getOtherGallery(userUuid, pageNum, display);
+        return ResponseEntity.ok(response);
+    }
 
-  @Operation(summary = "전체 공개 갤러리 조회", description = "모든 사용자들의 전체 공개된 갤러리를 조회합니다.")
-  @GetMapping("/public")
-  public ResponseEntity<MyGalleryResponse> getPublicGallery(
-      @Parameter(description = "페이지 번호 (기본값: 0)")
-      @RequestParam(defaultValue = "0") int pageNum,
-      @Parameter(description = "페이지당 표시할 개수 (기본값: 30)")
-      @RequestParam(defaultValue = "30") int display) {
+    @Operation(summary = "전체 공개 갤러리 조회", description = "모든 사용자들의 전체 공개된 갤러리를 조회합니다.")
+    @GetMapping("/public")
+    public ResponseEntity<MyGalleryResponse> getPublicGallery(
+        @Parameter(description = "페이지 번호 (기본값: 0)")
+        @RequestParam(defaultValue = "0") int pageNum,
+        @Parameter(description = "페이지당 표시할 개수 (기본값: 30)")
+        @RequestParam(defaultValue = "30") int display) {
 
-    MyGalleryResponse response = galleryService.getPublicGallery(pageNum, display);
-    return ResponseEntity.ok(response);
-  }
+        MyGalleryResponse response = galleryService.getPublicGallery(pageNum, display);
+        return ResponseEntity.ok(response);
+    }
 
-  @Operation(summary = "팔로잉 유저 갤러리 조회", description = "로그인한 사용자가 팔로우하는 유저들의 최신 갤러리를 조회합니다.")
-  @GetMapping("/followings")
-  public ResponseEntity<MyGalleryResponse> getFollowingsGallery(
-      @Parameter(hidden = true)
-      @AuthenticationPrincipal Object principal,
-      @Parameter(description = "페이지 번호 (기본값: 0)")
-      @RequestParam(defaultValue = "0") int pageNum,
-      @Parameter(description = "페이지당 표시할 개수 (기본값: 30)")
-      @RequestParam(defaultValue = "30") int display) {
+    @Operation(summary = "팔로잉 유저 갤러리 조회", description = "로그인한 사용자가 팔로우하는 유저들의 최신 갤러리를 조회합니다.")
+    @GetMapping("/followings")
+    public ResponseEntity<MyGalleryResponse> getFollowingsGallery(
+        @Parameter(hidden = true)
+        @AuthenticationPrincipal Object principal,
+        @Parameter(description = "페이지 번호 (기본값: 0)")
+        @RequestParam(defaultValue = "0") int pageNum,
+        @Parameter(description = "페이지당 표시할 개수 (기본값: 30)")
+        @RequestParam(defaultValue = "30") int display) {
 
-    String userUuid = principal.toString();
-    MyGalleryResponse response = galleryService.getFollowingsGallery(userUuid, pageNum, display);
-    return ResponseEntity.ok(response);
-  }
+        String userUuid = principal.toString();
+        MyGalleryResponse response = galleryService.getFollowingsGallery(userUuid, pageNum,
+            display);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/ncuts/{ncutUuid}")
+    public ResponseEntity<NcutDetailResponse> getNcutDetail(
+        @AuthenticationPrincipal Object principal,
+        @PathVariable("ncutUuid") String ncutUuid) {
+
+        String userUuid = principal.toString();
+        NcutDetailResponse ncutDetailResponse = galleryService.getNcutDetail(userUuid, ncutUuid);
+        return ResponseEntity.ok(ncutDetailResponse);
+    }
 }
