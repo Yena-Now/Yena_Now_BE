@@ -44,6 +44,9 @@ dependencies {
     // LiveKit
     implementation 'io.livekit:livekit-server:0.8.2'
 
+    // AWS SDK BOM
+    implementation platform('software.amazon.awssdk:bom:2.32.14')
+
     // AWS S3
     implementation 'software.amazon.awssdk:s3'
     implementation 'software.amazon.awssdk:s3-presigner'
