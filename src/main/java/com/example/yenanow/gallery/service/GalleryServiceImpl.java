@@ -106,7 +106,7 @@ public class GalleryServiceImpl implements GalleryService {
     }
 
     @Override
-    public NcutDetailResponse getNcutDetail(String userUuid, String ncutUuid) {
+    public NcutDetailResponse getNcut(String userUuid, String ncutUuid) {
         NcutDetailResponse ncutDetailResponse = ncutRepository.findNcutById(ncutUuid)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_NCUT));
 
@@ -131,6 +131,17 @@ public class GalleryServiceImpl implements GalleryService {
             .commentCount(commentCount)
             .isMine(isMine)
             .build();
+    }
+
+    @Override
+    @Transactional
+    public void deleteNcut(String userUuid, String ncutUuid) {
+        Ncut ncut = ncutRepository.findById(ncutUuid)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_NCUT));
+        if (!ncut.getUser().getUserUuid().equals(userUuid)) {
+            throw new BusinessException(ErrorCode.PERMISSION_DENIED);
+        }
+        ncutRepository.delete(ncut);
     }
 
     private void validateUserUuid(String userUuid) {

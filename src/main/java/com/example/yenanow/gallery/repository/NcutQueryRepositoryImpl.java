@@ -82,7 +82,8 @@ public class NcutQueryRepositoryImpl implements NcutQueryRepository {
     @Override
     public Optional<NcutDetailResponse> findNcutById(String ncutUuid) {
         QNcut ncut = QNcut.ncut;
-        NcutDetailResponse ncutDetailResponse = queryFactory.select(
+        NcutDetailResponse ncutDetailResponse = queryFactory
+            .select(
                 Projections.fields(NcutDetailResponse.class,
                     ncut.ncutUrl,
                     ncut.user.userUuid,
@@ -97,7 +98,7 @@ public class NcutQueryRepositoryImpl implements NcutQueryRepository {
             .from(ncut)
             .where(ncut.ncutUuid.eq(ncutUuid))
             .fetchOne();
-        
+
         return Optional.ofNullable(ncutDetailResponse);
     }
 }

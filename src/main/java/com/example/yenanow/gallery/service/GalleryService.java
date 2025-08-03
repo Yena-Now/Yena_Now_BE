@@ -17,5 +17,7 @@ public interface GalleryService {
     // 친구 갤러리
     MyGalleryResponse getFollowingsGallery(String userUuid, int page, int size);
 
-    NcutDetailResponse getNcutDetail(String userUuid, String ncutUuid);
+    NcutDetailResponse getNcut(String userUuid, String ncutUuid);
+
+    void deleteNcut(String userUuid, String ncutUuid);
 }
