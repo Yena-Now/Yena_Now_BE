@@ -1,9 +1,18 @@
 package com.example.yenanow.users.repository;
 
+import com.example.yenanow.users.dto.response.UserSearchResponseItem;
+import com.example.yenanow.users.entity.QFollow;
 import com.example.yenanow.users.entity.QUser;
+import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +35,7 @@ public class UserQueryRepositoryImpl implements UserQueryRepository {
             .execute();
     }
 
+    @Override
     public Optional<String> findNicknameById(String userUuid) {
         QUser user = QUser.user;
 
@@ -36,5 +46,46 @@ public class UserQueryRepositoryImpl implements UserQueryRepository {
             .fetchOne();
 
         return Optional.ofNullable(nickname);
+    }
+
+    @Override
+    public Page<UserSearchResponseItem> findUsersByKeyword(String currentUserUuid,
+        String keyword, Pageable pageable) {
+        QUser user = QUser.user;
+        QFollow follow = QFollow.follow;
+
+        // isFollowing 서브쿼리로 처리
+        BooleanExpression isFollowing = JPAExpressions
+            .selectOne()
+            .from(follow)
+            .where(follow.fromUser.userUuid.eq(currentUserUuid)
+                .and(follow.toUser.userUuid.eq(user.userUuid)))
+            .exists();
+
+        List<UserSearchResponseItem> content = queryFactory
+            .select(Projections.constructor(
+                UserSearchResponseItem.class,
+                user.userUuid,
+                user.profileUrl,
+                user.name,
+                user.nickname,
+                isFollowing
+            ))
+            .from(user)
+            .where(
+                user.name.like("%" + keyword + "%")
+                    .or(user.nickname.like("%" + keyword + "%")),
+                user.userUuid.ne(currentUserUuid) // 자기 자신은 겸색결과에서 제외
+            )
+            .fetch();
+
+        long total = queryFactory
+            .select(user.count())
+            .from(user)
+            .where(user.name.like("%" + keyword + "%")
+                .or(user.nickname.like("%" + keyword + "%")), user.userUuid.ne(currentUserUuid))
+            .fetchOne();
+
+        return new PageImpl<>(content, pageable, total);
     }
 }

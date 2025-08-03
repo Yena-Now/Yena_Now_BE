@@ -11,6 +11,7 @@ import com.example.yenanow.users.dto.response.MyInfoResponse;
 import com.example.yenanow.users.dto.response.NicknameResponse;
 import com.example.yenanow.users.dto.response.ProfileResponse;
 import com.example.yenanow.users.dto.response.SignupResponse;
+import com.example.yenanow.users.dto.response.UserSearchResponse;
 
 public interface UserService {
 
@@ -31,4 +32,7 @@ public interface UserService {
     void deleteMyInfo(String userUuid);
 
     ProfileResponse getProfile(String userUuid);
+
+    UserSearchResponse getUserSearch(String keyword, String currentUserUuid, int pageNum,
+        int display);
 }

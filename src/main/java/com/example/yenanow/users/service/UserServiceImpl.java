@@ -16,12 +16,18 @@ import com.example.yenanow.users.dto.response.MyInfoResponse;
 import com.example.yenanow.users.dto.response.NicknameResponse;
 import com.example.yenanow.users.dto.response.ProfileResponse;
 import com.example.yenanow.users.dto.response.SignupResponse;
+import com.example.yenanow.users.dto.response.UserSearchResponse;
+import com.example.yenanow.users.dto.response.UserSearchResponseItem;
 import com.example.yenanow.users.entity.User;
 import com.example.yenanow.users.repository.FollowRepository;
+import com.example.yenanow.users.repository.UserQueryRepository;
 import com.example.yenanow.users.repository.UserRepository;
 import java.time.Duration;
 import java.util.Random;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -34,6 +40,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final FollowRepository followRepository;
+    private final UserQueryRepository userQueryRepository;
     private final JwtUtil jwtUtil;
     private final BCryptPasswordEncoder encoder;
     private final StringRedisTemplate redisTemplate;
@@ -196,6 +203,19 @@ public class UserServiceImpl implements UserService {
             .totalCut(toUser.getTotalCut())
             .isFollowing(isFollowing)
             .isMine(isMine)
+            .build();
+    }
+
+    @Override
+    public UserSearchResponse getUserSearch(String keyword, String currentUserUuid,
+        int pageNum, int display) {
+        Pageable pageable = PageRequest.of(pageNum, display);
+        Page<UserSearchResponseItem> page = userQueryRepository
+            .findUsersByKeyword(currentUserUuid, keyword, pageable);
+
+        return UserSearchResponse.builder()
+            .totalPages(page.getTotalPages())
+            .userSearches(page.getContent())
             .build();
     }
 }

@@ -11,6 +11,7 @@ import com.example.yenanow.users.dto.response.MyInfoResponse;
 import com.example.yenanow.users.dto.response.NicknameResponse;
 import com.example.yenanow.users.dto.response.ProfileResponse;
 import com.example.yenanow.users.dto.response.SignupResponse;
+import com.example.yenanow.users.dto.response.UserSearchResponse;
 import com.example.yenanow.users.service.FollowService;
 import com.example.yenanow.users.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Users", description = "사용자 관련 API")
@@ -100,5 +102,17 @@ public class UsersController {
     @GetMapping("/profile/{userUuid}")
     public ResponseEntity<ProfileResponse> getMyProfile(@PathVariable String userUuid) {
         return ResponseEntity.ok(userService.getProfile(userUuid));
+    }
+
+    @Operation(summary = "사용자 검색", description = "사용자를 검색합니다.")
+    @GetMapping("/search")
+    public ResponseEntity<UserSearchResponse> getUserSearch(
+        @AuthenticationPrincipal Object principal,
+        @RequestParam("keyword") String keyword,
+        @RequestParam("pageNum") int pageNum,
+        @RequestParam("display") int display) {
+        String currentUserUuid = principal.toString();
+        return ResponseEntity.ok(
+            userService.getUserSearch(keyword, currentUserUuid, pageNum, display));
     }
 }
