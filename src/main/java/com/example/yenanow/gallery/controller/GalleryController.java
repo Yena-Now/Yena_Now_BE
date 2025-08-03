@@ -1,7 +1,9 @@
 package com.example.yenanow.gallery.controller;
 
+import com.example.yenanow.gallery.dto.request.UpdateNcutContentRequest;
 import com.example.yenanow.gallery.dto.response.MyGalleryResponse;
 import com.example.yenanow.gallery.dto.response.NcutDetailResponse;
+import com.example.yenanow.gallery.dto.response.UpdateNcutContentResponse;
 import com.example.yenanow.gallery.service.GalleryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -11,7 +13,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -99,5 +103,17 @@ public class GalleryController {
         String userUuid = principal.toString();
         galleryService.deleteNcut(userUuid, ncutUuid);
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/ncuts/{ncutUuid}/content")
+    public ResponseEntity<UpdateNcutContentResponse> updateNcutContent(
+        @AuthenticationPrincipal Object principal,
+        @PathVariable("ncutUuid") String ncutUuid,
+        @RequestBody UpdateNcutContentRequest updateNcutContentRequest) {
+
+        String userUuid = principal.toString();
+        UpdateNcutContentResponse updateNcutContentResponse = galleryService.updateNcutContent(
+            userUuid, ncutUuid, updateNcutContentRequest);
+        return ResponseEntity.ok(updateNcutContentResponse);
     }
 }

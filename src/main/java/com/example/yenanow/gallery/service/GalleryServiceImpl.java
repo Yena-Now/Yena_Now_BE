@@ -2,8 +2,10 @@ package com.example.yenanow.gallery.service;
 
 import com.example.yenanow.common.exception.BusinessException;
 import com.example.yenanow.common.exception.ErrorCode;
+import com.example.yenanow.gallery.dto.request.UpdateNcutContentRequest;
 import com.example.yenanow.gallery.dto.response.MyGalleryResponse;
 import com.example.yenanow.gallery.dto.response.NcutDetailResponse;
+import com.example.yenanow.gallery.dto.response.UpdateNcutContentResponse;
 import com.example.yenanow.gallery.entity.Ncut;
 import com.example.yenanow.gallery.entity.Visibility;
 import com.example.yenanow.gallery.repository.NcutRepository;
@@ -142,6 +144,24 @@ public class GalleryServiceImpl implements GalleryService {
             throw new BusinessException(ErrorCode.PERMISSION_DENIED);
         }
         ncutRepository.delete(ncut);
+    }
+
+    @Override
+    @Transactional
+    public UpdateNcutContentResponse updateNcutContent(String userUuid, String ncutUuid,
+        UpdateNcutContentRequest updateNcutContentRequest) {
+        Ncut ncut = ncutRepository.findById(ncutUuid)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_NCUT));
+        if (!ncut.getUser().getUserUuid().equals(userUuid)) {
+            throw new BusinessException(ErrorCode.PERMISSION_DENIED);
+        }
+        ncut.setContent(updateNcutContentRequest.getContent());
+
+        return UpdateNcutContentResponse.builder()
+            .ncutUuid(ncut.getNcutUuid())
+            .content(ncut.getContent())
+            .updatedAt(ncut.getUpdatedAt())
+            .build();
     }
 
     private void validateUserUuid(String userUuid) {

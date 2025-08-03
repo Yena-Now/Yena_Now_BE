@@ -1,7 +1,9 @@
 package com.example.yenanow.gallery.service;
 
+import com.example.yenanow.gallery.dto.request.UpdateNcutContentRequest;
 import com.example.yenanow.gallery.dto.response.MyGalleryResponse;
 import com.example.yenanow.gallery.dto.response.NcutDetailResponse;
+import com.example.yenanow.gallery.dto.response.UpdateNcutContentResponse;
 
 public interface GalleryService {
 
@@ -20,4 +22,7 @@ public interface GalleryService {
     NcutDetailResponse getNcut(String userUuid, String ncutUuid);
 
     void deleteNcut(String userUuid, String ncutUuid);
+
+    UpdateNcutContentResponse updateNcutContent(String userUuid, String ncutUuid,
+        UpdateNcutContentRequest updateNcutContentRequest);
 }
