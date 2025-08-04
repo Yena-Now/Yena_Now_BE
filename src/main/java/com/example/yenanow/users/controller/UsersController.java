@@ -3,14 +3,16 @@ package com.example.yenanow.users.controller;
 import com.example.yenanow.common.smtp.request.VerificationEmailRequest;
 import com.example.yenanow.common.smtp.request.VerifyEmailRequest;
 import com.example.yenanow.common.smtp.response.VerifyEmailResponse;
-import com.example.yenanow.users.dto.request.ModifyMyInfoRequest;
-import com.example.yenanow.users.dto.request.ModifyPasswordRequest;
 import com.example.yenanow.users.dto.request.NicknameRequest;
 import com.example.yenanow.users.dto.request.SignupRequest;
+import com.example.yenanow.users.dto.request.UpdateMyInfoRequest;
+import com.example.yenanow.users.dto.request.UpdatePasswordRequest;
+import com.example.yenanow.users.dto.request.UpdateProfileUrlRequest;
 import com.example.yenanow.users.dto.response.MyInfoResponse;
 import com.example.yenanow.users.dto.response.NicknameResponse;
 import com.example.yenanow.users.dto.response.ProfileResponse;
 import com.example.yenanow.users.dto.response.SignupResponse;
+import com.example.yenanow.users.dto.response.UpdateProfileUrlResponse;
 import com.example.yenanow.users.dto.response.UserSearchResponse;
 import com.example.yenanow.users.service.FollowService;
 import com.example.yenanow.users.service.UserService;
@@ -67,10 +69,10 @@ public class UsersController {
 
     @Operation(summary = "비밀번호 변경", description = "기존 비밀번호를 확인 후 비밀번호를 변경합니다.")
     @PatchMapping("/password")
-    public ResponseEntity<Void> modifyPassword(@AuthenticationPrincipal Object principal,
-        @RequestBody ModifyPasswordRequest request) {
+    public ResponseEntity<Void> updatePassword(@AuthenticationPrincipal Object principal,
+        @RequestBody UpdatePasswordRequest updatePasswordRequest) {
         String currentUserUuid = principal.toString();
-        userService.modifyPassword(request, currentUserUuid);
+        userService.updatePassword(updatePasswordRequest, currentUserUuid);
         return ResponseEntity.noContent().build(); // 204
     }
 
@@ -83,10 +85,10 @@ public class UsersController {
 
     @Operation(summary = "내 정보 수정", description = "로그인한 사용자의 정보를 수정합니다.")
     @PatchMapping("/me")
-    public ResponseEntity<MyInfoResponse> modifyMyInfo(@AuthenticationPrincipal Object principal,
-        @RequestBody ModifyMyInfoRequest request) {
+    public ResponseEntity<MyInfoResponse> updateMyInfo(@AuthenticationPrincipal Object principal,
+        @RequestBody UpdateMyInfoRequest request) {
         String currentUserUuid = principal.toString();
-        userService.modifyMyInfo(request, currentUserUuid);
+        userService.updateMyInfo(request, currentUserUuid);
         return ResponseEntity.noContent().build(); // 204;
     }
 
@@ -114,5 +116,22 @@ public class UsersController {
         String currentUserUuid = principal.toString();
         return ResponseEntity.ok(
             userService.getUserSearch(keyword, currentUserUuid, pageNum, display));
+    }
+
+    @Operation(summary = "프로필 사진 등록", description = "프로필 사진을 등록합니다.")
+    @PatchMapping("/image")
+    public ResponseEntity<UpdateProfileUrlResponse> updateProfileUrl(
+        @AuthenticationPrincipal Object principal, @RequestBody UpdateProfileUrlRequest request) {
+        String currentUserUuid = principal.toString();
+        String imageUrl = request.getImageUrl();
+        return ResponseEntity.ok(userService.updateProfileUrl(currentUserUuid, imageUrl));
+    }
+
+    @Operation(summary = "프로필 사진 삭제", description = "프로필 사진을 삭제합니다.")
+    @DeleteMapping("/image")
+    public ResponseEntity<Void> deleteProfileUrl(@AuthenticationPrincipal Object principal) {
+        String currentUserUuid = principal.toString();
+        userService.deleteProfileUrl(currentUserUuid);
+        return ResponseEntity.noContent().build();
     }
 }
