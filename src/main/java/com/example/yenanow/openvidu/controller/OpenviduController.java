@@ -1,13 +1,15 @@
-package com.example.yenanow.film.controller;
+package com.example.yenanow.openvidu.controller;
 
-import com.example.yenanow.film.dto.request.CodeRequest;
-import com.example.yenanow.film.dto.request.TokenRequest;
-import com.example.yenanow.film.dto.response.CodeResponse;
-import com.example.yenanow.film.dto.response.TokenResponse;
-import com.example.yenanow.film.service.OpenviduService;
+import com.example.yenanow.openvidu.dto.request.CodeRequest;
+import com.example.yenanow.openvidu.dto.request.TokenRequest;
+import com.example.yenanow.film.dto.response.BackgroundListResponse;
+import com.example.yenanow.openvidu.dto.response.CodeResponse;
+import com.example.yenanow.openvidu.dto.response.TokenResponse;
+import com.example.yenanow.openvidu.service.OpenviduService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -16,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/film")
+@RequestMapping("/openvidu")
 public class OpenviduController {
 
     private final OpenviduService openviduService;
@@ -46,4 +48,8 @@ public class OpenviduController {
         openviduService.reciveWebhook(authHeader, body);
         return ResponseEntity.ok("ok");
     }
+
+    @GetMapping(value = "/frames")
+    public ResponseEntity<BackgroundListResponse> getBackgrounds() {}
+    return ResponseEntity.ok(openviduService.getBackgrounds());
 }

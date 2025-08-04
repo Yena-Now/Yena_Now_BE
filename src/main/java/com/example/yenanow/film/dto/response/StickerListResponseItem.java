@@ -5,8 +5,8 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class CodeResponse {
-
-    String roomCode;
-    String token;
+public class StickerListResponseItem {
+    private String stickerUuid;
+    private String stickerName;
+    private String stickerUrl;
 }

@@ -1,4 +1,4 @@
-package com.example.yenanow.users.dto.response;
+package com.example.yenanow.film.dto.response;
 
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class FollowerResponse {
+public class StickerListResponse {
     private int totalPages;
-    private List<FollowerResponseItem> followers;
+    private List<StickerListResponseItem> stickers;
 }

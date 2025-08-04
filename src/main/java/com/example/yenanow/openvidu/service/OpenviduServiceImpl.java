@@ -1,12 +1,15 @@
-package com.example.yenanow.film.service;
+package com.example.yenanow.openvidu.service;
 
 import com.example.yenanow.common.exception.BusinessException;
 import com.example.yenanow.common.exception.ErrorCode;
 import com.example.yenanow.common.util.UuidUtil;
-import com.example.yenanow.film.dto.request.CodeRequest;
-import com.example.yenanow.film.dto.request.TokenRequest;
-import com.example.yenanow.film.dto.response.CodeResponse;
-import com.example.yenanow.film.dto.response.TokenResponse;
+import com.example.yenanow.openvidu.dto.request.CodeRequest;
+import com.example.yenanow.openvidu.dto.request.TokenRequest;
+import com.example.yenanow.film.dto.response.BackgroundListResponse;
+import com.example.yenanow.openvidu.dto.response.CodeResponse;
+import com.example.yenanow.film.dto.response.FrameListResponse;
+import com.example.yenanow.film.dto.response.StickerListResponse;
+import com.example.yenanow.openvidu.dto.response.TokenResponse;
 import com.example.yenanow.users.repository.UserRepository;
 import io.livekit.server.AccessToken;
 import io.livekit.server.RoomJoin;
@@ -114,5 +117,21 @@ public class OpenviduServiceImpl implements OpenviduService {
             // log.error("Error validating webhook event: {}", e.getMessage());
             throw new BusinessException(ErrorCode.BAD_REQUEST);
         }
+    }
+
+    @Override
+    public BackgroundListResponse getBackgrounds() {
+
+        return null;
+    }
+
+    @Override
+    public FrameListResponse getFrames() {
+        return null;
+    }
+
+    @Override
+    public StickerListResponse getStickers() {
+        return null;
     }
 }
