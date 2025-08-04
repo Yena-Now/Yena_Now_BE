@@ -9,7 +9,7 @@ import lombok.Getter;
 @Builder
 public class UpdateNcutVisibilityResponse {
 
-    String ncutUuid;
-    Visibility visibility;
-    LocalDateTime updatedAt;
+    private String ncutUuid;
+    private Visibility visibility;
+    private LocalDateTime updatedAt;
 }

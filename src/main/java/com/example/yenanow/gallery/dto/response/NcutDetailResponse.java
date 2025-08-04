@@ -13,16 +13,16 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class NcutDetailResponse {
 
-    String ncutUuid;
-    String ncutUrl;
-    String userUuid;
-    String nickname;
-    String profileUrl;
-    String content;
-    LocalDateTime createdAt;
-    Integer likeCount;
-    Integer commentCount;
-    Boolean isRelay;
-    Visibility visibility;
-    Boolean isMine;
+    private String ncutUuid;
+    private String ncutUrl;
+    private String userUuid;
+    private String nickname;
+    private String profileUrl;
+    private String content;
+    private LocalDateTime createdAt;
+    private Integer likeCount;
+    private Integer commentCount;
+    private Boolean isRelay;
+    private Visibility visibility;
+    private Boolean isMine;
 }

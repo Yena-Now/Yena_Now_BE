@@ -8,5 +8,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UpdateNcutVisibilityRequest {
 
-    Visibility visibility;
+    private Visibility visibility;
 }

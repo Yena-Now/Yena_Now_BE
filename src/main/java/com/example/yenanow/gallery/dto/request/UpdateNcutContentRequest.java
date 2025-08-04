@@ -7,5 +7,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UpdateNcutContentRequest {
 
-    String content;
+    private String content;
 }

@@ -4,6 +4,7 @@ import com.example.yenanow.gallery.dto.request.UpdateNcutContentRequest;
 import com.example.yenanow.gallery.dto.request.UpdateNcutVisibilityRequest;
 import com.example.yenanow.gallery.dto.response.MyGalleryResponse;
 import com.example.yenanow.gallery.dto.response.NcutDetailResponse;
+import com.example.yenanow.gallery.dto.response.NcutLikesResponse;
 import com.example.yenanow.gallery.dto.response.UpdateNcutContentResponse;
 import com.example.yenanow.gallery.dto.response.UpdateNcutVisibilityResponse;
 import com.example.yenanow.gallery.service.GalleryService;
@@ -129,5 +130,18 @@ public class GalleryController {
         UpdateNcutVisibilityResponse updateNcutVisibilityResponse = galleryService.updateNcutVisibility(
             userUuid, ncutUuid, updateNcutVisibilityRequest);
         return ResponseEntity.ok(updateNcutVisibilityResponse);
+    }
+
+    @GetMapping("/ncuts/{ncutUuid}/likes")
+    public ResponseEntity<NcutLikesResponse> getNcutLikes(
+        @AuthenticationPrincipal Object principal,
+        @PathVariable("ncutUuid") String ncutUuid,
+        @RequestParam("pageNum") int pageNum,
+        @RequestParam("display") int display) {
+
+        String userUuid = principal.toString();
+        NcutLikesResponse ncutLikesResponse = galleryService.getNcutLikes(userUuid, ncutUuid,
+            pageNum, display);
+        return ResponseEntity.ok(ncutLikesResponse);
     }
 }

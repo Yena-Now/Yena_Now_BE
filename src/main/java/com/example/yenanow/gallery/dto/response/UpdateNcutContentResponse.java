@@ -8,7 +8,7 @@ import lombok.Getter;
 @Builder
 public class UpdateNcutContentResponse {
 
-    String ncutUuid;
-    String content;
-    LocalDateTime updatedAt;
+    private String ncutUuid;
+    private String content;
+    private LocalDateTime updatedAt;
 }

@@ -6,10 +6,13 @@ import com.example.yenanow.gallery.dto.request.UpdateNcutContentRequest;
 import com.example.yenanow.gallery.dto.request.UpdateNcutVisibilityRequest;
 import com.example.yenanow.gallery.dto.response.MyGalleryResponse;
 import com.example.yenanow.gallery.dto.response.NcutDetailResponse;
+import com.example.yenanow.gallery.dto.response.NcutLikesResponse;
+import com.example.yenanow.gallery.dto.response.NcutLikesResponseItem;
 import com.example.yenanow.gallery.dto.response.UpdateNcutContentResponse;
 import com.example.yenanow.gallery.dto.response.UpdateNcutVisibilityResponse;
 import com.example.yenanow.gallery.entity.Ncut;
 import com.example.yenanow.gallery.entity.Visibility;
+import com.example.yenanow.gallery.repository.NcutLikeRepository;
 import com.example.yenanow.gallery.repository.NcutRepository;
 import com.example.yenanow.users.repository.FollowQueryRepository;
 import java.time.LocalDateTime;
@@ -30,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class GalleryServiceImpl implements GalleryService {
 
     private final NcutRepository ncutRepository;
+    private final NcutLikeRepository ncutLikeRepository;
     private final FollowQueryRepository followQueryRepository;
     private final StringRedisTemplate redisTemplate;
 
@@ -182,6 +186,22 @@ public class GalleryServiceImpl implements GalleryService {
             .ncutUuid(ncut.getNcutUuid())
             .visibility(ncut.getVisibility())
             .updatedAt(LocalDateTime.now())
+            .build();
+    }
+
+    @Override
+    public NcutLikesResponse getNcutLikes(String userUuid, String ncutUuid, int pageNum,
+        int display) {
+        boolean isLiked = ncutLikeRepository.existsByNcutNcutUuidAndUserUserUuid(ncutUuid,
+            userUuid);
+        Pageable pageable = PageRequest.of(pageNum, display);
+        Page<NcutLikesResponseItem> ncutLikesResponseItem = ncutLikeRepository.findNcutLikeByNcutUuid(
+            ncutUuid, pageable).orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+
+        return NcutLikesResponse.builder()
+            .isLiked(isLiked)
+            .likeCount(Long.valueOf(ncutLikesResponseItem.getTotalElements()).intValue())
+            .likes(ncutLikesResponseItem.getContent())
             .build();
     }
 
