@@ -2,19 +2,24 @@ package com.example.yenanow.gallery.service;
 
 import com.example.yenanow.common.exception.BusinessException;
 import com.example.yenanow.common.exception.ErrorCode;
+import com.example.yenanow.common.util.UuidUtil;
 import com.example.yenanow.gallery.dto.request.UpdateNcutContentRequest;
 import com.example.yenanow.gallery.dto.request.UpdateNcutVisibilityRequest;
 import com.example.yenanow.gallery.dto.response.MyGalleryResponse;
 import com.example.yenanow.gallery.dto.response.NcutDetailResponse;
+import com.example.yenanow.gallery.dto.response.NcutLikeResponse;
 import com.example.yenanow.gallery.dto.response.NcutLikesResponse;
 import com.example.yenanow.gallery.dto.response.NcutLikesResponseItem;
 import com.example.yenanow.gallery.dto.response.UpdateNcutContentResponse;
 import com.example.yenanow.gallery.dto.response.UpdateNcutVisibilityResponse;
 import com.example.yenanow.gallery.entity.Ncut;
+import com.example.yenanow.gallery.entity.NcutLike;
 import com.example.yenanow.gallery.entity.Visibility;
 import com.example.yenanow.gallery.repository.NcutLikeRepository;
 import com.example.yenanow.gallery.repository.NcutRepository;
+import com.example.yenanow.users.entity.User;
 import com.example.yenanow.users.repository.FollowQueryRepository;
+import com.example.yenanow.users.repository.UserRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +40,9 @@ public class GalleryServiceImpl implements GalleryService {
     private final NcutRepository ncutRepository;
     private final NcutLikeRepository ncutLikeRepository;
     private final FollowQueryRepository followQueryRepository;
+    private final UserRepository userRepository;
     private final StringRedisTemplate redisTemplate;
+    private final NcutCountSyncService ncutCountSyncService;
 
     @Override
     public MyGalleryResponse getMyGallery(String userUuid, int pageNum, int display) {
@@ -202,6 +209,36 @@ public class GalleryServiceImpl implements GalleryService {
             .isLiked(isLiked)
             .likeCount(Long.valueOf(ncutLikesResponseItem.getTotalElements()).intValue())
             .likes(ncutLikesResponseItem.getContent())
+            .build();
+    }
+
+    @Override
+    @Transactional
+    public NcutLikeResponse createNcutLike(String userUuid, String ncutUuid) {
+        if (!ncutRepository.existsById(ncutUuid)) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_NCUT);
+        }
+
+        if (ncutLikeRepository.existsByNcutNcutUuidAndUserUserUuid(ncutUuid, userUuid)) {
+            throw new BusinessException(ErrorCode.ALREADY_EXISTS);
+        }
+
+        Ncut ncutProxy = ncutRepository.getReferenceById(ncutUuid);
+        User userProxy = userRepository.getReferenceById(userUuid);
+        NcutLike ncutLike = NcutLike.builder()
+            .ncut(ncutProxy)
+            .user(userProxy)
+            .build();
+        ncutLikeRepository.save(ncutLike);
+
+        String key = "ncut:" + ncutUuid;
+        Integer likeCount = UuidUtil.incrementCounter(redisTemplate, key, "like_count", 1)
+            .intValue();
+        ncutCountSyncService.syncLikeCountToDB(ncutUuid, likeCount);
+
+        return NcutLikeResponse.builder()
+            .isLiked(true)
+            .likeCount(likeCount)
             .build();
     }
 

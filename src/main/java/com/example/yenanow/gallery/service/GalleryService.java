@@ -4,6 +4,7 @@ import com.example.yenanow.gallery.dto.request.UpdateNcutContentRequest;
 import com.example.yenanow.gallery.dto.request.UpdateNcutVisibilityRequest;
 import com.example.yenanow.gallery.dto.response.MyGalleryResponse;
 import com.example.yenanow.gallery.dto.response.NcutDetailResponse;
+import com.example.yenanow.gallery.dto.response.NcutLikeResponse;
 import com.example.yenanow.gallery.dto.response.NcutLikesResponse;
 import com.example.yenanow.gallery.dto.response.UpdateNcutContentResponse;
 import com.example.yenanow.gallery.dto.response.UpdateNcutVisibilityResponse;
@@ -33,4 +34,6 @@ public interface GalleryService {
         UpdateNcutVisibilityRequest updateNcutVisibilityRequest);
 
     NcutLikesResponse getNcutLikes(String userUuid, String ncutUuid, int pageNum, int display);
+
+    NcutLikeResponse createNcutLike(String userUuid, String ncutUuid);
 }
