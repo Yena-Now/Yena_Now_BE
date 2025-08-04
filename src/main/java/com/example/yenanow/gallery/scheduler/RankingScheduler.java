@@ -24,12 +24,8 @@ public class RankingScheduler {
     private final NcutRankingQueryRepository rankingRepository;
     private final StringRedisTemplate redis;
 
-    /**
-     * 매일 00:01(KST) 실행
-     */
-//    테스트용 ― 오늘 23:53에 한 번 실행
-    @Scheduled(cron = "0 55 23 * * *", zone = "Asia/Seoul")
-//    @Scheduled(cron = "0 1 0 * * *", zone = "Asia/Seoul")
+    // 매일 00:01(KST) 실행
+    @Scheduled(cron = "0 1 0 * * *", zone = "Asia/Seoul")
     public void cacheRankings() {
         LocalDate today = LocalDate.now(KST);
 
