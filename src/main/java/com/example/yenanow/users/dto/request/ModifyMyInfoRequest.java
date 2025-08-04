@@ -7,5 +7,7 @@ public class ModifyMyInfoRequest {
 
     private String name;
     private String nickname;
+    private String gender;
+    private String birthdate;
     private String phoneNumber;
 }

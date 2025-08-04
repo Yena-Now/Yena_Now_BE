@@ -18,11 +18,14 @@ import com.example.yenanow.users.dto.response.ProfileResponse;
 import com.example.yenanow.users.dto.response.SignupResponse;
 import com.example.yenanow.users.dto.response.UserSearchResponse;
 import com.example.yenanow.users.dto.response.UserSearchResponseItem;
+import com.example.yenanow.users.entity.Gender;
 import com.example.yenanow.users.entity.User;
 import com.example.yenanow.users.repository.FollowRepository;
 import com.example.yenanow.users.repository.UserQueryRepository;
 import com.example.yenanow.users.repository.UserRepository;
 import java.time.Duration;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.Random;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -160,10 +163,22 @@ public class UserServiceImpl implements UserService {
 
         String newName = request.getName();
         String newNickname = request.getNickname();
+        String newGender = request.getGender();
+        String newBirthdate = request.getBirthdate();
         String newPhoneNumber = request.getPhoneNumber();
 
         user.setName(newName);
         user.setNickname(newNickname);
+        user.setGender(Gender.from(newGender));
+
+        if (newBirthdate != null && !newBirthdate.isBlank()) { // 생년월일 비어있지 않을 때만 수정
+            try {
+                user.setBirthdate(LocalDate.parse(newBirthdate));
+            } catch (DateTimeParseException e) {
+                throw new BusinessException(ErrorCode.BAD_REQUEST); // 생년월일 형식 틀리면 오류
+            }
+        }
+
         user.setPhoneNumber(newPhoneNumber);
 
         userRepository.save(user);
