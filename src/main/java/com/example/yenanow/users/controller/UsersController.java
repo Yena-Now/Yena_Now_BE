@@ -70,9 +70,9 @@ public class UsersController {
     @Operation(summary = "비밀번호 변경", description = "기존 비밀번호를 확인 후 비밀번호를 변경합니다.")
     @PatchMapping("/password")
     public ResponseEntity<Void> updatePassword(@AuthenticationPrincipal Object principal,
-        @RequestBody UpdatePasswordRequest request) {
+        @RequestBody UpdatePasswordRequest updatePasswordRequest) {
         String currentUserUuid = principal.toString();
-        userService.updatePassword(request, currentUserUuid);
+        userService.updatePassword(updatePasswordRequest, currentUserUuid);
         return ResponseEntity.noContent().build(); // 204
     }
 

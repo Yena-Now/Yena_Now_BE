@@ -121,7 +121,6 @@ public class UserServiceImpl implements UserService {
         String oldPassword = request.getOldPassword();
         String newPassword = request.getNewPassword();
 
-        UuidUtil.validateUuid(userUuid);
         User user = UuidUtil.getUserByUuid(userRepository, userUuid);
 
         if (!encoder.matches(oldPassword, user.getPassword())) {
@@ -139,7 +138,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public MyInfoResponse getMyInfo(String userUuid) {
-        UuidUtil.validateUuid(userUuid);
         User user = UuidUtil.getUserByUuid(userRepository, userUuid);
 
         return MyInfoResponse.builder()
@@ -156,7 +154,6 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @Override
     public void updateMyInfo(UpdateMyInfoRequest request, String userUuid) {
-        UuidUtil.validateUuid(userUuid);
         User user = UuidUtil.getUserByUuid(userRepository, userUuid);
 
         String newName = request.getName();
@@ -183,7 +180,6 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @Override
     public void deleteMyInfo(String userUuid) {
-        UuidUtil.validateUuid(userUuid);
         User user = UuidUtil.getUserByUuid(userRepository, userUuid);
 
         redisTemplate.delete("user:" + userUuid);
@@ -233,7 +229,6 @@ public class UserServiceImpl implements UserService {
     @Override
     public UpdateProfileUrlResponse updateProfileUrl(String userUuid,
         String imageUrl) {
-        UuidUtil.validateUuid(userUuid);
         User user = UuidUtil.getUserByUuid(userRepository, userUuid);
         user.setProfileUrl(imageUrl);
 
@@ -245,7 +240,6 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @Override
     public void deleteProfileUrl(String userUuid) {
-        UuidUtil.validateUuid(userUuid);
         User user = UuidUtil.getUserByUuid(userRepository, userUuid);
 
         user.setProfileUrl(null);
