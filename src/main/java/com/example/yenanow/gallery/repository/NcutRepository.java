@@ -32,4 +32,7 @@ public interface NcutRepository extends JpaRepository<Ncut, String>, NcutQueryRe
     @Transactional
     @Query("UPDATE Ncut n SET n.commentCount = :commentCount WHERE n.ncutUuid = :ncutUuid")
     void updateCommentCount(String ncutUuid, int commentCount);
+
+    // 랭킹 상세 조회용 – IN 절
+    List<Ncut> findByNcutUuidIn(List<String> ncutUuid);
 }
