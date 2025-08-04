@@ -1,4 +1,4 @@
-package com.example.yenanow.openvidu.dto.response;
+package com.example.yenanow.film.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

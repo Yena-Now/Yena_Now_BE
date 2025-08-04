@@ -1,12 +1,12 @@
-package com.example.yenanow.openvidu.service;
+package com.example.yenanow.film.service;
 
 import com.example.yenanow.common.exception.BusinessException;
 import com.example.yenanow.common.exception.ErrorCode;
 import com.example.yenanow.common.util.UuidUtil;
-import com.example.yenanow.openvidu.dto.request.CodeRequest;
-import com.example.yenanow.openvidu.dto.request.TokenRequest;
-import com.example.yenanow.openvidu.dto.response.CodeResponse;
-import com.example.yenanow.openvidu.dto.response.TokenResponse;
+import com.example.yenanow.film.dto.request.CodeRequest;
+import com.example.yenanow.film.dto.request.TokenRequest;
+import com.example.yenanow.film.dto.response.CodeResponse;
+import com.example.yenanow.film.dto.response.TokenResponse;
 import com.example.yenanow.users.repository.UserRepository;
 import io.livekit.server.AccessToken;
 import io.livekit.server.RoomJoin;

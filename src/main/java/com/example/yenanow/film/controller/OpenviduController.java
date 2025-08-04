@@ -1,10 +1,10 @@
-package com.example.yenanow.openvidu.controller;
+package com.example.yenanow.film.controller;
 
-import com.example.yenanow.openvidu.dto.request.CodeRequest;
-import com.example.yenanow.openvidu.dto.request.TokenRequest;
-import com.example.yenanow.openvidu.dto.response.CodeResponse;
-import com.example.yenanow.openvidu.dto.response.TokenResponse;
-import com.example.yenanow.openvidu.service.OpenviduService;
+import com.example.yenanow.film.dto.request.CodeRequest;
+import com.example.yenanow.film.dto.request.TokenRequest;
+import com.example.yenanow.film.dto.response.CodeResponse;
+import com.example.yenanow.film.dto.response.TokenResponse;
+import com.example.yenanow.film.service.OpenviduService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
