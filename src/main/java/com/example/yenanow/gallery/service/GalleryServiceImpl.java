@@ -7,6 +7,7 @@ import com.example.yenanow.gallery.entity.Ncut;
 import com.example.yenanow.gallery.entity.Visibility;
 import com.example.yenanow.gallery.repository.NcutRepository;
 import com.example.yenanow.users.repository.FollowQueryRepository;
+import com.example.yenanow.users.repository.FollowRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -21,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class GalleryServiceImpl implements GalleryService {
 
     private final NcutRepository ncutRepository;
-    private final FollowQueryRepository followQueryRepository;
+    private final FollowRepository followRepository;
 
     @Override
     public MyGalleryResponse getMyGallery(String userUuid, int pageNum, int display) {
@@ -76,7 +77,7 @@ public class GalleryServiceImpl implements GalleryService {
     public MyGalleryResponse getFollowingsGallery(String userUuid, int pageNum, int display) {
         validateUserUuid(userUuid);
 
-        List<String> followingUuids = followQueryRepository.findFollowingUuids(userUuid);
+        List<String> followingUuids = followRepository.findFollowingUuids(userUuid);
         if (followingUuids.isEmpty()) {
             // 팔로잉한 유저가 아예 없는 경우도 정상 처리 (빈 결과 반환)
             return MyGalleryResponse.builder()

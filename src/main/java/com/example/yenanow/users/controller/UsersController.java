@@ -9,7 +9,10 @@ import com.example.yenanow.users.dto.request.NicknameRequest;
 import com.example.yenanow.users.dto.request.SignupRequest;
 import com.example.yenanow.users.dto.response.MyInfoResponse;
 import com.example.yenanow.users.dto.response.NicknameResponse;
+import com.example.yenanow.users.dto.response.ProfileResponse;
 import com.example.yenanow.users.dto.response.SignupResponse;
+import com.example.yenanow.users.dto.response.UserSearchResponse;
+import com.example.yenanow.users.service.FollowService;
 import com.example.yenanow.users.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -19,9 +22,11 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Users", description = "사용자 관련 API")
@@ -31,6 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class UsersController {
 
     private final UserService userService;
+    private final FollowService followService;
 
     @Operation(summary = "자체 회원가입", description = "이메일과 비밀번호를 이용해 회원가입을 수행합니다.")
     @PostMapping("/signup")
@@ -90,5 +96,23 @@ public class UsersController {
         String currentUserUuid = principal.toString();
         userService.deleteMyInfo(currentUserUuid);
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "사용자 프로필 조회", description = "사용자의 프로필을 조회합니다.")
+    @GetMapping("/profile/{userUuid}")
+    public ResponseEntity<ProfileResponse> getMyProfile(@PathVariable String userUuid) {
+        return ResponseEntity.ok(userService.getProfile(userUuid));
+    }
+
+    @Operation(summary = "사용자 검색", description = "사용자를 검색합니다.")
+    @GetMapping("/search")
+    public ResponseEntity<UserSearchResponse> getUserSearch(
+        @AuthenticationPrincipal Object principal,
+        @RequestParam("keyword") String keyword,
+        @RequestParam("pageNum") int pageNum,
+        @RequestParam("display") int display) {
+        String currentUserUuid = principal.toString();
+        return ResponseEntity.ok(
+            userService.getUserSearch(keyword, currentUserUuid, pageNum, display));
     }
 }

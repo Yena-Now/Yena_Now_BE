@@ -7,7 +7,7 @@ import com.example.yenanow.openvidu.dto.request.CodeRequest;
 import com.example.yenanow.openvidu.dto.request.TokenRequest;
 import com.example.yenanow.openvidu.dto.response.CodeResponse;
 import com.example.yenanow.openvidu.dto.response.TokenResponse;
-import com.example.yenanow.users.repository.UserQueryRepository;
+import com.example.yenanow.users.repository.UserRepository;
 import io.livekit.server.AccessToken;
 import io.livekit.server.RoomJoin;
 import io.livekit.server.RoomName;
@@ -24,7 +24,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class OpoenviduServiceImpl implements OpenviduService {
+public class OpenviduServiceImpl implements OpenviduService {
 
     @Value("${livekit.api.key}")
     private String LIVEKIT_API_KEY;
@@ -32,14 +32,14 @@ public class OpoenviduServiceImpl implements OpenviduService {
     @Value("${livekit.api.secret}")
     private String LIVEKIT_API_SECRET;
 
-    private final UserQueryRepository userQueryRepository;
+    private final UserRepository userRepository;
     private final StringRedisTemplate redisTemplate;
 
     @Override
     public CodeResponse createCode(String userUuid, CodeRequest codeRequest) {
         UuidUtil.validateUuid(userUuid);
         
-        String nickname = userQueryRepository.findNicknameById(userUuid)
+        String nickname = userRepository.findNicknameById(userUuid)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER));
         Random random = new Random();
         String roomCode;
@@ -74,7 +74,7 @@ public class OpoenviduServiceImpl implements OpenviduService {
     public TokenResponse createToken(String userUuid, TokenRequest tokenRequest) {
         UuidUtil.validateUuid(userUuid);
 
-        String nickname = userQueryRepository.findNicknameById(userUuid)
+        String nickname = userRepository.findNicknameById(userUuid)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER));
         String roomCode = tokenRequest.getRoomCode();
         String key = "room:" + roomCode;
