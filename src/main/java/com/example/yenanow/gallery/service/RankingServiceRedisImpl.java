@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class RankingServiceRedisImpl implements RankingService {
+public class RankingServiceRedisImpl implements RankingServiceRedis {
 
     private static final int LIMIT = 10;
     private final StringRedisTemplate redis;
