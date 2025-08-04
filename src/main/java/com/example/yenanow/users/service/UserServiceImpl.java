@@ -40,7 +40,6 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final FollowRepository followRepository;
-    private final UserQueryRepository userQueryRepository;
     private final JwtUtil jwtUtil;
     private final BCryptPasswordEncoder encoder;
     private final StringRedisTemplate redisTemplate;
@@ -210,7 +209,7 @@ public class UserServiceImpl implements UserService {
     public UserSearchResponse getUserSearch(String keyword, String currentUserUuid,
         int pageNum, int display) {
         Pageable pageable = PageRequest.of(pageNum, display);
-        Page<UserSearchResponseItem> page = userQueryRepository
+        Page<UserSearchResponseItem> page = userRepository
             .findUsersByKeyword(currentUserUuid, keyword, pageable);
 
         return UserSearchResponse.builder()

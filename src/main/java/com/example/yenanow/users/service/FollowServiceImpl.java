@@ -28,7 +28,6 @@ public class FollowServiceImpl implements FollowService {
     private final UserRepository userRepository;
     private final StringRedisTemplate redisTemplate;
     private final FollowCountSyncService followCountSyncService;
-    private final FollowQueryRepository followQueryRepository;
 
     @Override
     @Transactional
@@ -98,7 +97,7 @@ public class FollowServiceImpl implements FollowService {
     public FollowingResponse getFollowings(String userUuid, String currentUserUuid,
         int pageNum, int display) {
         Pageable pageable = PageRequest.of(pageNum, display);
-        Page<FollowingResponseItem> page = followQueryRepository
+        Page<FollowingResponseItem> page = followRepository
             .findFollowings(userUuid, currentUserUuid, pageable);
 
         return FollowingResponse.builder()
@@ -111,7 +110,7 @@ public class FollowServiceImpl implements FollowService {
     public FollowerResponse getFollowers(String userUuid, String currentUserUuid,
         int pageNum, int display) {
         Pageable pageable = PageRequest.of(pageNum, display);
-        Page<FollowerResponseItem> page = followQueryRepository
+        Page<FollowerResponseItem> page = followRepository
             .findFollowers(userUuid, currentUserUuid, pageable);
 
         return FollowerResponse.builder()
