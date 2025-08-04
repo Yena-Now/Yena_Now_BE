@@ -156,4 +156,14 @@ public class GalleryController {
         NcutLikeResponse ncutLikeResponse = galleryService.createNcutLike(userUuid, ncutUuid);
         return ResponseEntity.ok(ncutLikeResponse);
     }
+
+    @DeleteMapping("/ncuts/{ncutUuid}/likes")
+    public ResponseEntity<NcutLikeResponse> deleteNcutLike(
+        @AuthenticationPrincipal Object principal,
+        @PathVariable("ncutUuid") String ncutUuid) {
+
+        String userUuid = principal.toString();
+        NcutLikeResponse ncutLikeResponse = galleryService.deleteNcutLike(userUuid, ncutUuid);
+        return ResponseEntity.ok(ncutLikeResponse);
+    }
 }

@@ -36,4 +36,6 @@ public interface GalleryService {
     NcutLikesResponse getNcutLikes(String userUuid, String ncutUuid, int pageNum, int display);
 
     NcutLikeResponse createNcutLike(String userUuid, String ncutUuid);
+
+    NcutLikeResponse deleteNcutLike(String userUuid, String ncutUuid);
 }

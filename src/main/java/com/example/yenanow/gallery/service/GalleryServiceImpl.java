@@ -242,6 +242,24 @@ public class GalleryServiceImpl implements GalleryService {
             .build();
     }
 
+    @Override
+    @Transactional
+    public NcutLikeResponse deleteNcutLike(String userUuid, String ncutUuid) {
+        NcutLike ncutLike = ncutLikeRepository.findByNcutNcutUuidAndUserUserUuid(ncutUuid, userUuid)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+        ncutLikeRepository.delete(ncutLike);
+
+        String key = "ncut:" + ncutUuid;
+        Integer likeCount = UuidUtil.incrementCounter(redisTemplate, key, "like_count", -1)
+            .intValue();
+        ncutCountSyncService.syncLikeCountToDB(ncutUuid, likeCount);
+
+        return NcutLikeResponse.builder()
+            .isLiked(false)
+            .likeCount(likeCount)
+            .build();
+    }
+
     private void validateUserUuid(String userUuid) {
         if (userUuid == null || userUuid.isBlank()) {
             throw new BusinessException(ErrorCode.BAD_REQUEST);
