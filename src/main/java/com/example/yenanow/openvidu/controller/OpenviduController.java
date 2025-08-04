@@ -2,14 +2,12 @@ package com.example.yenanow.openvidu.controller;
 
 import com.example.yenanow.openvidu.dto.request.CodeRequest;
 import com.example.yenanow.openvidu.dto.request.TokenRequest;
-import com.example.yenanow.film.dto.response.BackgroundListResponse;
 import com.example.yenanow.openvidu.dto.response.CodeResponse;
 import com.example.yenanow.openvidu.dto.response.TokenResponse;
 import com.example.yenanow.openvidu.service.OpenviduService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -49,7 +47,5 @@ public class OpenviduController {
         return ResponseEntity.ok("ok");
     }
 
-    @GetMapping(value = "/frames")
-    public ResponseEntity<BackgroundListResponse> getBackgrounds() {}
-    return ResponseEntity.ok(openviduService.getBackgrounds());
+
 }
