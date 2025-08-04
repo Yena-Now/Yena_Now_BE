@@ -2,6 +2,7 @@ package com.example.yenanow.s3.controller;
 
 import com.example.yenanow.common.exception.BusinessException;
 import com.example.yenanow.common.exception.ErrorCode;
+import com.example.yenanow.common.util.UuidUtil;
 import com.example.yenanow.s3.dto.request.PresignedUrlRequest;
 import com.example.yenanow.s3.dto.response.PresignedUrlResponse;
 import com.example.yenanow.s3.service.S3Service;
@@ -13,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import com.example.yenanow.common.util.UuidUtil;
 
 @Slf4j
 @RestController
@@ -29,9 +31,7 @@ public class S3Controller {
         @AuthenticationPrincipal Object principal
     ) {
         String userUuid = principal.toString();
-        if (userUuid == null) {
-            throw new BusinessException(ErrorCode.INVALID_TOKEN);
-        }
+        UuidUtil.validateUuid(userUuid);
 
         // Key 생성
         String key = s3KeyFactory.createKey(
