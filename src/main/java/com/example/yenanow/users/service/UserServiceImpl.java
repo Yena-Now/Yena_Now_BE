@@ -8,20 +8,20 @@ import com.example.yenanow.common.smtp.request.VerifyEmailRequest;
 import com.example.yenanow.common.smtp.response.VerifyEmailResponse;
 import com.example.yenanow.common.util.JwtUtil;
 import com.example.yenanow.common.util.UuidUtil;
-import com.example.yenanow.users.dto.request.ModifyMyInfoRequest;
-import com.example.yenanow.users.dto.request.ModifyPasswordRequest;
 import com.example.yenanow.users.dto.request.NicknameRequest;
 import com.example.yenanow.users.dto.request.SignupRequest;
+import com.example.yenanow.users.dto.request.UpdateMyInfoRequest;
+import com.example.yenanow.users.dto.request.UpdatePasswordRequest;
 import com.example.yenanow.users.dto.response.MyInfoResponse;
 import com.example.yenanow.users.dto.response.NicknameResponse;
 import com.example.yenanow.users.dto.response.ProfileResponse;
 import com.example.yenanow.users.dto.response.SignupResponse;
+import com.example.yenanow.users.dto.response.UpdateProfileUrlResponse;
 import com.example.yenanow.users.dto.response.UserSearchResponse;
 import com.example.yenanow.users.dto.response.UserSearchResponseItem;
 import com.example.yenanow.users.entity.Gender;
 import com.example.yenanow.users.entity.User;
 import com.example.yenanow.users.repository.FollowRepository;
-import com.example.yenanow.users.repository.UserQueryRepository;
 import com.example.yenanow.users.repository.UserRepository;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -117,7 +117,7 @@ public class UserServiceImpl implements UserService {
 
     @Transactional
     @Override
-    public void modifyPassword(ModifyPasswordRequest request, String userUuid) {
+    public void updatePassword(UpdatePasswordRequest request, String userUuid) {
         String oldPassword = request.getOldPassword();
         String newPassword = request.getNewPassword();
 
@@ -135,8 +135,6 @@ public class UserServiceImpl implements UserService {
         }
 
         user.setPassword(encoder.encode(newPassword));
-
-        userRepository.save(user);
     }
 
     @Override
@@ -157,7 +155,7 @@ public class UserServiceImpl implements UserService {
 
     @Transactional
     @Override
-    public void modifyMyInfo(ModifyMyInfoRequest request, String userUuid) {
+    public void updateMyInfo(UpdateMyInfoRequest request, String userUuid) {
         UuidUtil.validateUuid(userUuid);
         User user = UuidUtil.getUserByUuid(userRepository, userUuid);
 
@@ -180,8 +178,6 @@ public class UserServiceImpl implements UserService {
         }
 
         user.setPhoneNumber(newPhoneNumber);
-
-        userRepository.save(user);
     }
 
     @Transactional
@@ -231,5 +227,27 @@ public class UserServiceImpl implements UserService {
             .totalPages(page.getTotalPages())
             .userSearches(page.getContent())
             .build();
+    }
+
+    @Transactional
+    @Override
+    public UpdateProfileUrlResponse updateProfileUrl(String userUuid,
+        String imageUrl) {
+        UuidUtil.validateUuid(userUuid);
+        User user = UuidUtil.getUserByUuid(userRepository, userUuid);
+        user.setProfileUrl(imageUrl);
+
+        return UpdateProfileUrlResponse.builder()
+            .imageUrl(user.getProfileUrl())
+            .build();
+    }
+
+    @Transactional
+    @Override
+    public void deleteProfileUrl(String userUuid) {
+        UuidUtil.validateUuid(userUuid);
+        User user = UuidUtil.getUserByUuid(userRepository, userUuid);
+
+        user.setProfileUrl(null);
     }
 }
