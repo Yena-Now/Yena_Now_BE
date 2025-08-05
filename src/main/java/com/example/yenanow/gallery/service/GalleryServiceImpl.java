@@ -131,8 +131,11 @@ public class GalleryServiceImpl implements GalleryService {
         HashOperations<String, String, Object> hashOps = redisTemplate.opsForHash();
         String key = "ncut:" + ncutUuid;
         Map<String, Object> ncutData = hashOps.entries(key);
-        Integer likeCount = Integer.parseInt(ncutData.get("like_count").toString());
-        Integer commentCount = Integer.parseInt(ncutData.get("comment_count").toString());
+        Object likeValue = ncutData.get("like_count");
+        Object commentValue = ncutData.get("comment_count");
+        Integer likeCount = (likeValue != null) ? Integer.parseInt(likeValue.toString()) : 0;
+        Integer commentCount =
+            (commentValue != null) ? Integer.parseInt(commentValue.toString()) : 0;
         Boolean isMine = ncutDetailResponse.getUserUuid().equals(userUuid);
 
         return NcutDetailResponse.builder()
