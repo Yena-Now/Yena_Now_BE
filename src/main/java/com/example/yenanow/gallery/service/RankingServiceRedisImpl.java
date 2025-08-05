@@ -1,5 +1,7 @@
 package com.example.yenanow.gallery.service;
 
+import com.example.yenanow.common.exception.BusinessException;
+import com.example.yenanow.common.exception.ErrorCode;
 import com.example.yenanow.gallery.dto.response.NcutRankingResponse;
 import com.example.yenanow.gallery.repository.NcutRepository;
 import java.util.Collections;
@@ -34,7 +36,7 @@ public class RankingServiceRedisImpl implements RankingServiceRedis {
 
         // 키가 없으면 아직 배치 전 or 실패 – 필요 시 Fallback 쿼리 호출
         if (!redis.hasKey(key)) {
-            throw new IllegalStateException("랭킹 갱신 중입니다. 잠시 후 다시 시도해 주세요.");
+            throw new BusinessException(ErrorCode.RANKING_NOT_READY);
         }
 
         // 1) UUID 리스트 → 좋아요 순으로 역정렬
