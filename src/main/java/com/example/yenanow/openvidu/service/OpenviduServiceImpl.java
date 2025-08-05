@@ -118,20 +118,4 @@ public class OpenviduServiceImpl implements OpenviduService {
             throw new BusinessException(ErrorCode.BAD_REQUEST);
         }
     }
-
-    @Override
-    public BackgroundListResponse getBackgrounds() {
-
-        return null;
-    }
-
-    @Override
-    public FrameListResponse getFrames() {
-        return null;
-    }
-
-    @Override
-    public StickerListResponse getStickers() {
-        return null;
-    }
 }

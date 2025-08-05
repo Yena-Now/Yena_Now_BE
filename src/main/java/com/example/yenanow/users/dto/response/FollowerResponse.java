@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class FollowerResponse {
+
     private int totalPages;
     private List<FollowerResponseItem> followers;
 }

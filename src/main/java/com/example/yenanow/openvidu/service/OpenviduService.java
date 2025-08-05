@@ -15,8 +15,4 @@ public interface OpenviduService {
     TokenResponse createToken(String userUuid, TokenRequest tokenRequest);
 
     void reciveWebhook(String authHeader, String body);
-
-    BackgroundListResponse getBackgrounds();
-    FrameListResponse getFrames();
-    StickerListResponse getStickers();
 }
