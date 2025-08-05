@@ -2,6 +2,7 @@ package com.example.yenanow.s3.service;
 
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -10,6 +11,7 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class S3ServiceImpl implements S3Service {
@@ -44,5 +46,16 @@ public class S3ServiceImpl implements S3Service {
     @Override
     public String getFileUrl(String key) {
         return "https://" + bucketName + ".s3." + region + ".amazonaws.com/" + key;
+    }
+
+    @Override
+    public boolean deleteObject(String key) {
+        try {
+            s3Client.deleteObject(b -> b.bucket(bucketName).key(key));
+            return true;
+        } catch (Exception e) {
+            log.error("[S3] deleteObject 실패 key-{}", key, e);
+            return false;
+        }
     }
 }
