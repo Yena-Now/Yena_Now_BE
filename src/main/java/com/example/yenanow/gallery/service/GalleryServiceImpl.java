@@ -18,7 +18,7 @@ import com.example.yenanow.gallery.entity.Visibility;
 import com.example.yenanow.gallery.repository.NcutLikeRepository;
 import com.example.yenanow.gallery.repository.NcutRepository;
 import com.example.yenanow.users.entity.User;
-import com.example.yenanow.users.repository.FollowQueryRepository;
+import com.example.yenanow.users.repository.FollowRepository;
 import com.example.yenanow.users.repository.UserRepository;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -41,7 +41,7 @@ public class GalleryServiceImpl implements GalleryService {
 
     private final NcutRepository ncutRepository;
     private final NcutLikeRepository ncutLikeRepository;
-    private final FollowQueryRepository followQueryRepository;
+    private final FollowRepository followRepository;
     private final UserRepository userRepository;
     private final StringRedisTemplate redisTemplate;
     private final NcutCountSyncService ncutCountSyncService;
@@ -99,7 +99,7 @@ public class GalleryServiceImpl implements GalleryService {
     public MyGalleryResponse getFollowingsGallery(String userUuid, int pageNum, int display) {
         validateUserUuid(userUuid);
 
-        List<String> followingUuids = followQueryRepository.findFollowingUuids(userUuid);
+        List<String> followingUuids = followRepository.findFollowingUuids(userUuid);
         if (followingUuids.isEmpty()) {
             // 팔로잉한 유저가 아예 없는 경우도 정상 처리 (빈 결과 반환)
             return MyGalleryResponse.builder()
