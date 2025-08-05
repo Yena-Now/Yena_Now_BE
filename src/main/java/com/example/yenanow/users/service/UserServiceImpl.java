@@ -156,25 +156,25 @@ public class UserServiceImpl implements UserService {
     public void updateMyInfo(UpdateMyInfoRequest request, String userUuid) {
         User user = UuidUtil.getUserByUuid(userRepository, userUuid);
 
-        String newName = request.getName();
-        String newNickname = request.getNickname();
-        String newGender = request.getGender();
-        String newBirthdate = request.getBirthdate();
-        String newPhoneNumber = request.getPhoneNumber();
-
-        user.setName(newName);
-        user.setNickname(newNickname);
-        user.setGender(Gender.from(newGender));
-
-        if (newBirthdate != null && !newBirthdate.isBlank()) { // 생년월일 비어있지 않을 때만 수정
+        if (request.getName() != null) {
+            user.setName(request.getName());
+        }
+        if (request.getNickname() != null) {
+            user.setNickname(request.getNickname());
+        }
+        if (request.getGender() != null) {
+            user.setGender(Gender.from(request.getGender()));
+        }
+        if (request.getBirthdate() != null) {
             try {
-                user.setBirthdate(LocalDate.parse(newBirthdate));
+                user.setBirthdate(LocalDate.parse(request.getBirthdate()));
             } catch (DateTimeParseException e) {
-                throw new BusinessException(ErrorCode.BAD_REQUEST); // 생년월일 형식 틀리면 오류
+                throw new BusinessException(ErrorCode.BAD_REQUEST);
             }
         }
-
-        user.setPhoneNumber(newPhoneNumber);
+        if (request.getPhoneNumber() != null) {
+            user.setPhoneNumber(request.getPhoneNumber());
+        }
     }
 
     @Transactional
