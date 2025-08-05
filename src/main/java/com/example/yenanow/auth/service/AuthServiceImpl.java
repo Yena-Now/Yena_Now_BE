@@ -73,6 +73,9 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public void sendMessage(VerificationEmailRequest request) {
         String email = request.getEmail();
+        userRepository.findByEmail(email) // 등록된 유저 이메일인지 여부
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER));
+
         String code = String.format("%06d", new Random().nextInt(999999));
 
         String key = "email:" + email;
@@ -105,8 +108,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public void sendPassword(ForgotPasswordRequest request) {
         String email = request.getEmail();
-
-        User user = userRepository.findByEmail(email) // 등록된 유저 이메일인지 여부
+        User user = userRepository.findByEmail(email)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER));
 
         String key = "verified:" + email;

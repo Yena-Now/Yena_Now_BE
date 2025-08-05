@@ -25,6 +25,7 @@ public enum ErrorCode {
 
     // USERS DOMAIN
     NOT_FOUND_USER(HttpStatus.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."),
+    NOT_FOUND_USER_PROFILE(HttpStatus.NOT_FOUND, "프로필 URL을 수정할 사용자를 찾을 수 없습니다."),
 
     // NCUT DOMAIN
     NOT_FOUND_NCUT(HttpStatus.NOT_FOUND, "해당 NCUT을 찾을 수 없습니다."),
@@ -38,8 +39,13 @@ public enum ErrorCode {
     FOLLOW_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 팔로우 중입니다."),
 
     // FILM DOMAIN
-    NOT_FOUND_CODE(HttpStatus.NOT_FOUND, "해당 방 코드를 찾을 수 없습니다.");
+    NOT_FOUND_CODE(HttpStatus.NOT_FOUND, "해당 방 코드를 찾을 수 없습니다."),
+    NOT_FOUND_FRAME(HttpStatus.NOT_FOUND, "해당 프레임을 찾을 수 없습니다."),
+    NOT_FOUND_BACKGROUND(HttpStatus.NOT_FOUND, "해당 배경을 찾을 수 없습니다."),
+    NOT_FOUND_STICKER(HttpStatus.NOT_FOUND, "해당 스티커를 찾을 수 없습니다."),
 
+    // RELAY DOMAIN
+    NOT_FOUND_RELAY_CUT(HttpStatus.NOT_FOUND, "해당 릴레이 컷을 찾을 수 없습니다.");
 
     private final HttpStatus status;
     private final String message;

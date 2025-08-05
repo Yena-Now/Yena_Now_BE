@@ -3,11 +3,19 @@ package com.example.yenanow.users.service;
 import com.example.yenanow.common.exception.BusinessException;
 import com.example.yenanow.common.exception.ErrorCode;
 import com.example.yenanow.common.util.UuidUtil;
+import com.example.yenanow.users.dto.response.FollowerResponse;
+import com.example.yenanow.users.dto.response.FollowerResponseItem;
+import com.example.yenanow.users.dto.response.FollowingResponse;
+import com.example.yenanow.users.dto.response.FollowingResponseItem;
 import com.example.yenanow.users.entity.Follow;
 import com.example.yenanow.users.entity.User;
+import com.example.yenanow.users.repository.FollowQueryRepository;
 import com.example.yenanow.users.repository.FollowRepository;
 import com.example.yenanow.users.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -83,5 +91,31 @@ public class FollowServiceImpl implements FollowService {
         User toUser = UuidUtil.getUserByUuid(userRepository, followingUuid);
 
         return followRepository.existsByFromUserAndToUser(fromUser, toUser);
+    }
+
+    @Override
+    public FollowingResponse getFollowings(String userUuid, String currentUserUuid,
+        int pageNum, int display) {
+        Pageable pageable = PageRequest.of(pageNum, display);
+        Page<FollowingResponseItem> page = followRepository
+            .findFollowings(userUuid, currentUserUuid, pageable);
+
+        return FollowingResponse.builder()
+            .totalPages(page.getTotalPages())
+            .followings(page.getContent())
+            .build();
+    }
+
+    @Override
+    public FollowerResponse getFollowers(String userUuid, String currentUserUuid,
+        int pageNum, int display) {
+        Pageable pageable = PageRequest.of(pageNum, display);
+        Page<FollowerResponseItem> page = followRepository
+            .findFollowers(userUuid, currentUserUuid, pageable);
+
+        return FollowerResponse.builder()
+            .totalPages(page.getTotalPages())
+            .followers(page.getContent())
+            .build();
     }
 }
