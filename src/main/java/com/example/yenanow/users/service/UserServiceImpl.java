@@ -133,6 +133,11 @@ public class UserServiceImpl implements UserService {
             throw new BusinessException(ErrorCode.BAD_REQUEST); // 400
         }
 
+        // 비밀번호의 길이가 8자리 이상 16자리 이하가 아니면
+        if (newPassword.length() < 8 || newPassword.length() > 16) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST); // 400
+        }
+
         user.setPassword(encoder.encode(newPassword));
     }
 
@@ -173,6 +178,11 @@ public class UserServiceImpl implements UserService {
             }
         }
         if (request.getPhoneNumber() != null) {
+            boolean isValid = request.getPhoneNumber()
+                .matches("^01(?:0|1|[6-9])-(?:\\d{3}|\\d{4})-\\d{4}$");
+            if (!isValid) {
+                throw new BusinessException(ErrorCode.BAD_REQUEST);
+            } // 전화번호 형식 검증 - 추후 Google libphonenumber 라이브러리 등 라이브러리 사용 가능
             user.setPhoneNumber(request.getPhoneNumber());
         }
     }
