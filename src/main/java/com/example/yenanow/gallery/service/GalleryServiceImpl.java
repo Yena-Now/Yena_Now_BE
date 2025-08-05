@@ -31,6 +31,8 @@ import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
 @RequiredArgsConstructor
@@ -157,7 +159,21 @@ public class GalleryServiceImpl implements GalleryService {
         if (!ncut.getUser().getUserUuid().equals(userUuid)) {
             throw new BusinessException(ErrorCode.PERMISSION_DENIED);
         }
+
         ncutRepository.delete(ncut);
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                String userKey = "user:" + userUuid;
+                Integer totalCut = UuidUtil.incrementCounter(redisTemplate, userKey, "total_cut",
+                    -1).intValue();
+                ncutCountSyncService.syncTotalCutToDB(userUuid, totalCut);
+
+                String ncutKey = "ncut:" + ncutUuid;
+                redisTemplate.delete(ncutKey);
+            }
+        });
     }
 
     @Override

@@ -4,6 +4,8 @@ import com.example.yenanow.common.exception.BusinessException;
 import com.example.yenanow.common.exception.ErrorCode;
 import com.example.yenanow.gallery.entity.Ncut;
 import com.example.yenanow.gallery.repository.NcutRepository;
+import com.example.yenanow.users.entity.User;
+import com.example.yenanow.users.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
@@ -15,7 +17,16 @@ import org.springframework.stereotype.Service;
 @EnableAsync
 public class NcutCountSyncService {
 
+    private final UserRepository userRepository;
     private final NcutRepository ncutRepository;
+
+    @Async
+    @Transactional
+    public void syncTotalCutToDB(String userUuid, Integer totalCut) {
+        User user = userRepository.findById(userUuid).orElseThrow(() -> new BusinessException(
+            ErrorCode.NOT_FOUND_NCUT));
+        user.setTotalCut(totalCut);
+    }
 
     @Async
     @Transactional
