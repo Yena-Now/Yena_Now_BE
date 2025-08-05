@@ -13,13 +13,13 @@ import lombok.NoArgsConstructor;
 public class NcutRankingResponse {
 
     private String ncutUuid;
-    private String thumbnailUrl;
+    private String ncutUrl;
     private int likeCount;
 
     public static NcutRankingResponse fromEntity(Ncut ncut) {
         return NcutRankingResponse.builder()
             .ncutUuid(ncut.getNcutUuid())
-            .thumbnailUrl(ncut.getThumbnailUrl())
+            .ncutUrl(ncut.getNcutUrl())
             .likeCount(ncut.getLikeCount())
             .build();
     }
