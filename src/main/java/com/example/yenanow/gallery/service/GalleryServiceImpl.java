@@ -247,14 +247,21 @@ public class GalleryServiceImpl implements GalleryService {
             .build();
         ncutLikeRepository.save(ncutLike);
 
-        String key = "ncut:" + ncutUuid;
-        Integer likeCount = UuidUtil.incrementCounter(redisTemplate, key, "like_count", 1)
-            .intValue();
-        ncutCountSyncService.syncLikeCountToDB(ncutUuid, likeCount);
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                String key = "ncut:" + ncutUuid;
+                Integer likeCount = UuidUtil.incrementCounter(redisTemplate, key, "like_count", 1)
+                    .intValue();
+                ncutCountSyncService.syncLikeCountToDB(ncutUuid, likeCount);
+            }
+        });
+
+        long currentLikeCount = ncutLikeRepository.countByNcutNcutUuid(ncutUuid);
 
         return NcutLikeResponse.builder()
             .isLiked(true)
-            .likeCount(likeCount)
+            .likeCount((int) currentLikeCount)
             .build();
     }
 
@@ -265,14 +272,21 @@ public class GalleryServiceImpl implements GalleryService {
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
         ncutLikeRepository.delete(ncutLike);
 
-        String key = "ncut:" + ncutUuid;
-        Integer likeCount = UuidUtil.incrementCounter(redisTemplate, key, "like_count", -1)
-            .intValue();
-        ncutCountSyncService.syncLikeCountToDB(ncutUuid, likeCount);
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                String key = "ncut:" + ncutUuid;
+                Integer likeCount = UuidUtil.incrementCounter(redisTemplate, key, "like_count", -1)
+                    .intValue();
+                ncutCountSyncService.syncLikeCountToDB(ncutUuid, likeCount);
+            }
+        });
+
+        long currentLikeCount = ncutLikeRepository.countByNcutNcutUuid(ncutUuid);
 
         return NcutLikeResponse.builder()
             .isLiked(false)
-            .likeCount(likeCount)
+            .likeCount((int) currentLikeCount)
             .build();
     }
 

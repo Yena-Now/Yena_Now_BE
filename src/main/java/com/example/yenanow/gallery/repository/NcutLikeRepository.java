@@ -10,4 +10,6 @@ public interface NcutLikeRepository extends JpaRepository<NcutLike, String>,
     boolean existsByNcutNcutUuidAndUserUserUuid(String ncutUuid, String userUuid);
 
     Optional<NcutLike> findByNcutNcutUuidAndUserUserUuid(String ncutUuid, String userUuid);
+
+    long countByNcutNcutUuid(String ncutUuid);
 }
