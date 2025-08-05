@@ -45,7 +45,10 @@ public enum ErrorCode {
     NOT_FOUND_STICKER(HttpStatus.NOT_FOUND, "해당 스티커를 찾을 수 없습니다."),
 
     // RELAY DOMAIN
-    NOT_FOUND_RELAY_CUT(HttpStatus.NOT_FOUND, "해당 릴레이 컷을 찾을 수 없습니다.");
+    NOT_FOUND_RELAY_CUT(HttpStatus.NOT_FOUND, "해당 릴레이 컷을 찾을 수 없습니다."),
+
+    // S3 DOMAIN
+    S3_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "S3 객체 삭제에 실패했습니다.");
 
     private final HttpStatus status;
     private final String message;
