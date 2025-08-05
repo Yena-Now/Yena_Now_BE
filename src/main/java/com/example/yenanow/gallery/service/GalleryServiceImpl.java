@@ -2,19 +2,37 @@ package com.example.yenanow.gallery.service;
 
 import com.example.yenanow.common.exception.BusinessException;
 import com.example.yenanow.common.exception.ErrorCode;
+import com.example.yenanow.common.util.UuidUtil;
+import com.example.yenanow.gallery.dto.request.UpdateNcutContentRequest;
+import com.example.yenanow.gallery.dto.request.UpdateNcutVisibilityRequest;
 import com.example.yenanow.gallery.dto.response.MyGalleryResponse;
+import com.example.yenanow.gallery.dto.response.NcutDetailResponse;
+import com.example.yenanow.gallery.dto.response.NcutLikeResponse;
+import com.example.yenanow.gallery.dto.response.NcutLikesResponse;
+import com.example.yenanow.gallery.dto.response.NcutLikesResponseItem;
+import com.example.yenanow.gallery.dto.response.UpdateNcutContentResponse;
+import com.example.yenanow.gallery.dto.response.UpdateNcutVisibilityResponse;
 import com.example.yenanow.gallery.entity.Ncut;
+import com.example.yenanow.gallery.entity.NcutLike;
 import com.example.yenanow.gallery.entity.Visibility;
+import com.example.yenanow.gallery.repository.NcutLikeRepository;
 import com.example.yenanow.gallery.repository.NcutRepository;
-import com.example.yenanow.users.repository.FollowQueryRepository;
+import com.example.yenanow.users.entity.User;
 import com.example.yenanow.users.repository.FollowRepository;
+import com.example.yenanow.users.repository.UserRepository;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.HashOperations;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
 @RequiredArgsConstructor
@@ -22,7 +40,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class GalleryServiceImpl implements GalleryService {
 
     private final NcutRepository ncutRepository;
+    private final NcutLikeRepository ncutLikeRepository;
     private final FollowRepository followRepository;
+    private final UserRepository userRepository;
+    private final StringRedisTemplate redisTemplate;
+    private final NcutCountSyncService ncutCountSyncService;
 
     @Override
     public MyGalleryResponse getMyGallery(String userUuid, int pageNum, int display) {
@@ -40,7 +62,7 @@ public class GalleryServiceImpl implements GalleryService {
         }
         return MyGalleryResponse.fromEntity(ncutPage);
     }
-    
+
     @Override
     public MyGalleryResponse getOtherGallery(String userUuid, int pageNum, int display) {
         validateUserUuid(userUuid);
@@ -99,6 +121,176 @@ public class GalleryServiceImpl implements GalleryService {
                 .build();
         }
         return MyGalleryResponse.fromEntityWithUser(ncutPage);
+    }
+
+    @Override
+    public NcutDetailResponse getNcut(String userUuid, String ncutUuid) {
+        NcutDetailResponse ncutDetailResponse = ncutRepository.findNcutById(ncutUuid)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_NCUT));
+
+        HashOperations<String, String, Object> hashOps = redisTemplate.opsForHash();
+        String key = "ncut:" + ncutUuid;
+        Map<String, Object> ncutData = hashOps.entries(key);
+        Object likeValue = ncutData.get("like_count");
+        Object commentValue = ncutData.get("comment_count");
+        Integer likeCount = (likeValue != null) ? Integer.parseInt(likeValue.toString()) : 0;
+        Integer commentCount =
+            (commentValue != null) ? Integer.parseInt(commentValue.toString()) : 0;
+        Boolean isMine = ncutDetailResponse.getUserUuid().equals(userUuid);
+
+        return NcutDetailResponse.builder()
+            .ncutUuid(ncutDetailResponse.getNcutUuid())
+            .ncutUrl(ncutDetailResponse.getNcutUrl())
+            .userUuid(ncutDetailResponse.getUserUuid())
+            .nickname(ncutDetailResponse.getNickname())
+            .profileUrl(ncutDetailResponse.getProfileUrl())
+            .content(ncutDetailResponse.getContent())
+            .createdAt(ncutDetailResponse.getCreatedAt())
+            .isRelay(ncutDetailResponse.getIsRelay())
+            .visibility(ncutDetailResponse.getVisibility())
+            .likeCount(likeCount)
+            .commentCount(commentCount)
+            .isMine(isMine)
+            .build();
+    }
+
+    @Override
+    @Transactional
+    public void deleteNcut(String userUuid, String ncutUuid) {
+        Ncut ncut = ncutRepository.findById(ncutUuid)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_NCUT));
+        if (!ncut.getUser().getUserUuid().equals(userUuid)) {
+            throw new BusinessException(ErrorCode.PERMISSION_DENIED);
+        }
+
+        ncutRepository.delete(ncut);
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                String userKey = "user:" + userUuid;
+                Integer totalCut = UuidUtil.incrementCounter(redisTemplate, userKey, "total_cut",
+                    -1).intValue();
+                ncutCountSyncService.syncTotalCutToDB(userUuid, totalCut);
+
+                String ncutKey = "ncut:" + ncutUuid;
+                redisTemplate.delete(ncutKey);
+            }
+        });
+    }
+
+    @Override
+    @Transactional
+    public UpdateNcutContentResponse updateNcutContent(String userUuid, String ncutUuid,
+        UpdateNcutContentRequest updateNcutContentRequest) {
+        Ncut ncut = ncutRepository.findById(ncutUuid)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_NCUT));
+        if (!ncut.getUser().getUserUuid().equals(userUuid)) {
+            throw new BusinessException(ErrorCode.PERMISSION_DENIED);
+        }
+        ncut.setContent(updateNcutContentRequest.getContent());
+
+        return UpdateNcutContentResponse.builder()
+            .ncutUuid(ncut.getNcutUuid())
+            .content(ncut.getContent())
+            .updatedAt(LocalDateTime.now())
+            .build();
+    }
+
+    @Override
+    @Transactional
+    public UpdateNcutVisibilityResponse updateNcutVisibility(String userUuid, String ncutUuid,
+        UpdateNcutVisibilityRequest updateNcutVisibilityRequest) {
+        Ncut ncut = ncutRepository.findById(ncutUuid)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_NCUT));
+        if (!ncut.getUser().getUserUuid().equals(userUuid)) {
+            throw new BusinessException(ErrorCode.PERMISSION_DENIED);
+        }
+        ncut.setVisibility(updateNcutVisibilityRequest.getVisibility());
+
+        return UpdateNcutVisibilityResponse.builder()
+            .ncutUuid(ncut.getNcutUuid())
+            .visibility(ncut.getVisibility())
+            .updatedAt(LocalDateTime.now())
+            .build();
+    }
+
+    @Override
+    public NcutLikesResponse getNcutLikes(String userUuid, String ncutUuid, int pageNum,
+        int display) {
+        boolean isLiked = ncutLikeRepository.existsByNcutNcutUuidAndUserUserUuid(ncutUuid,
+            userUuid);
+        Pageable pageable = PageRequest.of(pageNum, display);
+        Page<NcutLikesResponseItem> ncutLikesResponseItem = ncutLikeRepository.findNcutLikeByNcutUuid(
+            ncutUuid, pageable).orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+
+        return NcutLikesResponse.builder()
+            .isLiked(isLiked)
+            .likeCount(Long.valueOf(ncutLikesResponseItem.getTotalElements()).intValue())
+            .likes(ncutLikesResponseItem.getContent())
+            .build();
+    }
+
+    @Override
+    @Transactional
+    public NcutLikeResponse createNcutLike(String userUuid, String ncutUuid) {
+        if (!ncutRepository.existsById(ncutUuid)) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_NCUT);
+        }
+
+        if (ncutLikeRepository.existsByNcutNcutUuidAndUserUserUuid(ncutUuid, userUuid)) {
+            throw new BusinessException(ErrorCode.ALREADY_EXISTS);
+        }
+
+        Ncut ncutProxy = ncutRepository.getReferenceById(ncutUuid);
+        User userProxy = userRepository.getReferenceById(userUuid);
+        NcutLike ncutLike = NcutLike.builder()
+            .ncut(ncutProxy)
+            .user(userProxy)
+            .build();
+        ncutLikeRepository.save(ncutLike);
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                String key = "ncut:" + ncutUuid;
+                Integer likeCount = UuidUtil.incrementCounter(redisTemplate, key, "like_count", 1)
+                    .intValue();
+                ncutCountSyncService.syncLikeCountToDB(ncutUuid, likeCount);
+            }
+        });
+
+        long currentLikeCount = ncutLikeRepository.countByNcutNcutUuid(ncutUuid);
+
+        return NcutLikeResponse.builder()
+            .isLiked(true)
+            .likeCount((int) currentLikeCount)
+            .build();
+    }
+
+    @Override
+    @Transactional
+    public NcutLikeResponse deleteNcutLike(String userUuid, String ncutUuid) {
+        NcutLike ncutLike = ncutLikeRepository.findByNcutNcutUuidAndUserUserUuid(ncutUuid, userUuid)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+        ncutLikeRepository.delete(ncutLike);
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                String key = "ncut:" + ncutUuid;
+                Integer likeCount = UuidUtil.incrementCounter(redisTemplate, key, "like_count", -1)
+                    .intValue();
+                ncutCountSyncService.syncLikeCountToDB(ncutUuid, likeCount);
+            }
+        });
+
+        long currentLikeCount = ncutLikeRepository.countByNcutNcutUuid(ncutUuid);
+
+        return NcutLikeResponse.builder()
+            .isLiked(false)
+            .likeCount((int) currentLikeCount)
+            .build();
     }
 
     private void validateUserUuid(String userUuid) {
