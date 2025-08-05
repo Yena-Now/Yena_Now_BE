@@ -16,10 +16,12 @@ public class NcutRankingQueryRepositoryImpl implements NcutRankingQueryRepositor
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public List<Ncut> findRankingByPeriod(Visibility visibility,
+    public List<Ncut> findRankingByPeriod(
+        Visibility visibility,
         LocalDateTime start,
         LocalDateTime end,
-        int limit) {
+        int limit
+    ) {
 
         QNcut ncut = QNcut.ncut;
 
