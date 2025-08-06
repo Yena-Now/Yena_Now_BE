@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Ranking", description = "N컷 랭킹 API")
 @RestController
-@RequestMapping("/gallery/ranking")   // ← 최종 URL: /gallery/ranking/**
+@RequestMapping("/gallery/ranking")
 @RequiredArgsConstructor
 public class RankingController {
 

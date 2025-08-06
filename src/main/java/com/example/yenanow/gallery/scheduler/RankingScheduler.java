@@ -21,7 +21,7 @@ public class RankingScheduler {
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
     private static final int DAILY_TTL_HOURS = 25;  // 하루 + 여유 1시간
     private static final int WEEKLY_TTL_HOURS = 24 * 8; // 8일
-    private final NcutRankingQueryRepository rankingRepository;
+    private final NcutRankingQueryRepository ncutRankingQueryRepository;
     private final StringRedisTemplate redis;
 
     // 매일 00:01(KST) 실행
@@ -35,12 +35,12 @@ public class RankingScheduler {
         LocalDateTime weeklyEnd = dailyEnd;
 
         cache("ranking:daily_top10",
-            rankingRepository.findRankingByPeriod(
+            ncutRankingQueryRepository.findRankingByPeriod(
                 Visibility.PUBLIC, dailyStart, dailyEnd, 10),
             DAILY_TTL_HOURS);
 
         cache("ranking:weekly_top10",
-            rankingRepository.findRankingByPeriod(
+            ncutRankingQueryRepository.findRankingByPeriod(
                 Visibility.PUBLIC, weeklyStart, weeklyEnd, 10),
             WEEKLY_TTL_HOURS);
     }

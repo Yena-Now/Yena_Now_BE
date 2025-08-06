@@ -21,25 +21,21 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class RankingServiceRedisImpl implements RankingServiceRedis {
 
-    /* ───────── 상수 ───────── */
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
     private static final int LIMIT = 10;
     private static final int DAILY_TTL_HOURS  = 25;     // 하루 +1h
     private static final int WEEKLY_TTL_HOURS = 24 * 8; // 8일
 
-    /* ───────── 의존성 ───────── */
-    private final StringRedisTemplate redis;
+    private final StringRedisTemplate redisTemplate;
     private final NcutRepository ncutRepository;
-    private final NcutRankingQueryRepository rankingRepo;   // Fallback 조회용
-
-    /* ───────── API 진입점 ───────── */
+    private final NcutRankingQueryRepository rankingRepo; // Fallback 조회용
 
     @Override
     public List<NcutRankingResponse> getDailyRanking() {
 
         LocalDate today = LocalDate.now(KST);
-        LocalDateTime start = today.minusDays(1).atStartOfDay();        // 어제 00:00
-        LocalDateTime end   = today.atStartOfDay().minusNanos(1);       // 어제 23:59:59.999
+        LocalDateTime start = today.minusDays(1).atStartOfDay(); // 어제 00:00
+        LocalDateTime end   = today.atStartOfDay().minusNanos(1); // 어제 23:59:59.999
 
         return fetch("ranking:daily_top10", start, end, DAILY_TTL_HOURS);
     }
@@ -48,13 +44,11 @@ public class RankingServiceRedisImpl implements RankingServiceRedis {
     public List<NcutRankingResponse> getWeeklyRanking() {
 
         LocalDate today = LocalDate.now(KST);
-        LocalDateTime start = today.minusDays(7).atStartOfDay();        // 7일 전 00:00
-        LocalDateTime end   = today.atStartOfDay().minusNanos(1);       // 어제 23:59:59.999
+        LocalDateTime start = today.minusDays(7).atStartOfDay(); // 7일 전 00:00
+        LocalDateTime end   = today.atStartOfDay().minusNanos(1); // 어제 23:59:59.999
 
         return fetch("ranking:weekly_top10", start, end, WEEKLY_TTL_HOURS);
     }
-
-    /* ───────── 내부 헬퍼 ───────── */
 
     /**
      * 1) Redis 캐시 조회 → 없으면 2) DB Fallback + Redis 재적재
@@ -65,7 +59,7 @@ public class RankingServiceRedisImpl implements RankingServiceRedis {
         int ttlHours) {
 
         /* 1️⃣ Redis 캐시 시도 */
-        Set<String> uuidSet = redis.opsForZSet()
+        Set<String> uuidSet = redisTemplate.opsForZSet()
             .reverseRange(key, 0, LIMIT - 1);
 
         if (uuidSet != null && !uuidSet.isEmpty()) {
@@ -107,11 +101,11 @@ public class RankingServiceRedisImpl implements RankingServiceRedis {
     /** Redis ZSET에 재적재 + TTL 설정 */
     private void cacheToRedis(String key, List<Ncut> list, int ttlHours) {
 
-        redis.delete(key);
+        redisTemplate.delete(key);
         list.forEach(n ->
-            redis.opsForZSet().add(key, n.getNcutUuid(), n.getLikeCount())
+            redisTemplate.opsForZSet().add(key, n.getNcutUuid(), n.getLikeCount())
         );
-        redis.expire(key, Duration.ofHours(ttlHours));
+        redisTemplate.expire(key, Duration.ofHours(ttlHours));
 
         log.info("⏰  {} 캐시 재적재 완료 ({} 건)", key, list.size());
     }
