@@ -24,8 +24,10 @@ public class Sticker {
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     @Column(name = "sticker_uuid", length = 36, nullable = false)
     private String stickerUuid;
+
     @Column(name = "stickerName", length = 20, nullable = false)
     private String stickerName;
+    
     @Column(name = "stickerUrl", length = 200, nullable = false)
     private String stickerUrl;
 }

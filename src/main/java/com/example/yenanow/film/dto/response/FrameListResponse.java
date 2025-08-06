@@ -13,12 +13,16 @@ public class FrameListResponse {
     private String frameUuid;
     private String frameName;
     private String frameUrl;
+    private Integer frameCut;
+    private Integer frameType;
 
     public static FrameListResponse fromEntity(Frame entity) {
         return FrameListResponse.builder()
             .frameUuid(entity.getFrameUuid())
             .frameName(entity.getFrameName())
             .frameUrl(entity.getFrameUrl())
+            .frameCut(entity.getFrameCut())
+            .frameType(entity.getFrameType())
             .build();
     }
 }
