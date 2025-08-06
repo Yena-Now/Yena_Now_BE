@@ -70,7 +70,7 @@ public class S3Controller {
         @RequestParam String key
     ) {
         if (s3Service.deleteObject(key)) {
-            return ResponseEntity.noContent().build();     // 204
+            return ResponseEntity.noContent().build(); // 204
         }
         throw new BusinessException(ErrorCode.S3_DELETE_FAILED);
     }
