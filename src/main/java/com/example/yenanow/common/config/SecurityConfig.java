@@ -3,6 +3,7 @@ package com.example.yenanow.common.config;
 import com.example.yenanow.auth.oauth.CustomOAuth2UserService;
 import com.example.yenanow.auth.oauth.OAuth2LoginSuccessHandler;
 import com.example.yenanow.common.config.cors.CorsProperties;
+import com.example.yenanow.common.security.CustomAuthenticationEntryPoint;
 import com.example.yenanow.common.security.JwtAuthenticationFilter;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
     private final CorsProperties corsProperties;
@@ -38,6 +40,9 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(
                 session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .exceptionHandling(exception -> exception
+                .authenticationEntryPoint(customAuthenticationEntryPoint)
+            )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     "/v3/api-docs/**",
