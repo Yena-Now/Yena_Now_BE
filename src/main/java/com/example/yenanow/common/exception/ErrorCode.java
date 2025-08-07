@@ -15,6 +15,7 @@ public enum ErrorCode {
     DUPLICATE_SIGNIN_DETECTED(HttpStatus.UNAUTHORIZED, "토큰이 Redis에 저장된 값과 다름"),
     INVALID_SIGNIN(HttpStatus.BAD_REQUEST, "존재하지 않는 사용자 또는 비밀번호 불일치"),
     INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "비밀번호 불일치"),
+    EMPTY_REQUEST_BODY(HttpStatus.BAD_REQUEST, "요청 본문이 비어 있습니다."),
     ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 존재하는 데이터"),
     NOT_FOUND(HttpStatus.NOT_FOUND, "대상 데이터를 찾을 수 없음"),
     BAD_REQUEST(HttpStatus.BAD_REQUEST, "올바르지 않은 요청"),
@@ -49,6 +50,9 @@ public enum ErrorCode {
 
     // S3 DOMAIN
     S3_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "S3 객체 삭제에 실패했습니다.");
+    
+    // RANKING DOMAIN
+    RANKING_NOT_READY(HttpStatus.SERVICE_UNAVAILABLE, "랭킹 갱신 중입니다. 잠시 후 다시 시도해 주세요.");
 
     private final HttpStatus status;
     private final String message;

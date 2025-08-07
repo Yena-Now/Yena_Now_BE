@@ -24,8 +24,16 @@ public class Frame {
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     @Column(name = "frame_uuid", length = 36, nullable = false)
     private String frameUuid;
+
     @Column(name = "frame_name", length = 20, nullable = false)
     private String frameName;
+
     @Column(name = "frame_url", length = 200, nullable = false)
     private String frameUrl;
+
+    @Column(name = "frame_cut", nullable = false)
+    private Integer frameCut;
+
+    @Column(name = "frame_type", nullable = false)
+    private Integer frameType;
 }
