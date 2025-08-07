@@ -1,19 +1,20 @@
 package com.example.yenanow.gallery.repository;
 
+import com.example.yenanow.gallery.dto.response.NcutDetailResponse;
 import com.example.yenanow.gallery.entity.Ncut;
 import com.example.yenanow.gallery.entity.QNcut;
 import com.example.yenanow.gallery.entity.Visibility;
 import com.example.yenanow.users.entity.QUser;
+import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-@Repository
 @RequiredArgsConstructor
 public class NcutQueryRepositoryImpl implements NcutQueryRepository {
 
@@ -76,5 +77,28 @@ public class NcutQueryRepositoryImpl implements NcutQueryRepository {
             .set(ncut.commentCount, commentCount)
             .where(ncut.ncutUuid.eq(ncutUuid))
             .execute();
+    }
+
+    @Override
+    public Optional<NcutDetailResponse> findNcutById(String ncutUuid) {
+        QNcut ncut = QNcut.ncut;
+        NcutDetailResponse ncutDetailResponse = queryFactory
+            .select(
+                Projections.fields(NcutDetailResponse.class,
+                    ncut.ncutUrl,
+                    ncut.user.userUuid,
+                    ncut.user.nickname,
+                    ncut.user.profileUrl,
+                    ncut.content,
+                    ncut.createdAt,
+                    ncut.isRelay,
+                    ncut.visibility
+                )
+            )
+            .from(ncut)
+            .where(ncut.ncutUuid.eq(ncutUuid))
+            .fetchOne();
+
+        return Optional.ofNullable(ncutDetailResponse);
     }
 }

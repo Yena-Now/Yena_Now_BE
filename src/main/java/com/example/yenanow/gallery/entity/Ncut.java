@@ -1,6 +1,8 @@
 package com.example.yenanow.gallery.entity;
 
+import com.example.yenanow.comment.entity.Comment;
 import com.example.yenanow.users.entity.User;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -11,10 +13,12 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -30,7 +34,6 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @NoArgsConstructor
 @AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-@Builder
 public class Ncut {
 
     @Id
@@ -73,4 +76,7 @@ public class Ncut {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_uuid")  // referencedColumnName 제거
     private User user;
+
+    @OneToMany(mappedBy = "ncut", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Comment> comments = new ArrayList<>();
 }

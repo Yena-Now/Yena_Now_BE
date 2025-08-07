@@ -28,11 +28,14 @@ public class UuidUtil {
     /**
      * Redis 카운트 증감 (0 미만 방지)
      */
-    public static void incrementCounter(StringRedisTemplate redisTemplate, String key, String field,
+    public static Long incrementCounter(StringRedisTemplate redisTemplate, String key, String field,
         int delta) {
         Long newValue = redisTemplate.opsForHash().increment(key, field, delta);
         if (newValue != null && newValue < 0) {
             redisTemplate.opsForHash().put(key, field, "0");
+            newValue = 0L;
         }
+
+        return newValue;
     }
 }
