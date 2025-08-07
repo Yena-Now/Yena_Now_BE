@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface FollowRepository extends JpaRepository<Follow, String> {
+public interface FollowRepository extends JpaRepository<Follow, String>, FollowQueryRepository {
 
     // 특정 팔로우 관계가 존재하는지 여부 확인
     boolean existsByFromUserAndToUser(User fromUser, User toUser);

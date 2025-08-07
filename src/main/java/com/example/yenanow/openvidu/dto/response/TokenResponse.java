@@ -1,5 +1,6 @@
 package com.example.yenanow.openvidu.dto.response;
 
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -8,8 +9,9 @@ import lombok.Getter;
 public class TokenResponse {
 
     String token;
-    String backgoundUrl;
+    String backgroundUrl;
     Integer takeCnt;
     Integer cutCnt;
     Integer timeLimit;
+    List<String> cuts;
 }
