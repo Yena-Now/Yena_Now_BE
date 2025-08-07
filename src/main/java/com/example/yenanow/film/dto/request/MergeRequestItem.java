@@ -10,4 +10,5 @@ import lombok.NoArgsConstructor;
 public class MergeRequestItem {
 
     private String contentUrl;
+    private Integer order;
 }

@@ -24,5 +24,4 @@ public class FfmpegController {
         @RequestBody MergeRequest mergeRequest) {
         return ResponseEntity.ok(filmService.createMergedOutput(mergeRequest));
     }
-
 }

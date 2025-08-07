@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class MergeRequest {
 
+    private String roomCode;
     private String frameUuid;
     private List<MergeRequestItem> contentUrls;
 }

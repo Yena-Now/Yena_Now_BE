@@ -6,6 +6,7 @@ import com.example.yenanow.film.dto.response.FrameListResponse;
 import com.example.yenanow.film.dto.response.MergeResponse;
 import com.example.yenanow.film.dto.response.StickerListResponse;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import org.springframework.data.domain.Pageable;
 
 
@@ -18,4 +19,6 @@ public interface FilmService {
     List<BackgroundListResponse> getBackgrounds();
 
     MergeResponse createMergedOutput(MergeRequest request);
+
+    CompletableFuture<MergeResponse> createMergedOutputAsync(MergeRequest request);
 }
