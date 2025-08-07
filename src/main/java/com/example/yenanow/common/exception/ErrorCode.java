@@ -12,7 +12,6 @@ public enum ErrorCode {
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "토큰을 찾을 수 없거나 형식이 잘못됨"),
     INVALID_ACCESS_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 액세스 토큰"),
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 리프레시 토큰"),
-    DUPLICATE_SIGNIN_DETECTED(HttpStatus.UNAUTHORIZED, "토큰이 Redis에 저장된 값과 다름"),
     INVALID_SIGNIN(HttpStatus.BAD_REQUEST, "존재하지 않는 사용자 또는 비밀번호 불일치"),
     INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "비밀번호 불일치"),
     EMPTY_REQUEST_BODY(HttpStatus.BAD_REQUEST, "요청 본문이 비어 있습니다."),
@@ -27,6 +26,8 @@ public enum ErrorCode {
     // USERS DOMAIN
     NOT_FOUND_USER(HttpStatus.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."),
     NOT_FOUND_USER_PROFILE(HttpStatus.NOT_FOUND, "프로필 URL을 수정할 사용자를 찾을 수 없습니다."),
+    ALREADY_EXISTS_NICKNAME(HttpStatus.CONFLICT, "이미 존재하는 닉네임"),
+
 
     // NCUT DOMAIN
     NOT_FOUND_NCUT(HttpStatus.NOT_FOUND, "해당 NCUT을 찾을 수 없습니다."),

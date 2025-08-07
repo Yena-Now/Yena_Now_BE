@@ -56,10 +56,14 @@ public class UserServiceImpl implements UserService {
 
     @Transactional
     @Override
-    public SignupResponse createUser(SignupRequest dto) {
+    public SignupResponse createUser(SignupRequest signupRequest) {
+
+        if (userRepository.existsByNickname(signupRequest.getNickname())) {
+            throw new BusinessException(ErrorCode.ALREADY_EXISTS_NICKNAME);
+        }
 
         /* 1) 프로필 업로드 여부 판별 */
-        boolean hasProfile = dto.getProfileUrl() != null && !dto.getProfileUrl().isBlank();
+        boolean hasProfile = signupRequest.getProfileUrl() != null && !signupRequest.getProfileUrl().isBlank();
 
         /* 2) UUID 선생성 */
         String userUuid = UUID.randomUUID().toString();
@@ -67,7 +71,7 @@ public class UserServiceImpl implements UserService {
 
         if (hasProfile) {
             /* 2-a) temp URL → Key */
-            String tempKey = s3KeyFactory.extractKeyFromUrl(dto.getProfileUrl());
+            String tempKey = s3KeyFactory.extractKeyFromUrl(signupRequest.getProfileUrl());
 
             /* 2-b) 확장자 추출 (png, jpg 등) */
             String ext = org.apache.commons.io.FilenameUtils.getExtension(tempKey);
@@ -81,7 +85,7 @@ public class UserServiceImpl implements UserService {
         }
 
         /* 3) 엔티티 생성 및 저장 */
-        User user = dto.toEntity();
+        User user = signupRequest.toEntity();
         user.setUserUuid(userUuid);
         user.setProfileUrl(finalKey);      // null 또는 최종 Key
         user.encodePassword(encoder);
