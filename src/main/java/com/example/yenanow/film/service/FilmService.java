@@ -18,7 +18,7 @@ public interface FilmService {
 
     List<BackgroundListResponse> getBackgrounds();
 
-    MergeResponse createMergedOutput(MergeRequest request);
+    MergeResponse createMergedOutput(MergeRequest request, String userUuid);
 
-    CompletableFuture<MergeResponse> createMergedOutputAsync(MergeRequest request);
+    CompletableFuture<MergeResponse> createMergedOutputAsync(MergeRequest request, String userUuid);
 }

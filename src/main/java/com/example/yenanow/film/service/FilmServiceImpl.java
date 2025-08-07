@@ -14,10 +14,9 @@ import com.example.yenanow.film.entity.Sticker;
 import com.example.yenanow.film.repository.BackgroundRepository;
 import com.example.yenanow.film.repository.FrameRepository;
 import com.example.yenanow.film.repository.StickerRepository;
+import com.example.yenanow.s3.util.S3KeyFactory;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -47,11 +46,11 @@ public class FilmServiceImpl implements FilmService {
     private final StickerRepository stickerRepository;
     private final BackgroundRepository backgroundRepository;
     private final S3Client s3Client;
+    private final S3KeyFactory s3KeyFactory;
 
     @Value("${AWS_S3_BUCKET}")
     private String bucketName;
 
-    // ... getFrames, getStickers, getBackgrounds, createMergedOutputAsync 메서드는 동일 ...
     @Override
     public List<FrameListResponse> getFrames(int frameCut) {
         return frameRepository.findByFrameCut(frameCut).stream()
@@ -79,13 +78,14 @@ public class FilmServiceImpl implements FilmService {
 
     @Async
     @Override
-    public CompletableFuture<MergeResponse> createMergedOutputAsync(MergeRequest request) {
-        MergeResponse response = createMergedOutput(request);
+    public CompletableFuture<MergeResponse> createMergedOutputAsync(MergeRequest request,
+        String userUuid) {
+        MergeResponse response = createMergedOutput(request, userUuid);
         return CompletableFuture.completedFuture(response);
     }
 
     @Override
-    public MergeResponse createMergedOutput(MergeRequest request) {
+    public MergeResponse createMergedOutput(MergeRequest request, String userUuid) {
         String frameUuid = request.getFrameUuid();
         List<MergeRequestItem> contentUrls = request.getContentUrls();
 
@@ -106,25 +106,21 @@ public class FilmServiceImpl implements FilmService {
 
         try {
             String frameKey = frame.getFrameUrl();
-            String frameS3Uri = "s3://" + bucketName + "/" + frameKey;
-            String framePath = downloadFromS3(frameS3Uri, "frame", tempDirPath);
+            String framePath = downloadFromS3(bucketName, frameKey, "frame", tempDirPath);
 
             List<String> cutPaths = new ArrayList<>();
             for (int i = 0; i < contentUrls.size(); i++) {
                 String httpUrlString = contentUrls.get(i).getContentUrl();
-                java.net.URL url = new java.net.URL(httpUrlString);
-                String host = url.getHost();
-                String parsedBucket = host.substring(0, host.indexOf(".s3."));
-                String parsedKey = url.getPath().substring(1);
-                String cutS3Uri = "s3://" + parsedBucket + "/" + parsedKey;
-                cutPaths.add(downloadFromS3(cutS3Uri, "cut" + i, tempDirPath));
+                String cutKey = s3KeyFactory.extractKeyFromUrl(httpUrlString);
+                cutPaths.add(downloadFromS3(bucketName, cutKey, "cut" + i, tempDirPath));
             }
 
             boolean containsVideo = cutPaths.stream()
                 .anyMatch(path -> path.endsWith(".mp4") || path.endsWith(".mov") || path.endsWith(
                     ".webm"));
             String ext = containsVideo ? "mp4" : "jpg";
-            String outputPath = tempDirPath + File.separator + "output." + ext;
+            String outputFileName = "output." + ext;
+            String outputPath = tempDirPath + File.separator + outputFileName;
 
             ProcessBuilder ffmpegBuilder = buildFfmpegCommand(framePath, cutPaths, coordinates,
                 outputPath, containsVideo);
@@ -134,33 +130,34 @@ public class FilmServiceImpl implements FilmService {
             try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(process.getInputStream()))) {
                 String line;
-                while ((line = reader.readLine()) != null) {
-                    log.debug("FFMPEG LOG ({}): {}", uniqueId, line); // 버퍼를 비워줘야 함
+                while ((line = reader.readLine()) != null) { // 버퍼를 비워줘야 함
+                    log.debug("FFMPEG LOG ({}): {}", uniqueId, line);
                 }
             }
 
             int exitCode = process.waitFor();
 
             if (exitCode != 0) {
-                System.err.println("FFmpeg process exited with error code: " + exitCode);
+                log.error("FFmpeg process exited with error code: {}", exitCode);
                 throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
             }
 
-            String objectKey = "merged/output-" + UUID.randomUUID() + "." + ext;
+            String objectKey = s3KeyFactory.createKey("ncut", outputFileName, userUuid, null);
             String contentType = containsVideo ? "video/mp4" : "image/jpeg";
             String resultS3Url = uploadToS3(outputPath, objectKey, contentType);
 
             return new MergeResponse(resultS3Url);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("N컷 합성 중 오류가 발생했습니다", e);
             throw new RuntimeException(e.getMessage());
         } finally {
-            // 작업 성공/실패 여부와 관계없이 항상 임시 폴더 삭제
+            // 항상 임시 폴더 삭제
             deleteDirectory(tempDir);
         }
     }
 
+    // 프레임 컷 수, 프레임 타입으로 각 컷 배치할 좌표 구하는 메서드
     public List<Map<Integer, Integer>> getCoordinate(int frameCut, int frameType) {
         List<Map<Integer, Integer>> coordinates = new ArrayList<>();
 
@@ -325,12 +322,18 @@ public class FilmServiceImpl implements FilmService {
         return coordinates;
     }
 
-    private ProcessBuilder buildFfmpegCommand(String framePath, List<String> cutPaths,
-        List<Map<Integer, Integer>> positions, String outputPath, boolean containsVideo) {
+    // FFmpeg 명령어 반환 메서드
+    private ProcessBuilder buildFfmpegCommand(
+        String framePath,
+        List<String> cutPaths,
+        List<Map<Integer, Integer>> positions,
+        String outputPath,
+        boolean containsVideo) {
 
         List<String> command = new ArrayList<>();
         command.add("ffmpeg");
 
+        // FFmpeg는 입력 순서에 따라 [0:v], [1:v], [2:v], .. 와 같이 스트림을 식별
         command.add("-i");
         command.add(framePath);
         for (String cut : cutPaths) {
@@ -338,13 +341,17 @@ public class FilmServiceImpl implements FilmService {
             command.add(cut);
         }
 
+        // 각 컷([1:v], [2:v], ...)을 640x480로 크기 조절 후 임시 이름 부여(v0, v1, ...)
         StringBuilder filter = new StringBuilder();
         for (int i = 0; i < cutPaths.size(); i++) {
             filter.append("[").append(i + 1).append(":v]scale=640:480[v").append(i).append("];");
         }
+
+        // 프레임([0:v]) 위에 컷(v0)을 겹치고 그 위에 다시 다음 컷(v1)을 겹치는 과정을 반복
         String lastOutput = "[0:v]";
         for (int i = 0; i < cutPaths.size(); i++) {
             String currentOverlayInput = "[v" + i + "]";
+            // 최종 결과 스트림의 이름을 [out]으로 지정
             String nextOutput = (i == cutPaths.size() - 1) ? "[out]" : "[bg" + i + "]";
             filter.append(lastOutput).append(currentOverlayInput)
                 .append("overlay=").append(getX(positions.get(i))).append(":")
@@ -352,16 +359,21 @@ public class FilmServiceImpl implements FilmService {
                 .append(nextOutput).append(";");
             lastOutput = nextOutput;
         }
+
+        // 불필요한 세미콜론 제ㅐ거
         if (filter.length() > 0) {
             filter.setLength(filter.length() - 1);
         }
 
+        // 생성된 필터 그래프를 FFmpeg 명령어에 추가
         command.add("-filter_complex");
         command.add(filter.toString());
 
+        // 최종 출력물로 사용할 스트림을 지정 (여기선 [out])
         command.add("-map");
         command.add("[out]");
 
+        // 비디오 포함 여부에 따라 인코딩 옵션을 다르게 설정
         if (containsVideo) {
             command.add("-c:v");
             command.add("libx264");
@@ -372,6 +384,7 @@ public class FilmServiceImpl implements FilmService {
             command.add("1");
         }
 
+        // 동일 output 파일 있으면 그냥 덮어쓰도록 -y옵션
         command.add("-y");
         command.add(outputPath);
 
@@ -387,26 +400,16 @@ public class FilmServiceImpl implements FilmService {
     }
 
 
-    private String downloadFromS3(String s3Url, String fileName, String tempDirPath) {
-        String bucket = extractBucket(s3Url);
-        String key = extractKey(s3Url);
-        String ext = extractExt(s3Url);
-
-        File file = new File(tempDirPath, fileName + ext); // 생성자 인자 활용
-        file.getParentFile().mkdirs();
-
-        var responseBytes = s3Client.getObject(GetObjectRequest.builder()
-                .bucket(bucket)
-                .key(key)
-                .build(),
-            ResponseTransformer.toBytes());
-
-        try (FileOutputStream fos = new FileOutputStream(file)) {
-            fos.write(responseBytes.asByteArray());
-        } catch (IOException e) {
-            throw new RuntimeException("파일 저장 실패", e);
+    private String downloadFromS3(String bucket, String key, String fileName, String tempDirPath) {
+        String ext = "";
+        int lastDot = key.lastIndexOf('.');
+        if (lastDot >= 0) {
+            ext = key.substring(lastDot);
         }
 
+        File file = new File(tempDirPath, fileName + ext);
+        s3Client.getObject(GetObjectRequest.builder().bucket(bucket).key(key).build(),
+            ResponseTransformer.toFile(file));
         return file.getAbsolutePath();
     }
 
@@ -426,37 +429,37 @@ public class FilmServiceImpl implements FilmService {
         return objectUrl;
     }
 
-    private String extractBucket(String s3Url) {
-        if (!s3Url.startsWith("s3://")) {
-            throw new IllegalArgumentException("Invalid S3 URL format");
-        }
-        String withoutPrefix = s3Url.substring(5);
-        return withoutPrefix.substring(0, withoutPrefix.indexOf('/'));
-    }
-
-    private String extractKey(String s3Url) {
-        if (!s3Url.startsWith("s3://")) {
-            throw new IllegalArgumentException("Invalid S3 URL format");
-        }
-        String withoutPrefix = s3Url.substring(5);
-        return withoutPrefix.substring(withoutPrefix.indexOf('/') + 1);
-    }
-
-    private String extractExt(String s3Url) {
-        if (!s3Url.startsWith("s3://")) {
-            throw new IllegalArgumentException("Invalid S3 URL format");
-        }
-
-        String[] parts = s3Url.split("/");
-        String fileName = parts[parts.length - 1];
-
-        int lastDot = fileName.lastIndexOf(".");
-        if (lastDot == -1 || lastDot == fileName.length() - 1) {
-            throw new IllegalArgumentException("File has no extension: " + fileName);
-        }
-
-        return fileName.substring(lastDot);
-    }
+//    private String extractBucket(String s3Url) {
+//        if (!s3Url.startsWith("s3://")) {
+//            throw new IllegalArgumentException("Invalid S3 URL format");
+//        }
+//        String withoutPrefix = s3Url.substring(5);
+//        return withoutPrefix.substring(0, withoutPrefix.indexOf('/'));
+//    }
+//
+//    private String extractKey(String s3Url) {
+//        if (!s3Url.startsWith("s3://")) {
+//            throw new IllegalArgumentException("Invalid S3 URL format");
+//        }
+//        String withoutPrefix = s3Url.substring(5);
+//        return withoutPrefix.substring(withoutPrefix.indexOf('/') + 1);
+//    }
+//
+//    private String extractExt(String s3Url) {
+//        if (!s3Url.startsWith("s3://")) {
+//            throw new IllegalArgumentException("Invalid S3 URL format");
+//        }
+//
+//        String[] parts = s3Url.split("/");
+//        String fileName = parts[parts.length - 1];
+//
+//        int lastDot = fileName.lastIndexOf(".");
+//        if (lastDot == -1 || lastDot == fileName.length() - 1) {
+//            throw new IllegalArgumentException("File has no extension: " + fileName);
+//        }
+//
+//        return fileName.substring(lastDot);
+//    }
 
     private void deleteDirectory(File directory) {
         if (directory.exists()) {
