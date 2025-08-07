@@ -56,4 +56,17 @@ public class S3ServiceImpl implements S3Service {
             throw new BusinessException(ErrorCode.S3_DELETE_FAILED);
         }
     }
+
+    @Override
+    public void copyObject(String sourceKey, String destKey) {
+        try {
+            s3Client.copyObject(b -> b
+                .sourceBucket(bucketName)
+                .sourceKey(sourceKey)
+                .destinationBucket(bucketName)
+                .destinationKey(destKey));
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.S3_COPY_FAILED);
+        }
+    }
 }
