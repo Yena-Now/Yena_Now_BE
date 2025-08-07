@@ -48,6 +48,9 @@ public enum ErrorCode {
     // RELAY DOMAIN
     NOT_FOUND_RELAY_CUT(HttpStatus.NOT_FOUND, "해당 릴레이 컷을 찾을 수 없습니다."),
 
+    // S3 DOMAIN
+    S3_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "S3 객체 삭제에 실패했습니다.");
+    
     // RANKING DOMAIN
     RANKING_NOT_READY(HttpStatus.SERVICE_UNAVAILABLE, "랭킹 갱신 중입니다. 잠시 후 다시 시도해 주세요.");
 
