@@ -28,7 +28,6 @@ public enum ErrorCode {
     NOT_FOUND_USER_PROFILE(HttpStatus.NOT_FOUND, "프로필 URL을 수정할 사용자를 찾을 수 없습니다."),
     ALREADY_EXISTS_NICKNAME(HttpStatus.CONFLICT, "이미 존재하는 닉네임"),
 
-
     // NCUT DOMAIN
     NOT_FOUND_NCUT(HttpStatus.NOT_FOUND, "해당 NCUT을 찾을 수 없습니다."),
 
@@ -51,7 +50,7 @@ public enum ErrorCode {
 
     // S3 DOMAIN
     S3_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "S3 객체 삭제에 실패했습니다."),
-    S3_COPY_FAILED  (HttpStatus.INTERNAL_SERVER_ERROR, "S3 객체 복사에 실패했습니다."),
+    S3_COPY_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "S3 객체 복사에 실패했습니다."),
 
     // RANKING DOMAIN
     RANKING_NOT_READY(HttpStatus.SERVICE_UNAVAILABLE, "랭킹 갱신 중입니다. 잠시 후 다시 시도해 주세요.");
