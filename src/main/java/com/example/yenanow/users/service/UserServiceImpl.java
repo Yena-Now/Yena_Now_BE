@@ -44,14 +44,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class UserServiceImpl implements UserService {
 
+    private static final long VERIFICATION_CODE_TTL_MINUTES = 5;
     private final UserRepository userRepository;
     private final FollowRepository followRepository;
     private final JwtUtil jwtUtil;
     private final BCryptPasswordEncoder encoder;
     private final StringRedisTemplate redisTemplate;
     private final MailService mailService;
-
-    private static final long VERIFICATION_CODE_TTL_MINUTES = 5;
     private final S3KeyFactory s3KeyFactory;
     private final S3Service s3Service;
 
@@ -62,42 +61,47 @@ public class UserServiceImpl implements UserService {
         /* 1) 프로필 업로드 여부 판별 */
         boolean hasProfile = dto.getProfileUrl() != null && !dto.getProfileUrl().isBlank();
 
+        /* 2) UUID 선생성 */
         String userUuid = UUID.randomUUID().toString();
-        String finalKey = null;   // 기본 null
+        String finalKey = null;   // 사진이 없으면 그대로 null
 
         if (hasProfile) {
-            /* 1-a) temp URL → Key */
+            /* 2-a) temp URL → Key */
             String tempKey = s3KeyFactory.extractKeyFromUrl(dto.getProfileUrl());
 
-            /* 1-b) 최종 Key 계산 */
-            finalKey = s3KeyFactory.createFinalProfileKey(userUuid);
+            /* 2-b) 확장자 추출 (png, jpg 등) */
+            String ext = org.apache.commons.io.FilenameUtils.getExtension(tempKey);
 
-            /* 1-c) S3 복사 & temp 삭제 */
+            /* 2-c) 최종 Key: profile/{userUuid}/{랜덤}.{ext} */
+            finalKey = s3KeyFactory.createFinalProfileKey(userUuid, ext);
+
+            /* 2-d) S3 복사 & temp 삭제 */
             s3Service.copyObject(tempKey, finalKey);
             s3Service.deleteObject(tempKey);
         }
 
-        /* 2) 엔티티 생성 */
+        /* 3) 엔티티 생성 및 저장 */
         User user = dto.toEntity();
         user.setUserUuid(userUuid);
-        user.setProfileUrl(finalKey);      // null 또는 Key
+        user.setProfileUrl(finalKey);      // null 또는 최종 Key
         user.encodePassword(encoder);
-        userRepository.save(user);
+        userRepository.save(user);         // INSERT 한 번
 
-        /* 3) 토큰 & Redis 초기화 */
+        /* 4) 토큰 & Redis 초기화 */
         String token = jwtUtil.generateToken(userUuid);
-        redisTemplate.opsForHash().put("user:" + userUuid, "follower_count", "0");
-        redisTemplate.opsForHash().put("user:" + userUuid, "following_count", "0");
-        redisTemplate.opsForHash().put("user:" + userUuid, "total_cut", "0");
+        String rKey = "user:" + userUuid;
+        redisTemplate.opsForHash().put(rKey, "follower_count", "0");
+        redisTemplate.opsForHash().put(rKey, "following_count", "0");
+        redisTemplate.opsForHash().put(rKey, "total_cut", "0");
 
-        /* 4) 응답: Key → URL 변환 (null 처리) */
+        /* 5) 응답: Key → URL 변환 (null 처리) */
         String profileUrl = finalKey == null ? null : s3Service.getFileUrl(finalKey);
 
         return SignupResponse.builder()
             .accessToken(token)
             .userUuid(userUuid)
             .nickname(user.getNickname())
-            .profileUrl(profileUrl)   // null 이면 프런트는 기본 아바타 노출
+            .profileUrl(profileUrl)   // null 이면 프런트에서 기본 아바타 사용
             .build();
     }
 
