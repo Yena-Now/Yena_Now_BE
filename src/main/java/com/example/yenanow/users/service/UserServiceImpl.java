@@ -207,20 +207,32 @@ public class UserServiceImpl implements UserService {
         if (request.getGender() != null) {
             user.setGender(Gender.from(request.getGender()));
         }
+
+        // 빈 문자열인 경우 기존 값 삭제
         if (request.getBirthdate() != null) {
-            try {
-                user.setBirthdate(LocalDate.parse(request.getBirthdate()));
-            } catch (DateTimeParseException e) {
-                throw new BusinessException(ErrorCode.BAD_REQUEST);
+            if (request.getBirthdate().isEmpty()) {
+                user.setBirthdate(null);
+            } else {
+                try {
+                    user.setBirthdate(LocalDate.parse(request.getBirthdate()));
+                } catch (DateTimeParseException e) {
+                    throw new BusinessException(ErrorCode.BAD_REQUEST);
+                }
             }
         }
+
+        // 빈 문자열인 경우 기존 값 삭제
         if (request.getPhoneNumber() != null) {
-            boolean isValid = request.getPhoneNumber()
-                .matches("^01(?:0|1|[6-9])-(?:\\d{3}|\\d{4})-\\d{4}$");
-            if (!isValid) {
-                throw new BusinessException(ErrorCode.BAD_REQUEST);
-            } // 전화번호 형식 검증 - 추후 Google libphonenumber 라이브러리 등 라이브러리 사용 가능
-            user.setPhoneNumber(request.getPhoneNumber());
+            if (request.getPhoneNumber().isEmpty()) {
+                user.setPhoneNumber(null);
+            } else {
+                boolean isValid = request.getPhoneNumber()
+                    .matches("^01(?:0|1|[6-9])-(?:\\d{3}|\\d{4})-\\d{4}$");
+                if (!isValid) {
+                    throw new BusinessException(ErrorCode.BAD_REQUEST);
+                }
+                user.setPhoneNumber(request.getPhoneNumber());
+            }
         }
     }
 
