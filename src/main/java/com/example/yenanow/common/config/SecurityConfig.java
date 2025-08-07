@@ -44,6 +44,7 @@ public class SecurityConfig {
                     "/swagger-ui/**",
                     "/swagger-ui.html",
                     "/users/signup",
+                    "/users/signup/profile-url",
                     "/users/nickname",
                     "/users/verification-email",
                     "/users/verify-email",

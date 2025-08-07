@@ -1,6 +1,7 @@
 package com.example.yenanow.s3.util;
 
 import java.util.UUID;
+import org.apache.commons.io.FilenameUtils;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -31,5 +32,23 @@ public class S3KeyFactory {
             default:
                 throw new IllegalArgumentException("지원하지 않는 type: " + type);
         }
+    }
+
+    /** 회원가입 단계: temp 프로필 키 생성 */
+    public String createTempProfileKey(String fileName) {
+        String ext = FilenameUtils.getExtension(fileName);      // jpg, png …
+        return "profile/temp/%s.%s".formatted(UUID.randomUUID(), ext);
+    }
+
+    /** 회원가입 완료 후: 최종 프로필 키 */
+    public String createFinalProfileKey(String userUuid) {
+        return "profile/%s.jpg".formatted(userUuid);
+    }
+
+    /** https://bucket.s3.…/profile/temp/abc.jpg → profile/temp/abc.jpg */
+    public String extractKeyFromUrl(String url) {
+        int idx = url.indexOf(".amazonaws.com/");
+        if (idx == -1) throw new IllegalArgumentException("잘못된 S3 URL");
+        return url.substring(idx + ".amazonaws.com/".length());
     }
 }

@@ -8,6 +8,8 @@ import com.example.yenanow.common.smtp.request.VerifyEmailRequest;
 import com.example.yenanow.common.smtp.response.VerifyEmailResponse;
 import com.example.yenanow.common.util.JwtUtil;
 import com.example.yenanow.common.util.UuidUtil;
+import com.example.yenanow.s3.service.S3Service;
+import com.example.yenanow.s3.util.S3KeyFactory;
 import com.example.yenanow.users.dto.request.NicknameRequest;
 import com.example.yenanow.users.dto.request.SignupRequest;
 import com.example.yenanow.users.dto.request.UpdateMyInfoRequest;
@@ -27,6 +29,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.Random;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -49,26 +52,52 @@ public class UserServiceImpl implements UserService {
     private final MailService mailService;
 
     private static final long VERIFICATION_CODE_TTL_MINUTES = 5;
+    private final S3KeyFactory s3KeyFactory;
+    private final S3Service s3Service;
 
+    @Transactional
     @Override
-    public SignupResponse createUser(SignupRequest signupRequest) {
-        User user = signupRequest.toEntity();
+    public SignupResponse createUser(SignupRequest dto) {
+
+        /* 1) 프로필 업로드 여부 판별 */
+        boolean hasProfile = dto.getProfileUrl() != null && !dto.getProfileUrl().isBlank();
+
+        String userUuid = UUID.randomUUID().toString();
+        String finalKey = null;   // 기본 null
+
+        if (hasProfile) {
+            /* 1-a) temp URL → Key */
+            String tempKey = s3KeyFactory.extractKeyFromUrl(dto.getProfileUrl());
+
+            /* 1-b) 최종 Key 계산 */
+            finalKey = s3KeyFactory.createFinalProfileKey(userUuid);
+
+            /* 1-c) S3 복사 & temp 삭제 */
+            s3Service.copyObject(tempKey, finalKey);
+            s3Service.deleteObject(tempKey);
+        }
+
+        /* 2) 엔티티 생성 */
+        User user = dto.toEntity();
+        user.setUserUuid(userUuid);
+        user.setProfileUrl(finalKey);      // null 또는 Key
         user.encodePassword(encoder);
+        userRepository.save(user);
 
-        user = userRepository.save(user); // 저장 후 UUID 획득
-        String token = jwtUtil.generateToken(user.getUserUuid());
+        /* 3) 토큰 & Redis 초기화 */
+        String token = jwtUtil.generateToken(userUuid);
+        redisTemplate.opsForHash().put("user:" + userUuid, "follower_count", "0");
+        redisTemplate.opsForHash().put("user:" + userUuid, "following_count", "0");
+        redisTemplate.opsForHash().put("user:" + userUuid, "total_cut", "0");
 
-        // Redis에 팔로워, 팔로잉 수 및 게시글(N컷) 수 초기값 0 저장
-        String key = "user:" + user.getUserUuid();
-        redisTemplate.opsForHash().put(key, "follower_count", "0");
-        redisTemplate.opsForHash().put(key, "following_count", "0");
-        redisTemplate.opsForHash().put(key, "total_cut", "0");
+        /* 4) 응답: Key → URL 변환 (null 처리) */
+        String profileUrl = finalKey == null ? null : s3Service.getFileUrl(finalKey);
 
         return SignupResponse.builder()
             .accessToken(token)
-            .userUuid(user.getUserUuid())
+            .userUuid(userUuid)
             .nickname(user.getNickname())
-            .profileUrl(user.getProfileUrl())
+            .profileUrl(profileUrl)   // null 이면 프런트는 기본 아바타 노출
             .build();
     }
 
@@ -152,7 +181,7 @@ public class UserServiceImpl implements UserService {
             .gender(user.getGender())
             .birthdate(user.getBirthdate())
             .phoneNumber(user.getPhoneNumber())
-            .profileUrl(user.getProfileUrl())
+            .profileUrl(s3Service.getFileUrl(user.getProfileUrl()))
             .build();
     }
 
@@ -213,7 +242,7 @@ public class UserServiceImpl implements UserService {
             .name(toUser.getName())
             .nickname(toUser.getNickname())
             .gender(toUser.getGender())
-            .profileUrl(toUser.getProfileUrl())
+            .profileUrl(s3Service.getFileUrl(toUser.getProfileUrl()))
             .followingCount(toUser.getFollowingCount())
             .followerCount(toUser.getFollowerCount())
             .totalCut(toUser.getTotalCut())
@@ -239,11 +268,20 @@ public class UserServiceImpl implements UserService {
     @Override
     public UpdateProfileUrlResponse updateProfileUrl(String userUuid,
         String imageUrl) {
+
         User user = UuidUtil.getUserByUuid(userRepository, userUuid);
-        user.setProfileUrl(imageUrl);
+
+        /* 1) URL → Key 추출 */
+        String key = s3KeyFactory.extractKeyFromUrl(imageUrl);   // profile/... 또는 profile/temp/...
+
+        /* 2) DB에는 Key만 저장 */
+        user.setProfileUrl(key);
+
+        /* 3) 응답은 Key → URL 변환 */
+        String finalUrl = s3Service.getFileUrl(key);
 
         return UpdateProfileUrlResponse.builder()
-            .imageUrl(user.getProfileUrl())
+            .imageUrl(finalUrl)
             .build();
     }
 

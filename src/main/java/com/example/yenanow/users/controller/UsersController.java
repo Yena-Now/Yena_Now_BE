@@ -1,9 +1,14 @@
 package com.example.yenanow.users.controller;
 
+import com.example.yenanow.common.exception.BusinessException;
+import com.example.yenanow.common.exception.ErrorCode;
 import com.example.yenanow.common.smtp.request.VerificationEmailRequest;
 import com.example.yenanow.common.smtp.request.VerifyEmailRequest;
 import com.example.yenanow.common.smtp.response.VerifyEmailResponse;
+import com.example.yenanow.s3.service.S3Service;
+import com.example.yenanow.s3.util.S3KeyFactory;
 import com.example.yenanow.users.dto.request.NicknameRequest;
+import com.example.yenanow.users.dto.request.PresignedProfileRequest;
 import com.example.yenanow.users.dto.request.SignupRequest;
 import com.example.yenanow.users.dto.request.UpdateMyInfoRequest;
 import com.example.yenanow.users.dto.request.UpdatePasswordRequest;
@@ -11,6 +16,7 @@ import com.example.yenanow.users.dto.request.UpdateProfileUrlRequest;
 import com.example.yenanow.users.dto.response.MyInfoResponse;
 import com.example.yenanow.users.dto.response.NicknameResponse;
 import com.example.yenanow.users.dto.response.ProfileResponse;
+import com.example.yenanow.users.dto.response.SignupProfileUrlResponse;
 import com.example.yenanow.users.dto.response.SignupResponse;
 import com.example.yenanow.users.dto.response.UpdateProfileUrlResponse;
 import com.example.yenanow.users.dto.response.UserSearchResponse;
@@ -39,12 +45,30 @@ public class UsersController {
 
     private final UserService userService;
     private final FollowService followService;
+    private final S3Service s3Service;
+    private final S3KeyFactory s3KeyFactory;
 
     @Operation(summary = "자체 회원가입", description = "이메일과 비밀번호를 이용해 회원가입을 수행합니다.")
     @PostMapping("/signup")
     public ResponseEntity<SignupResponse> signup(@RequestBody SignupRequest signupRequest) {
         return ResponseEntity.ok(userService.createUser(signupRequest));
     }
+
+    @Operation(summary = "회원가입용 프로필 Presigned URL 발급")
+    @PostMapping("/signup/profile-url")
+    public ResponseEntity<SignupProfileUrlResponse> presignProfile(
+        @RequestBody PresignedProfileRequest req) {
+
+        if (req == null) {
+            throw new BusinessException(ErrorCode.EMPTY_REQUEST_BODY);
+        }
+
+        String key = s3KeyFactory.createTempProfileKey(req.getFileName());
+        String uploadUrl = s3Service.generatePresignedUploadUrl(key, req.getContentType());
+        String fileUrl = s3Service.getFileUrl(key);
+        return ResponseEntity.ok(new SignupProfileUrlResponse(uploadUrl, fileUrl));
+    }
+
 
     @Operation(summary = "닉네임 중복 확인", description = "입력한 닉네임이 이미 사용 중인지 확인합니다.")
     @PostMapping("/nickname")
@@ -89,7 +113,7 @@ public class UsersController {
         @RequestBody UpdateMyInfoRequest request) {
         String currentUserUuid = principal.toString();
         userService.updateMyInfo(request, currentUserUuid);
-        return ResponseEntity.noContent().build(); // 204;
+        return ResponseEntity.noContent().build(); // 204
     }
 
     @Operation(summary = "회원 탈퇴", description = "회원 탈퇴를 진행합니다.")
