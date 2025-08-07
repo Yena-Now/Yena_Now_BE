@@ -1,5 +1,7 @@
 package com.example.yenanow.s3.controller;
 
+import com.example.yenanow.common.exception.BusinessException;
+import com.example.yenanow.common.exception.ErrorCode;
 import com.example.yenanow.common.util.UuidUtil;
 import com.example.yenanow.s3.dto.request.PresignedUrlRequest;
 import com.example.yenanow.s3.dto.response.PresignedUrlResponse;
@@ -15,6 +17,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -34,12 +38,16 @@ public class S3Controller {
         description = "S3에 파일 업로드 시 사용할 Presigned URL을 발급합니다.<br>"
             + "업로드 정보는 DB에 저장됩니다."
     )
-    @GetMapping("/presigned-url")
+    @PostMapping("/presigned-url")
     public ResponseEntity<PresignedUrlResponse> getPresignedUrl(
-        @Valid PresignedUrlRequest request,
+        @RequestBody PresignedUrlRequest request,
         @Parameter(hidden = true)
         @AuthenticationPrincipal Object principal
     ) {
+        if (request == null) {
+            throw new BusinessException(ErrorCode.EMPTY_REQUEST_BODY);
+        }
+
         String userUuid = principal.toString();
         UuidUtil.validateUuid(userUuid);
 
