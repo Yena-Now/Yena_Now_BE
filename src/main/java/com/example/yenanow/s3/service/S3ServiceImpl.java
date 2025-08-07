@@ -1,5 +1,7 @@
 package com.example.yenanow.s3.service;
 
+import com.example.yenanow.common.exception.BusinessException;
+import com.example.yenanow.common.exception.ErrorCode;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -47,12 +49,11 @@ public class S3ServiceImpl implements S3Service {
     }
 
     @Override
-    public boolean deleteObject(String key) {
+    public void deleteObject(String key) {
         try {
             s3Client.deleteObject(b -> b.bucket(bucketName).key(key));
-            return true;
         } catch (Exception e) {
-            return false;
+            throw new BusinessException(ErrorCode.S3_DELETE_FAILED);
         }
     }
 }

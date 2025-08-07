@@ -6,5 +6,5 @@ public interface S3Service {
 
     String getFileUrl(String key);
 
-    boolean deleteObject(String key);
+    void deleteObject(String key);
 }

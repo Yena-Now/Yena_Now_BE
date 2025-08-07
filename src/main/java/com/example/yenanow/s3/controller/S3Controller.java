@@ -75,9 +75,7 @@ public class S3Controller {
         @Parameter(description = "S3 객체 키", required = true)
         @RequestParam String key
     ) {
-        if (s3Service.deleteObject(key)) {
-            return ResponseEntity.noContent().build(); // 204
-        }
-        throw new BusinessException(ErrorCode.S3_DELETE_FAILED);
+        s3Service.deleteObject(key);
+        return ResponseEntity.noContent().build();
     }
 }
