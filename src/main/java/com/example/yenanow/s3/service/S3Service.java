@@ -7,4 +7,6 @@ public interface S3Service {
     String getFileUrl(String key);
 
     void deleteObject(String key);
+
+    public void copyObject(String sourceKey, String destKey);
 }
