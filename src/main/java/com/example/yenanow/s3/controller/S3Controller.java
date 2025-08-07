@@ -16,10 +16,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
@@ -65,5 +67,15 @@ public class S3Controller {
         String uploadUrl = s3Service.generatePresignedUploadUrl(key, request.getContentType());
 
         return ResponseEntity.ok(new PresignedUrlResponse(uploadUrl, fileUrl));
+    }
+
+    @Operation(summary = "S3 객체 삭제")
+    @DeleteMapping
+    public ResponseEntity<Void> deleteFile(
+        @Parameter(description = "S3 객체 키", required = true)
+        @RequestParam String key
+    ) {
+        s3Service.deleteObject(key);
+        return ResponseEntity.noContent().build();
     }
 }
