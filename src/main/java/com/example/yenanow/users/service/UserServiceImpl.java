@@ -52,6 +52,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public SignupResponse createUser(SignupRequest signupRequest) {
+        if (userRepository.existsByNickname(signupRequest.getNickname())) {
+            throw new BusinessException(ErrorCode.ALREADY_EXISTS_NICKNAME);
+        }
+
         User user = signupRequest.toEntity();
         user.encodePassword(encoder);
 
