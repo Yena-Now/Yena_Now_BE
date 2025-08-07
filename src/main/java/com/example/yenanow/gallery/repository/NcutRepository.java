@@ -27,12 +27,6 @@ public interface NcutRepository extends JpaRepository<Ncut, String>, NcutQueryRe
         List<Visibility> visibilities,
         Pageable pageable);
 
-    // CommentCount 백업 메서드
-    @Modifying(clearAutomatically = true)
-    @Transactional
-    @Query("UPDATE Ncut n SET n.commentCount = :commentCount WHERE n.ncutUuid = :ncutUuid")
-    void updateCommentCount(String ncutUuid, int commentCount);
-
     // 랭킹 상세 조회용 – IN 절
     List<Ncut> findByNcutUuidIn(List<String> ncutUuid);
 }
