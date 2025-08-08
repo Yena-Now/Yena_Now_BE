@@ -1,5 +1,7 @@
 package com.example.yenanow.s3.service;
 
+import com.example.yenanow.common.exception.BusinessException;
+import com.example.yenanow.common.exception.ErrorCode;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -44,5 +46,27 @@ public class S3ServiceImpl implements S3Service {
     @Override
     public String getFileUrl(String key) {
         return "https://" + bucketName + ".s3." + region + ".amazonaws.com/" + key;
+    }
+
+    @Override
+    public void deleteObject(String key) {
+        try {
+            s3Client.deleteObject(b -> b.bucket(bucketName).key(key));
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.S3_DELETE_FAILED);
+        }
+    }
+
+    @Override
+    public void copyObject(String sourceKey, String destKey) {
+        try {
+            s3Client.copyObject(b -> b
+                .sourceBucket(bucketName)
+                .sourceKey(sourceKey)
+                .destinationBucket(bucketName)
+                .destinationKey(destKey));
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.S3_COPY_FAILED);
+        }
     }
 }

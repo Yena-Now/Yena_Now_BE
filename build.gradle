@@ -60,6 +60,9 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'io.projectreactor:reactor-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // ─── 공통 IO 유틸 ───
+    implementation 'commons-io:commons-io:2.15.0'
 }
 
 tasks.named('test') {
