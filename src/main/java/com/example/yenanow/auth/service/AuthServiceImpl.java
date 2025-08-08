@@ -13,6 +13,7 @@ import com.example.yenanow.common.util.CookieUtil;
 import com.example.yenanow.common.util.JwtUtil;
 import com.example.yenanow.users.entity.User;
 import com.example.yenanow.users.repository.UserRepository;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.Duration;
@@ -134,18 +135,25 @@ public class AuthServiceImpl implements AuthService {
     public String reissueToken(HttpServletRequest request) {
         String refreshToken = CookieUtil.getCookieValue(request, "refresh_token");
 
-        if (refreshToken == null || !jwtUtil.validateToken(refreshToken)) {
+        if (refreshToken == null) {
             throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
 
-        String userUuid = jwtUtil.getSubject(refreshToken); // 토큰에서 사용자 UUID 추출
+        try {
+            jwtUtil.validateToken(refreshToken);
 
-        String storedRefreshToken = redisTemplate.opsForValue().get("refresh_token:" + userUuid);
-        if (!refreshToken.equals(storedRefreshToken)) { // redis에 저장된 리프레시 토큰인지 검증
-            throw new BusinessException(ErrorCode.DUPLICATE_SIGNIN_DETECTED);
+            String userUuid = jwtUtil.getSubject(refreshToken);
+            String storedRefreshToken = redisTemplate.opsForValue()
+                .get("refresh_token:" + userUuid);
+
+            if (!refreshToken.equals(storedRefreshToken)) {
+                throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN);
+            }
+
+            return jwtUtil.generateToken(userUuid);
+        } catch (JwtException | IllegalArgumentException e) {
+            throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
-
-        return jwtUtil.generateToken(userUuid);
     }
 
     private String generatePassword(int length) {

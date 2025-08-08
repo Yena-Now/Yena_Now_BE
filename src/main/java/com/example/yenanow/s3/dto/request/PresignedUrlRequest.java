@@ -8,7 +8,7 @@ import lombok.Setter;
 @Setter
 public class PresignedUrlRequest {
 
-    @Schema(description = "파일 타입", example = "image/png", required = true)
+    @Schema(description = "파일 타입", example = "frame", required = true)
     private String type;
 
     @Schema(description = "파일명", example = "sample.png", required = true)

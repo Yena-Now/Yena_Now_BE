@@ -5,17 +5,20 @@ import com.example.yenanow.common.exception.ErrorCode;
 import com.example.yenanow.common.util.UuidUtil;
 import com.example.yenanow.openvidu.dto.request.CodeRequest;
 import com.example.yenanow.openvidu.dto.request.TokenRequest;
-import com.example.yenanow.film.dto.response.BackgroundListResponse;
 import com.example.yenanow.openvidu.dto.response.CodeResponse;
-import com.example.yenanow.film.dto.response.FrameListResponse;
-import com.example.yenanow.film.dto.response.StickerListResponse;
 import com.example.yenanow.openvidu.dto.response.TokenResponse;
+import com.example.yenanow.s3.service.S3Service;
 import com.example.yenanow.users.repository.UserRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.livekit.server.AccessToken;
 import io.livekit.server.RoomJoin;
 import io.livekit.server.RoomName;
 import io.livekit.server.WebhookReceiver;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import livekit.LivekitWebhook.WebhookEvent;
@@ -37,11 +40,12 @@ public class OpenviduServiceImpl implements OpenviduService {
 
     private final UserRepository userRepository;
     private final StringRedisTemplate redisTemplate;
+    private final S3Service s3Service;
 
     @Override
     public CodeResponse createCode(String userUuid, CodeRequest codeRequest) {
         UuidUtil.validateUuid(userUuid);
-        
+
         String nickname = userRepository.findNicknameById(userUuid)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER));
         Random random = new Random();
@@ -59,6 +63,7 @@ public class OpenviduServiceImpl implements OpenviduService {
                 roomDataMap.put("take_cnt", String.valueOf(codeRequest.getTakeCnt()));
                 roomDataMap.put("cut_cnt", String.valueOf(codeRequest.getCutCnt()));
                 roomDataMap.put("time_limit", String.valueOf(codeRequest.getTimeLimit()));
+                roomDataMap.put("cuts", "[]");
 
                 hashOps.putAll(key, roomDataMap);
                 break;
@@ -97,8 +102,10 @@ public class OpenviduServiceImpl implements OpenviduService {
         Integer takeCnt = Integer.parseInt(roomData.get("take_cnt").toString());
         Integer cutCnt = Integer.parseInt(roomData.get("cut_cnt").toString());
         Integer timeLimit = Integer.parseInt(roomData.get("time_limit").toString());
+        String cutsJson = (String) roomData.get("cuts");
+        List<String> cutUrls = parseCutsJson(cutsJson);
 
-        return new TokenResponse(token.toJwt(), backgroundUrl, takeCnt, cutCnt, timeLimit);
+        return new TokenResponse(token.toJwt(), backgroundUrl, takeCnt, cutCnt, timeLimit, cutUrls);
     }
 
     @Override
@@ -111,11 +118,39 @@ public class OpenviduServiceImpl implements OpenviduService {
             if ("room_finished".equals(event.getEvent())) {
                 String roomCode = event.getRoom().getName();
                 String key = "room:" + roomCode;
-                redisTemplate.delete(key);
+                HashOperations<String, String, Object> hashOps = redisTemplate.opsForHash();
+                Map<String, Object> roomData = hashOps.entries(key);
+
+                if (!roomData.isEmpty()) {
+                    String backgroundUrl = (String) roomData.get("background_url");
+                    String cutsJson = (String) roomData.get("cuts");
+                    List<String> cutUrls = parseCutsJson(cutsJson);
+
+                    s3Service.deleteObject(backgroundUrl);
+                    for (String cutUrl : cutUrls) {
+                        s3Service.deleteObject(cutUrl);
+                    }
+
+                    redisTemplate.delete(key);
+                }
             }
         } catch (Exception e) {
             // log.error("Error validating webhook event: {}", e.getMessage());
             throw new BusinessException(ErrorCode.BAD_REQUEST);
         }
+    }
+
+    private List<String> parseCutsJson(String cutsJson) {
+        List<String> cutUrls = new ArrayList<>();
+        if (cutsJson != null && !cutsJson.isEmpty()) {
+            try {
+                ObjectMapper objectMapper = new ObjectMapper();
+                cutUrls = objectMapper.readValue(cutsJson, new TypeReference<List<String>>() {
+                });
+            } catch (JsonProcessingException e) {
+                // log.error("JSON 파싱 오류 발생: {}", e.getMessage());
+            }
+        }
+        return cutUrls;
     }
 }
