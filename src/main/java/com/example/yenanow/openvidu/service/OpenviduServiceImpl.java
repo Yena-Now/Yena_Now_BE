@@ -60,8 +60,8 @@ public class OpenviduServiceImpl implements OpenviduService {
 
                 Map<String, String> roomDataMap = new HashMap<>();
                 roomDataMap.put("background_url", codeRequest.getBackgroundUrl());
-                roomDataMap.put("take_cnt", String.valueOf(codeRequest.getTakeCnt()));
-                roomDataMap.put("cut_cnt", String.valueOf(codeRequest.getCutCnt()));
+                roomDataMap.put("take_count", String.valueOf(codeRequest.getTakeCount()));
+                roomDataMap.put("cut_count", String.valueOf(codeRequest.getCutCount()));
                 roomDataMap.put("time_limit", String.valueOf(codeRequest.getTimeLimit()));
                 roomDataMap.put("cuts", "[]");
 
@@ -99,8 +99,8 @@ public class OpenviduServiceImpl implements OpenviduService {
         token.addGrants(new RoomJoin(true), new RoomName(roomCode));
 
         String backgroundUrl = (String) roomData.get("background_url");
-        Integer takeCnt = Integer.parseInt(roomData.get("take_cnt").toString());
-        Integer cutCnt = Integer.parseInt(roomData.get("cut_cnt").toString());
+        Integer takeCnt = Integer.parseInt(roomData.get("take_count").toString());
+        Integer cutCnt = Integer.parseInt(roomData.get("cut_count").toString());
         Integer timeLimit = Integer.parseInt(roomData.get("time_limit").toString());
         String cutsJson = (String) roomData.get("cuts");
         List<String> cutUrls = parseCutsJson(cutsJson);
