@@ -354,7 +354,7 @@ public class FilmServiceImpl implements FilmService {
             lastOutput = nextOutput;
         }
 
-        // 불필요한 세미콜론 제ㅐ거
+        // 불필요한 세미콜론 제거
         if (filter.length() > 0) {
             filter.setLength(filter.length() - 1);
         }
