@@ -8,6 +8,7 @@ import com.example.yenanow.openvidu.dto.request.TokenRequest;
 import com.example.yenanow.openvidu.dto.response.CodeResponse;
 import com.example.yenanow.openvidu.dto.response.TokenResponse;
 import com.example.yenanow.s3.service.S3Service;
+import com.example.yenanow.s3.util.S3KeyFactory;
 import com.example.yenanow.users.repository.UserRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -41,6 +42,7 @@ public class OpenviduServiceImpl implements OpenviduService {
     private final UserRepository userRepository;
     private final StringRedisTemplate redisTemplate;
     private final S3Service s3Service;
+    private final S3KeyFactory s3KeyFactory;
 
     @Override
     public CodeResponse createCode(String userUuid, CodeRequest codeRequest) {
@@ -59,7 +61,8 @@ public class OpenviduServiceImpl implements OpenviduService {
                 HashOperations<String, String, Object> hashOps = redisTemplate.opsForHash();
 
                 Map<String, String> roomDataMap = new HashMap<>();
-                roomDataMap.put("background_url", codeRequest.getBackgroundUrl());
+                roomDataMap.put("background_url",
+                    s3KeyFactory.extractKeyFromUrl(codeRequest.getBackgroundUrl()));
                 roomDataMap.put("take_count", String.valueOf(codeRequest.getTakeCount()));
                 roomDataMap.put("cut_count", String.valueOf(codeRequest.getCutCount()));
                 roomDataMap.put("time_limit", String.valueOf(codeRequest.getTimeLimit()));
@@ -98,12 +101,16 @@ public class OpenviduServiceImpl implements OpenviduService {
         token.setIdentity(userUuid);
         token.addGrants(new RoomJoin(true), new RoomName(roomCode));
 
-        String backgroundUrl = (String) roomData.get("background_url");
+        String backgroundUrl = s3Service.getFileUrl((String) roomData.get("background_url"));
         Integer takeCnt = Integer.parseInt(roomData.get("take_count").toString());
         Integer cutCnt = Integer.parseInt(roomData.get("cut_count").toString());
         Integer timeLimit = Integer.parseInt(roomData.get("time_limit").toString());
         String cutsJson = (String) roomData.get("cuts");
-        List<String> cutUrls = parseCutsJson(cutsJson);
+        List<String> cutKeys = parseCutsJson(cutsJson);
+        List<String> cutUrls = new ArrayList<>();
+        for (String cutUrl : cutKeys) {
+            cutUrls.add(s3Service.getFileUrl(cutUrl));
+        }
 
         return new TokenResponse(token.toJwt(), backgroundUrl, takeCnt, cutCnt, timeLimit, cutUrls);
     }
