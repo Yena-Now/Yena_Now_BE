@@ -40,6 +40,9 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
             }
         }
 
+        // provider 정보를 attributes에 추가하여 Authentication 객체로 전달
+        attributes.put("provider", registrationId);
+
         return new DefaultOAuth2User(
             null,
             attributes,
@@ -72,15 +75,17 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         String finalEmail = email;
         String finalName = name;
         String finalProfileUrl = profileUrl;
-        return userRepository.findByEmail(email)
+        return userRepository.findByEmailAndProvider(email, registrationId)
             .orElseGet(() -> {
                 User user = User.builder()
+                    .userUuid(UUID.randomUUID().toString())
                     .email(finalEmail)
                     .name(finalName)
                     .nickname("user_" + UUID.randomUUID().toString().substring(0, 8))
                     .password(UUID.randomUUID().toString()) // 소셜로그인 시 비밀번호는 필요없기 때문에 UUID생성해서 저장
-                    .phoneNumber("010-0000-0000")
+                    .phoneNumber(null)
                     .profileUrl(finalProfileUrl)
+                    .provider(registrationId)
                     .build();
 
                 User savedUser = userRepository.save(user);

@@ -41,7 +41,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public LoginResponse login(LoginRequest loginRequest, HttpServletResponse response) {
-        User user = userRepository.findByEmail(loginRequest.getEmail())
+        User user = userRepository.findByEmailAndProviderIsNull(loginRequest.getEmail())
             .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_SIGNIN));
 
         if (!encoder.matches(loginRequest.getPassword(), user.getPassword())) {
@@ -74,7 +74,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public void sendMessage(VerificationEmailRequest request) {
         String email = request.getEmail();
-        userRepository.findByEmail(email) // 등록된 유저 이메일인지 여부
+        userRepository.findByEmailAndProviderIsNull(email) // 등록된 유저 이메일인지 여부
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER));
 
         String code = String.format("%06d", new Random().nextInt(999999));
@@ -109,7 +109,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public void sendPassword(ForgotPasswordRequest request) {
         String email = request.getEmail();
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findByEmailAndProviderIsNull(email)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER));
 
         String key = "verified:" + email;
