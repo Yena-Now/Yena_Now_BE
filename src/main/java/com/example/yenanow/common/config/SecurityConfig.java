@@ -4,6 +4,7 @@ import com.example.yenanow.auth.oauth.CustomOAuth2UserService;
 import com.example.yenanow.auth.oauth.OAuth2LoginSuccessHandler;
 import com.example.yenanow.common.config.cors.CorsProperties;
 import com.example.yenanow.common.security.JwtAuthenticationFilter;
+import jakarta.servlet.DispatcherType;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -39,6 +40,8 @@ public class SecurityConfig {
             .sessionManagement(
                 session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                .dispatcherTypeMatchers(DispatcherType.ASYNC)
+                .permitAll() // Async 요청은 permitAll, 앞서 토큰 인증했기 때문에 무방
                 .requestMatchers(
                     "/v3/api-docs/**",
                     "/swagger-ui/**",

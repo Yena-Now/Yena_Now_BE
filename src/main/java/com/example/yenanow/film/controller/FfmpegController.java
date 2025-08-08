@@ -6,7 +6,6 @@ import com.example.yenanow.film.service.FilmService;
 import io.swagger.v3.oas.annotations.Operation;
 import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,10 +21,10 @@ public class FfmpegController {
 
     @Operation(summary = "결과물 합성 요청", description = "촬영한 컷들을 N컷으로 합성 요청합니다.")
     @PostMapping("/merge")
-    public ResponseEntity<CompletableFuture<MergeResponse>> createMergedOutput(
+    public CompletableFuture<MergeResponse> createMergedOutput(
         @AuthenticationPrincipal Object principal,
         @RequestBody MergeRequest mergeRequest) {
         String userUuid = principal.toString();
-        return ResponseEntity.ok(filmService.createMergedOutputAsync(mergeRequest, userUuid));
+        return filmService.createMergedOutput(mergeRequest, userUuid);
     }
 }

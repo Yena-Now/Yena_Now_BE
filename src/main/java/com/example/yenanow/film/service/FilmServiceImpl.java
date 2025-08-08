@@ -48,7 +48,7 @@ public class FilmServiceImpl implements FilmService {
     private final S3Client s3Client;
     private final S3KeyFactory s3KeyFactory;
 
-    @Value("${AWS_S3_BUCKET}")
+    @Value("${cloud.aws.s3.bucket}")
     private String bucketName;
 
     @Override
@@ -76,16 +76,10 @@ public class FilmServiceImpl implements FilmService {
             .toList();
     }
 
-    @Async
+    @Async("taskExecutor")
     @Override
-    public CompletableFuture<MergeResponse> createMergedOutputAsync(MergeRequest request,
+    public CompletableFuture<MergeResponse> createMergedOutput(MergeRequest request,
         String userUuid) {
-        MergeResponse response = createMergedOutput(request, userUuid);
-        return CompletableFuture.completedFuture(response);
-    }
-
-    @Override
-    public MergeResponse createMergedOutput(MergeRequest request, String userUuid) {
         String frameUuid = request.getFrameUuid();
         List<MergeRequestItem> contentUrls = request.getContentUrls();
 
@@ -146,11 +140,11 @@ public class FilmServiceImpl implements FilmService {
             String contentType = containsVideo ? "video/mp4" : "image/jpeg";
             String resultS3Url = uploadToS3(outputPath, objectKey, contentType);
 
-            return new MergeResponse(resultS3Url);
+            return CompletableFuture.completedFuture(new MergeResponse(resultS3Url));
 
         } catch (Exception e) {
             log.error("N컷 합성 중 오류가 발생했습니다", e);
-            throw new RuntimeException(e.getMessage());
+            return CompletableFuture.failedFuture(e); // 실패 시 실패한 Future 반환
         } finally {
             // 항상 임시 폴더 삭제
             deleteDirectory(tempDir);
