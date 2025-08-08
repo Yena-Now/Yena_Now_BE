@@ -85,6 +85,7 @@ public class NcutQueryRepositoryImpl implements NcutQueryRepository {
         NcutDetailResponse ncutDetailResponse = queryFactory
             .select(
                 Projections.fields(NcutDetailResponse.class,
+                    ncut.ncutUuid,
                     ncut.ncutUrl,
                     ncut.user.userUuid,
                     ncut.user.nickname,
