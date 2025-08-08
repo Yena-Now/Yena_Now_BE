@@ -423,38 +423,6 @@ public class FilmServiceImpl implements FilmService {
         return objectUrl;
     }
 
-//    private String extractBucket(String s3Url) {
-//        if (!s3Url.startsWith("s3://")) {
-//            throw new IllegalArgumentException("Invalid S3 URL format");
-//        }
-//        String withoutPrefix = s3Url.substring(5);
-//        return withoutPrefix.substring(0, withoutPrefix.indexOf('/'));
-//    }
-//
-//    private String extractKey(String s3Url) {
-//        if (!s3Url.startsWith("s3://")) {
-//            throw new IllegalArgumentException("Invalid S3 URL format");
-//        }
-//        String withoutPrefix = s3Url.substring(5);
-//        return withoutPrefix.substring(withoutPrefix.indexOf('/') + 1);
-//    }
-//
-//    private String extractExt(String s3Url) {
-//        if (!s3Url.startsWith("s3://")) {
-//            throw new IllegalArgumentException("Invalid S3 URL format");
-//        }
-//
-//        String[] parts = s3Url.split("/");
-//        String fileName = parts[parts.length - 1];
-//
-//        int lastDot = fileName.lastIndexOf(".");
-//        if (lastDot == -1 || lastDot == fileName.length() - 1) {
-//            throw new IllegalArgumentException("File has no extension: " + fileName);
-//        }
-//
-//        return fileName.substring(lastDot);
-//    }
-
     private void deleteDirectory(File directory) {
         if (directory.exists()) {
             File[] files = directory.listFiles();
