@@ -45,7 +45,16 @@ public class S3ServiceImpl implements S3Service {
 
     @Override
     public String getFileUrl(String key) {
+        // null값 방어
+        if (key == null || key.isBlank()) {
+            return null;
+        }
+        // 주소로 왔다면 그대로 반환
+        if (key.startsWith("http://") || key.startsWith("https://")) {
+            return key;
+        }
         return "https://" + bucketName + ".s3." + region + ".amazonaws.com/" + key;
+
     }
 
     @Override
