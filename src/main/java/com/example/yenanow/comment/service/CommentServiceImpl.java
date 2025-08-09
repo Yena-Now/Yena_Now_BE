@@ -79,14 +79,19 @@ public class CommentServiceImpl implements CommentService {
         Comment comment = commentRepository.findById(commentUuid)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_COMMENT));
 
-        if (!comment.getUser().getUserUuid().equals(userUuid)) {
+        boolean isCommentAuthor = comment.getUser().getUserUuid().equals(userUuid);
+        boolean isPostAuthor = comment.getNcut().getUser().getUserUuid().equals(userUuid);
+
+        if (!(isCommentAuthor || isPostAuthor)) {
             throw new BusinessException(ErrorCode.PERMISSION_DENIED);
         }
+
+        String ncutUuid = comment.getNcut().getNcutUuid();
 
         commentRepository.delete(comment);
 
         // Redis 댓글 수 감소
-        incrementCounter("ncut:" + comment.getNcut().getNcutUuid(), "comment_count", -1);
+        incrementCounter("ncut:" + ncutUuid, "comment_count", -1);
 
         // 비동기 DB 백업
         commentCountSyncService.syncCommentCountToDB(comment.getNcut().getNcutUuid());
