@@ -15,4 +15,10 @@ public interface FilmService {
 
     List<BackgroundListResponse> getBackgrounds();
 
+    void createBackground(String s3Key);
+
+    void createSticker(String s3Key);
+
+//    void createFrame(String s3Key, Integer frameCut, Integer frameType);
+
 }
