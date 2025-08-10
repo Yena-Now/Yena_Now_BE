@@ -1,5 +1,7 @@
 package com.example.yenanow.s3.util;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.UUID;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.stereotype.Component;
@@ -41,10 +43,13 @@ public class S3KeyFactory {
     }
 
     /**
-     * 프로필 최종 키: profile/{userUuid}/{랜덤}.{ext}
+     * 최종 프로필 키(옵션 C): 사용자 UUID를 포함하지 않는 구조 profiles/{yyyy}/{MM}/{dd}/{random}.{ext}
      */
-    public String createFinalProfileKey(String userUuid, String ext) {
-        return "profile/%s/%s.%s".formatted(userUuid, UUID.randomUUID(), ext);
+    public String createProfileKeyWithoutUser(String ext) {
+        LocalDate now = LocalDate.now(ZoneId.of("Asia/Seoul"));
+        String datePath = String.format("%04d/%02d/%02d", now.getYear(), now.getMonthValue(),
+            now.getDayOfMonth());
+        return "profile/%s/%s.%s".formatted(datePath, UUID.randomUUID(), ext);
     }
 
     /**
