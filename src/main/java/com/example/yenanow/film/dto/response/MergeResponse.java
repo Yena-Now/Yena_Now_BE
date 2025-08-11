@@ -1,6 +1,5 @@
 package com.example.yenanow.film.dto.response;
 
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -8,7 +7,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 @Builder
-public class FrameListResponse {
+public class MergeResponse {
 
-    private List<FrameListResponseItem> frames;
+    private String resultUrl;
 }

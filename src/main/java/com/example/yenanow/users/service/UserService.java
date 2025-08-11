@@ -12,6 +12,7 @@ import com.example.yenanow.users.dto.response.NicknameResponse;
 import com.example.yenanow.users.dto.response.ProfileResponse;
 import com.example.yenanow.users.dto.response.SignupResponse;
 import com.example.yenanow.users.dto.response.UpdateProfileUrlResponse;
+import com.example.yenanow.users.dto.response.UserInviteSearchResponse;
 import com.example.yenanow.users.dto.response.UserSearchResponse;
 
 public interface UserService {
@@ -36,6 +37,9 @@ public interface UserService {
 
     UserSearchResponse getUserSearch(String keyword, String currentUserUuid, int pageNum,
         int display);
+
+    UserInviteSearchResponse getUserInviteSearch(String keyword, String currentUserUuid,
+        int pageNum, int display);
 
     UpdateProfileUrlResponse updateProfileUrl(String userUuid, String imageUrl);
 

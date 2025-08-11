@@ -1,5 +1,6 @@
 package com.example.yenanow.users.repository;
 
+import com.example.yenanow.users.dto.response.UserInviteSearchResponseItem;
 import com.example.yenanow.users.dto.response.UserSearchResponseItem;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
@@ -13,4 +14,7 @@ public interface UserQueryRepository {
 
     Page<UserSearchResponseItem> findUsersByKeyword(String currentUserUuid, String keyword,
         Pageable pageable);
+
+    Page<UserInviteSearchResponseItem> findFollowersByKeyword(String currentUserUuid,
+        String keyword, Pageable pageable);
 }
