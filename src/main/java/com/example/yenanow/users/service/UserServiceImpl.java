@@ -19,6 +19,8 @@ import com.example.yenanow.users.dto.response.NicknameResponse;
 import com.example.yenanow.users.dto.response.ProfileResponse;
 import com.example.yenanow.users.dto.response.SignupResponse;
 import com.example.yenanow.users.dto.response.UpdateProfileUrlResponse;
+import com.example.yenanow.users.dto.response.UserInviteSearchResponse;
+import com.example.yenanow.users.dto.response.UserInviteSearchResponseItem;
 import com.example.yenanow.users.dto.response.UserSearchResponse;
 import com.example.yenanow.users.dto.response.UserSearchResponseItem;
 import com.example.yenanow.users.entity.Gender;
@@ -278,6 +280,19 @@ public class UserServiceImpl implements UserService {
             .findUsersByKeyword(currentUserUuid, keyword, pageable);
 
         return UserSearchResponse.builder()
+            .totalPages(page.getTotalPages())
+            .userSearches(page.getContent())
+            .build();
+    }
+
+    @Override
+    public UserInviteSearchResponse getUserInviteSearch(String keyword, String currentUserUuid,
+        int pageNum, int display) {
+        Pageable pageable = PageRequest.of(pageNum, display);
+        Page<UserInviteSearchResponseItem> page = userRepository
+            .findFollowersByKeyword(currentUserUuid, keyword, pageable);
+
+        return UserInviteSearchResponse.builder()
             .totalPages(page.getTotalPages())
             .userSearches(page.getContent())
             .build();

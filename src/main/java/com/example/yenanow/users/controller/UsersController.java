@@ -19,6 +19,7 @@ import com.example.yenanow.users.dto.response.ProfileResponse;
 import com.example.yenanow.users.dto.response.SignupProfileUrlResponse;
 import com.example.yenanow.users.dto.response.SignupResponse;
 import com.example.yenanow.users.dto.response.UpdateProfileUrlResponse;
+import com.example.yenanow.users.dto.response.UserInviteSearchResponse;
 import com.example.yenanow.users.dto.response.UserSearchResponse;
 import com.example.yenanow.users.service.FollowService;
 import com.example.yenanow.users.service.UserService;
@@ -68,8 +69,7 @@ public class UsersController {
         String fileUrl = s3Service.getFileUrl(key);
         return ResponseEntity.ok(new SignupProfileUrlResponse(uploadUrl, fileUrl));
     }
-
-
+    
     @Operation(summary = "닉네임 중복 확인", description = "입력한 닉네임이 이미 사용 중인지 확인합니다.")
     @PostMapping("/nickname")
     public ResponseEntity<NicknameResponse> validateNickname(
@@ -140,6 +140,18 @@ public class UsersController {
         String currentUserUuid = principal.toString();
         return ResponseEntity.ok(
             userService.getUserSearch(keyword, currentUserUuid, pageNum, display));
+    }
+
+    @Operation(summary = "초대할 사용자 검색", description = "팔로워 중 초대할 사용자를 검색합니다.")
+    @GetMapping("/invite-search")
+    public ResponseEntity<UserInviteSearchResponse> getUserInviteSearch(
+        @AuthenticationPrincipal Object principal,
+        @RequestParam("keyword") String keyword,
+        @RequestParam("pageNum") int pageNum,
+        @RequestParam("display") int display) {
+        String currentUserUuid = principal.toString();
+        return ResponseEntity.ok(
+            userService.getUserInviteSearch(keyword, currentUserUuid, pageNum, display));
     }
 
     @Operation(summary = "프로필 사진 등록", description = "프로필 사진을 등록합니다.")
