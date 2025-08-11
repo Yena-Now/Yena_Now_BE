@@ -78,7 +78,6 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         return userRepository.findByEmailAndProvider(email, registrationId)
             .orElseGet(() -> {
                 User user = User.builder()
-                    .userUuid(UUID.randomUUID().toString())
                     .email(finalEmail)
                     .name(finalName)
                     .nickname("user_" + UUID.randomUUID().toString().substring(0, 8))
