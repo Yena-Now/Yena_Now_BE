@@ -1,6 +1,5 @@
 package com.example.yenanow.gallery.entity;
 
-import com.example.yenanow.users.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -18,7 +17,7 @@ import org.hibernate.annotations.GenericGenerator;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
-@Table(name = "relay_participant")
+@Table(name = "relay_cut")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -29,14 +28,19 @@ public class RelayCut {
     @Id
     @GeneratedValue(generator = "UUID")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
-    @Column(name = "pcp_uuid", length = 36, nullable = false)
-    private String pcpUuid;
+    @Column(name = "cut_uuid", length = 36, nullable = false)
+    private String cutUuid;
+
+    @Column(name = "cut_url", length = 200)
+    private String cutUrl;
+
+    @Column(name = "cut_index", nullable = false)
+    private Integer cutIndex;
+
+    @Column(name = "is_taken", columnDefinition = "TINYINT(1) DEFAULT 0", nullable = false)
+    private boolean isTaken;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "relay_uuid")
     private Relay relay;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private User user;
 }

@@ -6,6 +6,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface RelayRepository extends JpaRepository<Relay, String> {
-
-    boolean existByRelayUuidAndUserUserUuid(String relayUuid, String userUuid);
+    
+    boolean existsByRelayUuidAndUserUserUuid(String relayUuid, String userUuid);
 }
