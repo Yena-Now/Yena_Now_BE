@@ -24,7 +24,7 @@ public class S3KeyFactory {
             case "frame" -> "frame/%s%s".formatted(UUID.randomUUID(), ext);
             case "background" -> "background/%s%s".formatted(UUID.randomUUID(), ext);
             case "sticker" -> "sticker/%s%s".formatted(UUID.randomUUID(), ext);
-            case "ncut" -> "ncut/%s/%s%s".formatted(userUuid, UUID.randomUUID(), ext);
+            case "ncut" -> "ncut/%s%s".formatted(UUID.randomUUID(), ext);
             case "ncutThumbnail" ->
                 "ncut/thumbnail/%s/%s%s".formatted(userUuid, UUID.randomUUID(), ext);
             case "relayCut" -> "relay/%s/%s%s".formatted(relayUuid, UUID.randomUUID(), ext);

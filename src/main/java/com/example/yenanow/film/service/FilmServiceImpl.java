@@ -9,17 +9,18 @@ import com.example.yenanow.film.dto.response.FrameListResponse;
 import com.example.yenanow.film.dto.response.MergeResponse;
 import com.example.yenanow.film.dto.response.StickerListResponse;
 import com.example.yenanow.film.dto.response.StickerListResponseItem;
+import com.example.yenanow.film.entity.Background;
 import com.example.yenanow.film.entity.Frame;
 import com.example.yenanow.film.entity.Sticker;
 import com.example.yenanow.film.repository.BackgroundRepository;
 import com.example.yenanow.film.repository.FrameRepository;
 import com.example.yenanow.film.repository.StickerRepository;
+import com.example.yenanow.s3.service.S3Service;
 import com.example.yenanow.s3.util.S3KeyFactory;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -45,6 +46,7 @@ public class FilmServiceImpl implements FilmService {
     private final FrameRepository frameRepository;
     private final StickerRepository stickerRepository;
     private final BackgroundRepository backgroundRepository;
+    private final S3Service s3Service;
     private final S3Client s3Client;
     private final S3KeyFactory s3KeyFactory;
 
@@ -52,27 +54,51 @@ public class FilmServiceImpl implements FilmService {
     private String bucketName;
 
     @Override
+    public void createBackground(String s3Key) {
+        require(s3Key, "s3Key");
+        Background background = new Background();
+        background.setBackgroundUrl(s3Key);
+        backgroundRepository.save(background);
+    }
+
+    @Override
     public List<FrameListResponse> getFrames(int frameCut) {
         return frameRepository.findByFrameCut(frameCut).stream()
-            .map(FrameListResponse::fromEntity)
+            .map(frame -> FrameListResponse.builder()
+                .frameUuid(frame.getFrameUuid())
+                .frameName(frame.getFrameName())
+                .frameUrl(s3Service.getFileUrl(frame.getFrameUrl())) // Key → URL 변환
+                .frameCut(frame.getFrameCut())
+                .frameType(frame.getFrameType())
+                .build())
             .toList();
     }
 
     @Override
     public StickerListResponse getStickers(Pageable pageable) {
-        Page<Sticker> page = stickerRepository.findAll(pageable);
+        Page<Sticker> stickerPage = stickerRepository.findAll(pageable);
+
+        List<StickerListResponseItem> stickerListResponseItems = stickerPage.getContent().stream()
+            .map(sticker -> StickerListResponseItem.builder()
+                .stickerUuid(sticker.getStickerUuid())
+                .stickerName(sticker.getStickerName())
+                .stickerUrl(s3Service.getFileUrl(sticker.getStickerUrl())) // Key → URL 변환
+                .build())
+            .toList();
+
         return StickerListResponse.builder()
-            .totalPages(page.getTotalPages())
-            .stickers(page.getContent().stream()
-                .map(StickerListResponseItem::fromEntity)
-                .toList())
+            .totalPages(stickerPage.getTotalPages())
+            .stickers(stickerListResponseItems)
             .build();
     }
 
     @Override
     public List<BackgroundListResponse> getBackgrounds() {
         return backgroundRepository.findAll().stream()
-            .map(BackgroundListResponse::fromEntity)
+            .map(background -> BackgroundListResponse.builder()
+                .backgroundUuid(background.getBackgroundUuid())
+                .backgroundUrl(s3Service.getFileUrl(background.getBackgroundUrl())) // Key → URL 변환
+                .build())
             .toList();
     }
 
@@ -81,6 +107,7 @@ public class FilmServiceImpl implements FilmService {
     public CompletableFuture<MergeResponse> createMergedOutput(MergeRequest request,
         String userUuid) {
         String frameUuid = request.getFrameUuid();
+        String roomCode = request.getRoomCode();
         List<MergeRequestItem> contentUrls = request.getContentUrls();
 
         contentUrls.sort(java.util.Comparator.comparingInt(MergeRequestItem::getOrder));
@@ -136,7 +163,8 @@ public class FilmServiceImpl implements FilmService {
                 throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
             }
 
-            String objectKey = s3KeyFactory.createKey("ncut", outputFileName, userUuid, null);
+            String objectKey = s3KeyFactory.createKey("ncut", outputFileName, userUuid, null,
+                roomCode);
             String contentType = containsVideo ? "video/mp4" : "image/jpeg";
             String resultS3Url = uploadToS3(outputPath, objectKey, contentType);
 
@@ -153,167 +181,42 @@ public class FilmServiceImpl implements FilmService {
 
     // 프레임 컷 수, 프레임 타입으로 각 컷 배치할 좌표 구하는 메서드
     public List<Map<Integer, Integer>> getCoordinate(int frameCut, int frameType) {
-        List<Map<Integer, Integer>> coordinates = new ArrayList<>();
-
-        switch (frameCut) {
-            case 1: {
-                Map<Integer, Integer> pos1 = new HashMap<>();
-                pos1.put(40, 40);
-                coordinates.add(pos1);
-                break;
-            }
-            case 2: {
-                switch (frameType) {
-                    case 1: { // 1 * 2, 세로
-                        Map<Integer, Integer> pos1 = new HashMap<>();
-                        pos1.put(40, 40);
-                        coordinates.add(pos1);
-
-                        Map<Integer, Integer> pos2 = new HashMap<>();
-                        pos2.put(40, 560);
-                        coordinates.add(pos2);
-                        break;
-                    }
-                    case 2: { // 2 * 1, 가로
-                        Map<Integer, Integer> pos1 = new HashMap<>();
-                        pos1.put(40, 40);
-                        coordinates.add(pos1);
-
-                        Map<Integer, Integer> pos2 = new HashMap<>();
-                        pos2.put(720, 40);
-                        coordinates.add(pos2);
-                        break;
-                    }
-                    default:
-                        throw new BusinessException(ErrorCode.NOT_FOUND);
-                }
-                break;
-            }
-            case 4: {
-                switch (frameType) {
-                    case 1: { // 1 * 4, 세로
-                        Map<Integer, Integer> pos1 = new HashMap<>();
-                        pos1.put(40, 40);
-                        coordinates.add(pos1);
-
-                        Map<Integer, Integer> pos2 = new HashMap<>();
-                        pos2.put(40, 560);
-                        coordinates.add(pos2);
-
-                        Map<Integer, Integer> pos3 = new HashMap<>();
-                        pos3.put(40, 1080);
-                        coordinates.add(pos3);
-
-                        Map<Integer, Integer> pos4 = new HashMap<>();
-                        pos4.put(40, 1600);
-                        coordinates.add(pos4);
-                        break;
-                    }
-                    case 2: { // 4 * 1, 가로
-                        Map<Integer, Integer> pos1 = new HashMap<>();
-                        pos1.put(40, 40);
-                        coordinates.add(pos1);
-
-                        Map<Integer, Integer> pos2 = new HashMap<>();
-                        pos2.put(720, 40);
-                        coordinates.add(pos2);
-
-                        Map<Integer, Integer> pos3 = new HashMap<>();
-                        pos3.put(1400, 40);
-                        coordinates.add(pos3);
-
-                        Map<Integer, Integer> pos4 = new HashMap<>();
-                        pos4.put(2080, 40);
-                        coordinates.add(pos4);
-                        break;
-                    }
-                    case 3: { // 2 * 2
-                        Map<Integer, Integer> pos1 = new HashMap<>();
-                        pos1.put(40, 40);
-                        coordinates.add(pos1);
-
-                        Map<Integer, Integer> pos2 = new HashMap<>();
-                        pos2.put(720, 40);
-                        coordinates.add(pos2);
-
-                        Map<Integer, Integer> pos3 = new HashMap<>();
-                        pos3.put(40, 560);
-                        coordinates.add(pos3);
-
-                        Map<Integer, Integer> pos4 = new HashMap<>();
-                        pos4.put(720, 560);
-                        coordinates.add(pos4);
-                        break;
-                    }
-                    default:
-                        throw new BusinessException(ErrorCode.NOT_FOUND);
-                }
-                break;
-            }
-            case 6: {
-                switch (frameType) {
-                    case 1: { // 2 * 3, 세로
-                        Map<Integer, Integer> pos1 = new HashMap<>();
-                        pos1.put(40, 40);
-                        coordinates.add(pos1);
-
-                        Map<Integer, Integer> pos2 = new HashMap<>();
-                        pos2.put(720, 40);
-                        coordinates.add(pos2);
-
-                        Map<Integer, Integer> pos3 = new HashMap<>();
-                        pos3.put(40, 560);
-                        coordinates.add(pos3);
-
-                        Map<Integer, Integer> pos4 = new HashMap<>();
-                        pos4.put(720, 560);
-                        coordinates.add(pos4);
-
-                        Map<Integer, Integer> pos5 = new HashMap<>();
-                        pos5.put(40, 1080);
-                        coordinates.add(pos5);
-
-                        Map<Integer, Integer> pos6 = new HashMap<>();
-                        pos6.put(720, 1080);
-                        coordinates.add(pos6);
-                        break;
-                    }
-                    case 2: { // 3 * 2, 가로
-                        Map<Integer, Integer> pos1 = new HashMap<>();
-                        pos1.put(40, 40);
-                        coordinates.add(pos1);
-
-                        Map<Integer, Integer> pos2 = new HashMap<>();
-                        pos2.put(720, 40);
-                        coordinates.add(pos2);
-
-                        Map<Integer, Integer> pos3 = new HashMap<>();
-                        pos3.put(1400, 40);
-                        coordinates.add(pos3);
-
-                        Map<Integer, Integer> pos4 = new HashMap<>();
-                        pos4.put(40, 560);
-                        coordinates.add(pos4);
-
-                        Map<Integer, Integer> pos5 = new HashMap<>();
-                        pos5.put(720, 560);
-                        coordinates.add(pos5);
-
-                        Map<Integer, Integer> pos6 = new HashMap<>();
-                        pos6.put(1400, 560);
-                        coordinates.add(pos6);
-                        break;
-                    }
-                    default:
-                        throw new BusinessException(ErrorCode.NOT_FOUND);
-                }
-                break;
-            }
-            default:
-                throw new BusinessException(ErrorCode.NOT_FOUND);
-        }
-
-        return coordinates;
+        return switch (frameCut) {
+            case 1 -> List.of(Map.of(40, 40));
+            case 2 -> switch (frameType) {
+                case 1 -> List.of(Map.of(40, 40), Map.of(40, 560)); // 1x2 세로
+                case 2 -> List.of(Map.of(40, 40), Map.of(720, 40)); // 2x1 가로
+                default -> throw new BusinessException(ErrorCode.NOT_FOUND);
+            };
+            case 4 -> switch (frameType) {
+                case 1 -> List.of( // 1x4 세로
+                    Map.of(40, 40), Map.of(40, 560),
+                    Map.of(40, 1080), Map.of(40, 1600)
+                );
+                case 2 -> List.of( // 4x1 가로
+                    Map.of(40, 40), Map.of(720, 40),
+                    Map.of(1400, 40), Map.of(2080, 40)
+                );
+                case 3 -> List.of( // 2x2
+                    Map.of(40, 40), Map.of(720, 40),
+                    Map.of(40, 560), Map.of(720, 560)
+                );
+                default -> throw new BusinessException(ErrorCode.NOT_FOUND);
+            };
+            case 6 -> switch (frameType) {
+                case 1 -> List.of( // 2x3 세로
+                    Map.of(40, 40), Map.of(720, 40),
+                    Map.of(40, 560), Map.of(720, 560),
+                    Map.of(40, 1080), Map.of(720, 1080)
+                );
+                case 2 -> List.of( // 3x2 가로
+                    Map.of(40, 40), Map.of(720, 40), Map.of(1400, 40),
+                    Map.of(40, 560), Map.of(720, 560), Map.of(1400, 560)
+                );
+                default -> throw new BusinessException(ErrorCode.NOT_FOUND);
+            };
+            default -> throw new BusinessException(ErrorCode.NOT_FOUND);
+        };
     }
 
     // FFmpeg 명령어 반환 메서드
@@ -436,6 +339,12 @@ public class FilmServiceImpl implements FilmService {
                 }
             }
             directory.delete();
+        }
+    }
+
+    private void require(String v, String name) {
+        if (v == null || v.isBlank()) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST);
         }
     }
 }
