@@ -77,7 +77,6 @@ public class FilmServiceImpl implements FilmService {
             .toList();
     }
 
-
     private void require(String v, String name) {
         if (v == null || v.isBlank()) {
             throw new BusinessException(ErrorCode.BAD_REQUEST);
