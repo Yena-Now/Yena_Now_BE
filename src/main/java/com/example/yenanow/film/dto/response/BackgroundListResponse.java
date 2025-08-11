@@ -10,7 +10,6 @@ import lombok.Getter;
 public class BackgroundListResponse {
 
     private String backgroundUuid;
-    private String backgroundName;
     private String backgroundUrl;
 
 }

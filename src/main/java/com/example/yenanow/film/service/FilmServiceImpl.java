@@ -33,7 +33,6 @@ public class FilmServiceImpl implements FilmService {
         require(s3Key, "s3Key");
         Background background = new Background();
         background.setBackgroundUrl(s3Key);
-        background.setBackgroundName(UUID.randomUUID().toString());
         backgroundRepository.save(background);
     }
 
@@ -73,7 +72,6 @@ public class FilmServiceImpl implements FilmService {
         return backgroundRepository.findAll().stream()
             .map(background -> BackgroundListResponse.builder()
                 .backgroundUuid(background.getBackgroundUuid())
-                .backgroundName(background.getBackgroundName())
                 .backgroundUrl(s3Service.getFileUrl(background.getBackgroundUrl())) // Key → URL 변환
                 .build())
             .toList();
