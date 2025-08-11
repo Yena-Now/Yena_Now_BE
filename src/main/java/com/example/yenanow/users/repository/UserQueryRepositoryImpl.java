@@ -1,5 +1,6 @@
 package com.example.yenanow.users.repository;
 
+import com.example.yenanow.users.dto.response.UserInviteSearchResponseItem;
 import com.example.yenanow.users.dto.response.UserSearchResponseItem;
 import com.example.yenanow.users.entity.QFollow;
 import com.example.yenanow.users.entity.QUser;
@@ -13,7 +14,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
@@ -77,13 +77,56 @@ public class UserQueryRepositoryImpl implements UserQueryRepository {
             )
             .fetch();
 
-        long total = queryFactory
+        Long total = queryFactory
             .select(user.count())
             .from(user)
             .where(user.name.like("%" + keyword + "%")
                 .or(user.nickname.like("%" + keyword + "%")), user.userUuid.ne(currentUserUuid))
             .fetchOne();
 
-        return new PageImpl<>(content, pageable, total);
+        return new PageImpl<>(content, pageable, total == null ? 0 : total);
     }
+
+    @Override
+    public Page<UserInviteSearchResponseItem> findFollowersByKeyword(
+        String currentUserUuid, String keyword, Pageable pageable) {
+
+        QUser user = QUser.user;
+        QFollow follow = QFollow.follow;
+
+        BooleanExpression matchesKeyword =
+            user.name.containsIgnoreCase(keyword)
+                .or(user.nickname.containsIgnoreCase(keyword));
+
+        List<UserInviteSearchResponseItem> content = queryFactory
+            .select(Projections.constructor(
+                UserInviteSearchResponseItem.class,
+                user.userUuid,
+                user.profileUrl,
+                user.name,
+                user.nickname
+            ))
+            .from(user)
+            .join(follow).on(
+                follow.fromUser.userUuid.eq(user.userUuid),
+                follow.toUser.userUuid.eq(currentUserUuid)
+            )
+            .where(matchesKeyword)
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
+
+        Long total = queryFactory
+            .select(user.countDistinct())
+            .from(user)
+            .join(follow).on(
+                follow.fromUser.userUuid.eq(user.userUuid),
+                follow.toUser.userUuid.eq(currentUserUuid)
+            )
+            .where(matchesKeyword)
+            .fetchOne();
+
+        return new PageImpl<>(content, pageable, total == null ? 0 : total);
+    }
+
 }
