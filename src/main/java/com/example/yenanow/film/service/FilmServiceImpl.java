@@ -38,29 +38,6 @@ public class FilmServiceImpl implements FilmService {
     }
 
     @Override
-    public void createSticker(String s3Key) {
-        require(s3Key, "s3Key");
-        Sticker sticker = new Sticker();
-        sticker.setStickerUrl(s3Key);
-        sticker.setStickerName(UUID.randomUUID().toString());
-        stickerRepository.save(sticker);
-    }
-
-//    @Override
-//    public void createFrame(String s3Key, Integer frameCut, Integer frameType) {
-//        require(s3Key, "s3Key");
-//        if (frameCut == null || frameType == null) {
-//            throw new BusinessException(ErrorCode.BAD_REQUEST);
-//        }
-//        Frame frame = new Frame();
-//        frame.setFrameUrl(s3Key);
-//        frame.setFrameName(UUID.randomUUID().toString());
-//        frame.setFrameCut(frameCut);
-//        frame.setFrameType(frameType);
-//        frameRepository.save(frame);
-//    }
-
-    @Override
     public List<FrameListResponse> getFrames() {
         return frameRepository.findAll().stream()
             .map(frame -> FrameListResponse.builder()

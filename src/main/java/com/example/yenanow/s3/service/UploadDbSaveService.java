@@ -23,9 +23,7 @@ public class UploadDbSaveService {
         String s3Key = (key != null && !key.isBlank()) ? key : extractKeyOrThrow(fileUrl);
         switch (type) {
             case "profile" -> userService.updateProfileUrl(userUuid, fileUrl);
-//            case "frame" -> filmService.createFrame(s3Key);
             case "background" -> filmService.createBackground(s3Key);
-            case "sticker" -> filmService.createSticker(s3Key);
             case "ncut" -> {
                 require(userUuid != null && !userUuid.isBlank(), "ncut타입은 userUuid가 필요합니다.");
 //                ncutService.saveNcut(fileUrl, userUuid);
