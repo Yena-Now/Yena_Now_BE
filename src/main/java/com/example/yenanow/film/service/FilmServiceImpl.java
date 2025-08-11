@@ -5,7 +5,7 @@ import com.example.yenanow.common.exception.ErrorCode;
 import com.example.yenanow.film.dto.request.MergeRequest;
 import com.example.yenanow.film.dto.request.MergeRequestItem;
 import com.example.yenanow.film.dto.response.BackgroundListResponse;
-import com.example.yenanow.film.dto.response.FrameListResponse;
+import com.example.yenanow.film.dto.response.FrameListResponseItem;
 import com.example.yenanow.film.dto.response.MergeResponse;
 import com.example.yenanow.film.dto.response.StickerListResponse;
 import com.example.yenanow.film.dto.response.StickerListResponseItem;
@@ -62,16 +62,8 @@ public class FilmServiceImpl implements FilmService {
     }
 
     @Override
-    public List<FrameListResponse> getFrames(int frameCut) {
-        return frameRepository.findByFrameCut(frameCut).stream()
-            .map(frame -> FrameListResponse.builder()
-                .frameUuid(frame.getFrameUuid())
-                .frameName(frame.getFrameName())
-                .frameUrl(s3Service.getFileUrl(frame.getFrameUrl())) // Key → URL 변환
-                .frameCut(frame.getFrameCut())
-                .frameType(frame.getFrameType())
-                .build())
-            .toList();
+    public List<FrameListResponseItem> getFrames(int frameCut) {
+        return frameRepository.findByFrameCut(frameCut);
     }
 
     @Override
