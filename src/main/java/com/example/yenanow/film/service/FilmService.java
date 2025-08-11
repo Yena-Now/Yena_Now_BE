@@ -15,4 +15,6 @@ public interface FilmService {
 
     List<BackgroundListResponse> getBackgrounds();
 
+    void createBackground(String s3Key);
+
 }

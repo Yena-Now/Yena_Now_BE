@@ -25,7 +25,7 @@ public class Frame {
     @Column(name = "frame_uuid", length = 36, nullable = false)
     private String frameUuid;
 
-    @Column(name = "frame_name", length = 20, nullable = false)
+    @Column(name = "frame_name", length = 50, nullable = false)
     private String frameName;
 
     @Column(name = "frame_url", length = 200, nullable = false)
