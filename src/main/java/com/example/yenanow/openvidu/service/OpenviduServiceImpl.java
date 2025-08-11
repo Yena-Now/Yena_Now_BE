@@ -3,7 +3,10 @@ package com.example.yenanow.openvidu.service;
 import com.example.yenanow.common.exception.BusinessException;
 import com.example.yenanow.common.exception.ErrorCode;
 import com.example.yenanow.common.util.UuidUtil;
+import com.example.yenanow.gallery.entity.Relay;
+import com.example.yenanow.gallery.repository.RelayRepository;
 import com.example.yenanow.openvidu.dto.request.CodeRequest;
+import com.example.yenanow.openvidu.dto.request.TokenRelayRequest;
 import com.example.yenanow.openvidu.dto.request.TokenRequest;
 import com.example.yenanow.openvidu.dto.response.CodeResponse;
 import com.example.yenanow.openvidu.dto.response.TokenResponse;
@@ -40,6 +43,7 @@ public class OpenviduServiceImpl implements OpenviduService {
     private String LIVEKIT_API_SECRET;
 
     private final UserRepository userRepository;
+    private final RelayRepository relayRepository;
     private final StringRedisTemplate redisTemplate;
     private final S3Service s3Service;
     private final S3KeyFactory s3KeyFactory;
@@ -144,6 +148,47 @@ public class OpenviduServiceImpl implements OpenviduService {
         } catch (Exception e) {
             // log.error("Error validating webhook event: {}", e.getMessage());
             throw new BusinessException(ErrorCode.BAD_REQUEST);
+        }
+    }
+
+    @Override
+    public TokenResponse createRelayToken(String userUuid, TokenRelayRequest tokenRelayRequest) {
+        String relayUuid = tokenRelayRequest.getRelayUuid();
+        boolean isParticipant = relayRepository.existByRelayUuidAndUserUserUuid(relayUuid,
+            userUuid);
+        if (!isParticipant) {
+            throw new BusinessException(ErrorCode.PERMISSION_DENIED);
+        }
+
+        Relay relay = relayRepository.findById(relayUuid)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+
+        String relayKey = "relay:" + relayUuid;
+        String roomCode = redisTemplate.opsForValue().get(relayKey);
+        if (roomCode == null) {
+            Random random = new Random();
+
+            while (true) {
+                roomCode = String.format("%06d", random.nextInt(999999));
+                String roomKey = "room:" + roomCode;
+
+                if (!redisTemplate.hasKey(roomKey)) {
+                    HashOperations<String, String, Object> hashOps = redisTemplate.opsForHash();
+
+                    Map<String, String> roomDataMap = new HashMap<>();
+                    roomDataMap.put("background_url",
+                        s3KeyFactory.extractKeyFromUrl(relay.getBackgroundUrl()));
+                    roomDataMap.put("take_count", String.valueOf(relay.getTakeCount()));
+                    roomDataMap.put("cut_count", String.valueOf(relay.getCutCount()));
+                    roomDataMap.put("time_limit", String.valueOf(relay.getTimeLimit()));
+                    roomDataMap.put("cuts", "[]");
+
+                    hashOps.putAll(roomKey, roomDataMap);
+                    break;
+                }
+            }
+        } else {
+
         }
     }
 
