@@ -85,6 +85,9 @@ public class User {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    @Column(name = "provider")
+    private String provider;
+
     public User updateProfileUrl(String profileUrl) {
         this.profileUrl = profileUrl;
         return this;
