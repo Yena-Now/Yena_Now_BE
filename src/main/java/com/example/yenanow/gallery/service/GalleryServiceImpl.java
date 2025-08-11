@@ -3,6 +3,7 @@ package com.example.yenanow.gallery.service;
 import com.example.yenanow.common.exception.BusinessException;
 import com.example.yenanow.common.exception.ErrorCode;
 import com.example.yenanow.common.util.UuidUtil;
+import com.example.yenanow.gallery.dto.request.CreateNcutRequest;
 import com.example.yenanow.gallery.dto.request.UpdateNcutContentRequest;
 import com.example.yenanow.gallery.dto.request.UpdateNcutVisibilityRequest;
 import com.example.yenanow.gallery.dto.response.MyGalleryResponse;
@@ -17,10 +18,13 @@ import com.example.yenanow.gallery.entity.NcutLike;
 import com.example.yenanow.gallery.entity.Visibility;
 import com.example.yenanow.gallery.repository.NcutLikeRepository;
 import com.example.yenanow.gallery.repository.NcutRepository;
+import com.example.yenanow.s3.service.S3Service;
+import com.example.yenanow.s3.util.S3KeyFactory;
 import com.example.yenanow.users.entity.User;
 import com.example.yenanow.users.repository.FollowRepository;
 import com.example.yenanow.users.repository.UserRepository;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +49,8 @@ public class GalleryServiceImpl implements GalleryService {
     private final UserRepository userRepository;
     private final StringRedisTemplate redisTemplate;
     private final NcutCountSyncService ncutCountSyncService;
+    private final S3KeyFactory s3KeyFactory;
+    private final S3Service s3Service;
 
     @Override
     public MyGalleryResponse getMyGallery(String userUuid, int pageNum, int display) {
@@ -290,6 +296,57 @@ public class GalleryServiceImpl implements GalleryService {
         return NcutLikeResponse.builder()
             .isLiked(false)
             .likeCount((int) currentLikeCount)
+            .build();
+    }
+
+    @Override
+    @Transactional
+    public NcutDetailResponse createNcut(String userUuid, CreateNcutRequest createNcutRequest) {
+        User userProxy = userRepository.getReferenceById(userUuid);
+
+        Ncut ncut = Ncut.builder()
+            .ncutUrl(s3KeyFactory.extractKeyFromUrl(createNcutRequest.getNcutUrl()))
+            .thumbnailUrl(s3KeyFactory.extractKeyFromUrl(createNcutRequest.getThumbnailUrl()))
+            .content(createNcutRequest.getContent())
+            .visibility(createNcutRequest.getVisibility())
+            .isRelay(createNcutRequest.getIsRelay())
+            .likeCount(0)
+            .user(userProxy)
+            .commentCount(0)
+            .build();
+        Ncut createdNcut = ncutRepository.save(ncut);
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                String userKey = "user:" + userUuid;
+                Integer totalCut = UuidUtil.incrementCounter(redisTemplate, userKey, "total_cut",
+                    1).intValue();
+                ncutCountSyncService.syncTotalCutToDB(userUuid, totalCut);
+
+                String ncutKey = "ncut:" + createdNcut.getNcutUuid();
+                HashOperations<String, String, Object> hashOps = redisTemplate.opsForHash();
+                Map<String, String> roomDataMap = new HashMap<>();
+                roomDataMap.put("like_count", String.valueOf(createdNcut.getLikeCount()));
+                roomDataMap.put("comment_cnt", String.valueOf(createdNcut.getCommentCount()));
+
+                hashOps.putAll(ncutKey, roomDataMap);
+            }
+        });
+
+        return NcutDetailResponse.builder()
+            .ncutUuid(createdNcut.getNcutUuid())
+            .ncutUrl(s3Service.getFileUrl(createdNcut.getNcutUrl()))
+            .userUuid(createdNcut.getUser().getUserUuid())
+            .nickname(createdNcut.getUser().getNickname())
+            .profileUrl(s3Service.getFileUrl(createdNcut.getUser().getProfileUrl()))
+            .content(createdNcut.getContent())
+            .createdAt(createdNcut.getCreatedAt())
+            .isRelay(createdNcut.isRelay())
+            .visibility(createdNcut.getVisibility())
+            .likeCount(createdNcut.getLikeCount())
+            .commentCount(createdNcut.getCommentCount())
+            .isMine(true)
             .build();
     }
 

@@ -10,8 +10,8 @@ public class TokenResponse {
 
     String token;
     String backgroundUrl;
-    Integer takeCnt;
-    Integer cutCnt;
+    Integer takeCount;
+    Integer cutCount;
     Integer timeLimit;
     List<String> cuts;
 }

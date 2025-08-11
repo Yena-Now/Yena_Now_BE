@@ -1,5 +1,6 @@
 package com.example.yenanow.gallery.service;
 
+import com.example.yenanow.gallery.dto.request.CreateNcutRequest;
 import com.example.yenanow.gallery.dto.request.UpdateNcutContentRequest;
 import com.example.yenanow.gallery.dto.request.UpdateNcutVisibilityRequest;
 import com.example.yenanow.gallery.dto.response.MyGalleryResponse;
@@ -38,4 +39,6 @@ public interface GalleryService {
     NcutLikeResponse createNcutLike(String userUuid, String ncutUuid);
 
     NcutLikeResponse deleteNcutLike(String userUuid, String ncutUuid);
+
+    NcutDetailResponse createNcut(String userUuid, CreateNcutRequest createNcutRequest);
 }

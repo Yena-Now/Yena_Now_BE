@@ -22,4 +22,7 @@ public class PresignedUrlRequest {
 
     @Schema(description = "엔컷 UUID (nullable)", example = "null 또는 UUID 값", nullable = true)
     private String ncutUuid;
+
+    @Schema(description = "룸 UUID (nullable)", example = "null 또는 UUID 값", nullable = true)
+    private String roomCode;
 }

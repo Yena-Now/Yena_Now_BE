@@ -11,13 +11,11 @@ import com.example.yenanow.s3.util.S3KeyFactory;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -55,13 +53,25 @@ public class S3Controller {
 
         // S3 Key 생성
         String key = s3KeyFactory.createKey(
-            request.getType(), request.getFileName(), userUuid, request.getRelayUuid());
+            request.getType(),
+            request.getFileName(),
+            userUuid,
+            request.getRelayUuid(),
+            request.getRoomCode()
+        );
 
         // 업로드 URL 및 DB 저장
         String fileUrl = s3Service.getFileUrl(key);
+
         uploadDbSaveService.saveUrl(
-            request.getType(), fileUrl, key,
-            userUuid, request.getRelayUuid(), request.getNcutUuid());
+            request.getType(),
+            fileUrl,
+            key,
+            userUuid,
+            request.getRelayUuid(),
+            request.getNcutUuid(),
+            request.getNcutUuid()
+        );
 
         // Presigned URL 생성
         String uploadUrl = s3Service.generatePresignedUploadUrl(key, request.getContentType());

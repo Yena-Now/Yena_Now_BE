@@ -1,7 +1,7 @@
 package com.example.yenanow.film.controller;
 
 import com.example.yenanow.film.dto.response.BackgroundListResponse;
-import com.example.yenanow.film.dto.response.FrameListResponse;
+import com.example.yenanow.film.dto.response.FrameListResponseItem;
 import com.example.yenanow.film.dto.response.StickerListResponse;
 import com.example.yenanow.film.service.FilmService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -26,8 +26,8 @@ public class FilmController {
 
     @Operation(summary = "프레임 목록 조회", description = "필름에 사용 가능한 모든 프레임 목록을 조회합니다.")
     @GetMapping("/frames")
-    public List<FrameListResponse> getFrames() {
-        return filmService.getFrames();
+    public List<FrameListResponseItem> getFrames(@RequestParam int frameCut) {
+        return filmService.getFrames(frameCut);
     }
 
     @Operation(summary = "스티커 목록 조회", description = "필름에 사용 가능한 스티커 목록을 페이지네이션으로 조회합니다.")

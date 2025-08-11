@@ -25,9 +25,9 @@ public class Sticker {
     @Column(name = "sticker_uuid", length = 36, nullable = false)
     private String stickerUuid;
 
-    @Column(name = "stickerName", length = 20, nullable = false)
+    @Column(name = "sticker_name", length = 50, nullable = false)
     private String stickerName;
-    
-    @Column(name = "stickerUrl", length = 200, nullable = false)
+
+    @Column(name = "sticker_url", length = 200, nullable = false)
     private String stickerUrl;
 }

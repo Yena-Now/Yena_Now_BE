@@ -7,9 +7,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 @Builder
-public class BackgroundListResponse {
+public class MergeResponse {
 
-    private String backgroundUuid;
-    private String backgroundUrl;
-
+    private String resultUrl;
 }
