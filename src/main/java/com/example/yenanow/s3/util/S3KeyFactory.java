@@ -12,7 +12,7 @@ public class S3KeyFactory {
     /* 범용 키 생성(기존) -------------------------------------------------- */
 
     public String createKey(String type, String fileName,
-        String userUuid, String relayUuid, String roodCode) {
+        String userUuid, String relayUuid, String roomCode) {
         String ext = "";
         int dotIndex = fileName.lastIndexOf('.');
         if (dotIndex > -1) {
