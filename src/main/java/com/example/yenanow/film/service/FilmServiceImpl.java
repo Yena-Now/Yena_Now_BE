@@ -63,7 +63,21 @@ public class FilmServiceImpl implements FilmService {
 
     @Override
     public List<FrameListResponseItem> getFrames(int frameCut) {
-        return frameRepository.findByFrameCut(frameCut);
+        List<FrameListResponseItem> frames = frameRepository.findByFrameCut(frameCut);
+
+        return frames.stream()
+            .map(frame -> {
+                String objectUrl = s3Service.getFileUrl(frame.getFrameUrl());
+
+                return FrameListResponseItem.builder()
+                    .frameUuid(frame.getFrameUuid())
+                    .frameName(frame.getFrameName())
+                    .frameUrl(objectUrl)
+                    .frameCut(frame.getFrameCut())
+                    .frameType(frame.getFrameType())
+                    .build();
+            })
+            .toList();
     }
 
     @Override
