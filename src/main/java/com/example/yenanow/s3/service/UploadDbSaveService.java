@@ -19,7 +19,7 @@ public class UploadDbSaveService {
     private final S3KeyFactory s3KeyFactory;
 
     public void saveUrl(String type, String fileUrl, String key, String userUuid, String relayUuid,
-        String ncutUuid, String roodCode) {
+        String ncutUuid, String roomCode) {
         String s3Key = (key != null && !key.isBlank()) ? key : extractKeyOrThrow(fileUrl);
         switch (type) {
             case "profile" -> userService.updateProfileUrl(userUuid, fileUrl);
