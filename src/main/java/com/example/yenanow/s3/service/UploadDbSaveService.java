@@ -2,8 +2,9 @@ package com.example.yenanow.s3.service;
 
 import com.example.yenanow.common.exception.BusinessException;
 import com.example.yenanow.common.exception.ErrorCode;
-import com.example.yenanow.users.entity.User;
-import com.example.yenanow.users.repository.UserRepository;
+import com.example.yenanow.film.service.FilmService;
+import com.example.yenanow.s3.util.S3KeyFactory;
+import com.example.yenanow.users.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -11,32 +12,46 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class UploadDbSaveService {
 
-    private final UserRepository userRepository;
-//    private final FrameRepository frameRepository;
-//    private final BackgroundRepository backgroundRepository;
-//    private final StickerRepository stickerRepository;
-//    private final NcutRepository ncutRepository;
-//    private final RelayCutRepository relayCutRepository;
+    private final UserService userService;
+    private final FilmService filmService;
+    // private final GalleryService galleryService;
+    // private final RelayCutService relayCutService;
+    private final S3KeyFactory s3KeyFactory;
 
     public void saveUrl(String type, String fileUrl, String key, String userUuid, String relayUuid,
-        String ncutUuid) {
+        String ncutUuid, String roomCode) {
+        String s3Key = (key != null && !key.isBlank()) ? key : extractKeyOrThrow(fileUrl);
         switch (type) {
-            case "profile":
-                User user = userRepository.findById(userUuid)
-                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER_PROFILE));
-                user.setProfileUrl(fileUrl);
-                userRepository.save(user);
-                break;
-//            case "profile" -> userService.updateProfileUrl(userUuid, fileUrl);
-//            case "frame" -> frameService.saveFrame(fileUrl);
-//            case "background" -> backgroundService.saveBackground(fileUrl);
-//            case "sticker" -> stickerService.saveSticker(fileUrl);
-//            case "ncut" -> ncutService.saveNcut(fileUrl, userUuid);
-//            case "ncut-thumbnail" -> ncutService.updateThumbnail(ncutUuid, fileUrl);
-//            case "relay-cut" -> relayCutService.saveRelayCut(relayUuid, fileUrl);
-//            default -> throw new BusinessException(ErrorCode.BAD_REQUEST);
-            default:
-                throw new IllegalArgumentException("지원하지 않는 type: " + type);
+            case "profile" -> userService.updateProfileUrl(userUuid, fileUrl);
+            case "background" -> filmService.createBackground(s3Key);
+            case "ncut" -> {
+                require(userUuid != null && !userUuid.isBlank(), "ncut타입은 userUuid가 필요합니다.");
+//                ncutService.saveNcut(fileUrl, userUuid);
+            }
+            case "ncutThumbnail" -> {
+                require(ncutUuid != null && !ncutUuid.isBlank(),
+                    "ncutThumbnail타입은 ncutUuid가 필요합니다.");
+//                ncutService.updateThumbnail(ncutUuid, fileUrl);
+            }
+            case "relayCut" -> {
+                require(relayUuid != null && !relayUuid.isBlank(),
+                    "relayUuid타입은 relayUuid가 필요합니다.");
+//                relayCutService.saveRelayCut(relayUuid, fileUrl);
+            }
+            default -> throw new BusinessException(ErrorCode.BAD_REQUEST);
+        }
+    }
+
+    private String extractKeyOrThrow(String fileUrl) {
+        if (fileUrl == null || fileUrl.isBlank()) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST);
+        }
+        return s3KeyFactory.extractKeyFromUrl(fileUrl);
+    }
+
+    private void require(boolean cond, String message) {
+        if (!cond) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST);
         }
     }
 }

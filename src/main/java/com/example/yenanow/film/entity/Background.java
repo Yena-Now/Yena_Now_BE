@@ -25,9 +25,6 @@ public class Background {
     @Column(name = "background_uuid", length = 36, nullable = false)
     private String backgroundUuid;
 
-    @Column(name = "background_name", length = 20, nullable = false)
-    private String backgroundName;
-
     @Column(name = "background_url", length = 200, nullable = false)
     private String backgroundUrl;
 }

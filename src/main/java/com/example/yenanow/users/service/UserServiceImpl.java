@@ -19,6 +19,8 @@ import com.example.yenanow.users.dto.response.NicknameResponse;
 import com.example.yenanow.users.dto.response.ProfileResponse;
 import com.example.yenanow.users.dto.response.SignupResponse;
 import com.example.yenanow.users.dto.response.UpdateProfileUrlResponse;
+import com.example.yenanow.users.dto.response.UserInviteSearchResponse;
+import com.example.yenanow.users.dto.response.UserInviteSearchResponseItem;
 import com.example.yenanow.users.dto.response.UserSearchResponse;
 import com.example.yenanow.users.dto.response.UserSearchResponseItem;
 import com.example.yenanow.users.entity.Gender;
@@ -29,7 +31,6 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.Random;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -63,10 +64,10 @@ public class UserServiceImpl implements UserService {
         }
 
         /* 1) 프로필 업로드 여부 판별 */
-        boolean hasProfile = signupRequest.getProfileUrl() != null && !signupRequest.getProfileUrl().isBlank();
+        boolean hasProfile =
+            signupRequest.getProfileUrl() != null && !signupRequest.getProfileUrl().isBlank();
 
-        /* 2) UUID 선생성 */
-        String userUuid = UUID.randomUUID().toString();
+        /* 2) 최종 프로필 키 */
         String finalKey = null;   // 사진이 없으면 그대로 null
 
         if (hasProfile) {
@@ -77,7 +78,7 @@ public class UserServiceImpl implements UserService {
             String ext = org.apache.commons.io.FilenameUtils.getExtension(tempKey);
 
             /* 2-c) 최종 Key: profile/{userUuid}/{랜덤}.{ext} */
-            finalKey = s3KeyFactory.createFinalProfileKey(userUuid, ext);
+            finalKey = s3KeyFactory.createProfileKeyWithoutUser(ext);
 
             /* 2-d) S3 복사 & temp 삭제 */
             s3Service.copyObject(tempKey, finalKey);
@@ -86,12 +87,12 @@ public class UserServiceImpl implements UserService {
 
         /* 3) 엔티티 생성 및 저장 */
         User user = signupRequest.toEntity();
-        user.setUserUuid(userUuid);
         user.setProfileUrl(finalKey);      // null 또는 최종 Key
         user.encodePassword(encoder);
         userRepository.save(user);         // INSERT 한 번
 
         /* 4) 토큰 & Redis 초기화 */
+        String userUuid = user.getUserUuid();
         String token = jwtUtil.generateToken(userUuid);
         String rKey = "user:" + userUuid;
         redisTemplate.opsForHash().put(rKey, "follower_count", "0");
@@ -279,6 +280,19 @@ public class UserServiceImpl implements UserService {
             .findUsersByKeyword(currentUserUuid, keyword, pageable);
 
         return UserSearchResponse.builder()
+            .totalPages(page.getTotalPages())
+            .userSearches(page.getContent())
+            .build();
+    }
+
+    @Override
+    public UserInviteSearchResponse getUserInviteSearch(String keyword, String currentUserUuid,
+        int pageNum, int display) {
+        Pageable pageable = PageRequest.of(pageNum, display);
+        Page<UserInviteSearchResponseItem> page = userRepository
+            .findFollowersByKeyword(currentUserUuid, keyword, pageable);
+
+        return UserInviteSearchResponse.builder()
             .totalPages(page.getTotalPages())
             .userSearches(page.getContent())
             .build();

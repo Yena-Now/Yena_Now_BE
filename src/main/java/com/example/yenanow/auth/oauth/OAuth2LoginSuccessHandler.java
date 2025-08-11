@@ -8,6 +8,8 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
@@ -33,17 +35,22 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         HttpServletResponse response,
         Authentication authentication)
         throws IOException, ServletException {
+        org.springframework.security.oauth2.core.user.OAuth2User oAuth2User =
+            (org.springframework.security.oauth2.core.user.OAuth2User) authentication.getPrincipal();
 
-        String email = ((org.springframework.security.oauth2.core.user.OAuth2User) authentication.getPrincipal())
-            .getAttribute("email");
+        String email = oAuth2User.getAttribute("email");
+        String provider = oAuth2User.getAttribute("provider");
 
-        Optional<User> userOpt = userRepository.findByEmail(email);
+        Optional<User> userOpt = userRepository.findByEmailAndProvider(email, provider);
         if (userOpt.isEmpty()) {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "User not found");
             return;
         }
 
         User user = userOpt.get();
+
+        // 닉네임을 URL 인코딩
+        String encodedNickname = URLEncoder.encode(user.getNickname(), StandardCharsets.UTF_8);
 
         // JWT 생성
         String accessToken = jwtUtil.generateToken(user.getUserUuid());
@@ -58,22 +65,9 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
         response.addCookie(refreshTokenCookie);
 
-        // 클라이언트에 JSON으로 응답
-//        response.setContentType("application/json");
-//        response.setCharacterEncoding("utf-8");
-//        String json = String.format("""
-//            {
-//              "accessToken": "%s",
-//              "userUuid": "%s",
-//              "nickname": "%s",
-//              "profileUrl": "%s"
-//            }
-//            """, accessToken, user.getUserUuid(), user.getNickname(), user.getProfileUrl());
-//        response.getWriter().write(json);
-
         String redirectUrl = clientOrigin + "?accessToken=" + accessToken +
             "&userUuid=" + user.getUserUuid() +
-            "&nickname=" + user.getNickname() +
+            "&nickname=" + encodedNickname +
             "&profileUrl=" + user.getProfileUrl();
         response.sendRedirect(redirectUrl);
     }

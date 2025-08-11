@@ -10,7 +10,7 @@ import lombok.Setter;
 public class CodeRequest {
 
     String backgroundUrl;
-    Integer takeCnt;
-    Integer cutCnt;
+    Integer takeCount;
+    Integer cutCount;
     Integer timeLimit;
 }

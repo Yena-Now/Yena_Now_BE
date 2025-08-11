@@ -1,5 +1,6 @@
 package com.example.yenanow.gallery.controller;
 
+import com.example.yenanow.gallery.dto.request.CreateNcutRequest;
 import com.example.yenanow.gallery.dto.request.UpdateNcutContentRequest;
 import com.example.yenanow.gallery.dto.request.UpdateNcutVisibilityRequest;
 import com.example.yenanow.gallery.dto.response.MyGalleryResponse;
@@ -165,5 +166,16 @@ public class GalleryController {
         String userUuid = principal.toString();
         NcutLikeResponse ncutLikeResponse = galleryService.deleteNcutLike(userUuid, ncutUuid);
         return ResponseEntity.ok(ncutLikeResponse);
+    }
+
+    @PostMapping("/ncuts")
+    public ResponseEntity<NcutDetailResponse> createNcut(
+        @AuthenticationPrincipal Object principal,
+        @RequestBody CreateNcutRequest createNcutRequest) {
+
+        String userUuid = principal.toString();
+        NcutDetailResponse ncutDetailResponse = galleryService.createNcut(userUuid,
+            createNcutRequest);
+        return ResponseEntity.ok(ncutDetailResponse);
     }
 }

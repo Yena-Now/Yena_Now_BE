@@ -19,4 +19,6 @@ public interface FilmService {
     List<BackgroundListResponse> getBackgrounds();
 
     CompletableFuture<MergeResponse> createMergedOutput(MergeRequest request, String userUuid);
+
+    void createBackground(String s3Key);
 }
