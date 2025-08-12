@@ -159,10 +159,10 @@ public class GalleryServiceImpl implements GalleryService {
 
         return NcutDetailResponse.builder()
             .ncutUuid(ncutDetailResponse.getNcutUuid())
-            .ncutUrl(ncutDetailResponse.getNcutUrl())
+            .ncutUrl(s3Service.getFileUrl(ncutDetailResponse.getNcutUrl()))
             .userUuid(ncutDetailResponse.getUserUuid())
             .nickname(ncutDetailResponse.getNickname())
-            .profileUrl(ncutDetailResponse.getProfileUrl())
+            .profileUrl(s3Service.getFileUrl(ncutDetailResponse.getProfileUrl()))
             .content(ncutDetailResponse.getContent())
             .createdAt(ncutDetailResponse.getCreatedAt())
             .isRelay(ncutDetailResponse.getIsRelay())
@@ -443,7 +443,7 @@ public class GalleryServiceImpl implements GalleryService {
         if (!isParticipant) {
             throw new BusinessException(ErrorCode.PERMISSION_DENIED);
         }
-        
+
         if (updateRelayRequest.getFrameUuid() != null) {
             Frame frame = frameRepository.getReferenceById(updateRelayRequest.getFrameUuid());
             relay.setFrame(frame);
