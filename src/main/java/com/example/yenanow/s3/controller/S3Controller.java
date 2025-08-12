@@ -80,7 +80,6 @@ public class S3Controller {
             type,
             fileName,
             userUuid,
-            request.getRelayUuid(),
             request.getRoomCode()
         );
 
@@ -90,11 +89,7 @@ public class S3Controller {
         uploadDbSaveService.saveUrl(
             type,
             fileUrl,
-            key,
-            userUuid,
-            request.getRelayUuid(),
-            request.getNcutUuid(),
-            request.getRoomCode()
+            userUuid
         );
 
         // Presigned URL 생성
