@@ -1,6 +1,7 @@
 package com.example.yenanow.openvidu.controller;
 
 import com.example.yenanow.openvidu.dto.request.CodeRequest;
+import com.example.yenanow.openvidu.dto.request.TokenRelayRequest;
 import com.example.yenanow.openvidu.dto.request.TokenRequest;
 import com.example.yenanow.openvidu.dto.response.CodeResponse;
 import com.example.yenanow.openvidu.dto.response.TokenResponse;
@@ -56,5 +57,14 @@ public class OpenviduController {
         @RequestBody String body) {
         openviduService.reciveWebhook(authHeader, body);
         return ResponseEntity.ok("ok");
+    }
+
+    @PostMapping("/token/relay")
+    public ResponseEntity<TokenResponse> createRelayToken(
+        @AuthenticationPrincipal Object principal,
+        @RequestBody TokenRelayRequest tokenRelayRequest) {
+        String userUuid = principal.toString();
+        TokenResponse tokenResponse = openviduService.createRelayToken(userUuid, tokenRelayRequest);
+        return ResponseEntity.ok(tokenResponse);
     }
 }

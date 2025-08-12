@@ -3,7 +3,12 @@ package com.example.yenanow.openvidu.service;
 import com.example.yenanow.common.exception.BusinessException;
 import com.example.yenanow.common.exception.ErrorCode;
 import com.example.yenanow.common.util.UuidUtil;
+import com.example.yenanow.gallery.entity.Relay;
+import com.example.yenanow.gallery.entity.RelayCut;
+import com.example.yenanow.gallery.repository.RelayCutRepository;
+import com.example.yenanow.gallery.repository.RelayRepository;
 import com.example.yenanow.openvidu.dto.request.CodeRequest;
+import com.example.yenanow.openvidu.dto.request.TokenRelayRequest;
 import com.example.yenanow.openvidu.dto.request.TokenRequest;
 import com.example.yenanow.openvidu.dto.response.CodeResponse;
 import com.example.yenanow.openvidu.dto.response.TokenResponse;
@@ -40,9 +45,12 @@ public class OpenviduServiceImpl implements OpenviduService {
     private String LIVEKIT_API_SECRET;
 
     private final UserRepository userRepository;
+    private final RelayRepository relayRepository;
+    private final RelayCutRepository relayCutRepository;
     private final StringRedisTemplate redisTemplate;
     private final S3Service s3Service;
     private final S3KeyFactory s3KeyFactory;
+    private final ObjectMapper objectMapper;
 
     @Override
     public CodeResponse createCode(String userUuid, CodeRequest codeRequest) {
@@ -102,8 +110,8 @@ public class OpenviduServiceImpl implements OpenviduService {
         token.addGrants(new RoomJoin(true), new RoomName(roomCode));
 
         String backgroundUrl = s3Service.getFileUrl((String) roomData.get("background_url"));
-        Integer takeCnt = Integer.parseInt(roomData.get("take_count").toString());
-        Integer cutCnt = Integer.parseInt(roomData.get("cut_count").toString());
+        Integer takeCount = Integer.parseInt(roomData.get("take_count").toString());
+        Integer cutCount = Integer.parseInt(roomData.get("cut_count").toString());
         Integer timeLimit = Integer.parseInt(roomData.get("time_limit").toString());
         String cutsJson = (String) roomData.get("cuts");
         List<String> cutKeys = parseCutsJson(cutsJson);
@@ -112,7 +120,8 @@ public class OpenviduServiceImpl implements OpenviduService {
             cutUrls.add(s3Service.getFileUrl(cutUrl));
         }
 
-        return new TokenResponse(token.toJwt(), backgroundUrl, takeCnt, cutCnt, timeLimit, cutUrls);
+        return new TokenResponse(token.toJwt(), backgroundUrl, takeCount, cutCount, timeLimit,
+            cutUrls);
     }
 
     @Override
@@ -145,6 +154,84 @@ public class OpenviduServiceImpl implements OpenviduService {
             // log.error("Error validating webhook event: {}", e.getMessage());
             throw new BusinessException(ErrorCode.BAD_REQUEST);
         }
+    }
+
+    @Override
+    public TokenResponse createRelayToken(String userUuid, TokenRelayRequest tokenRelayRequest) {
+        String relayUuid = tokenRelayRequest.getRelayUuid();
+
+        if (!relayRepository.existsByRelayUuidAndUserUserUuid(relayUuid, userUuid)) {
+            throw new BusinessException(ErrorCode.PERMISSION_DENIED);
+        }
+        String nickname = userRepository.findNicknameById(userUuid)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_USER));
+
+        Relay relay = relayRepository.findById(relayUuid)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+        List<RelayCut> allCuts = relayCutRepository.findByRelayRelayUuid(relayUuid);
+
+        String relayKey = "relay:" + relayUuid;
+        String roomCode = redisTemplate.opsForValue().get(relayKey);
+
+        if (roomCode == null) {
+            Random random = new Random();
+            while (true) {
+                String newRoomCode = String.format("%06d", random.nextInt(999999));
+                String roomKey = "room:" + newRoomCode;
+
+                if (!redisTemplate.hasKey(roomKey)) {
+                    roomCode = newRoomCode;
+                    try {
+                        List<String> takenCutKeys = allCuts.stream()
+                            .filter(RelayCut::isTaken)
+                            .map(RelayCut::getCutUrl)
+                            .toList();
+
+                        HashOperations<String, Object, Object> hashOps = redisTemplate.opsForHash();
+                        Map<String, String> roomDataMap = new HashMap<>();
+
+                        roomDataMap.put("background_url", relay.getBackgroundUrl());
+                        roomDataMap.put("take_count", String.valueOf(relay.getTakeCount()));
+                        roomDataMap.put("cut_count", String.valueOf(relay.getCutCount()));
+                        roomDataMap.put("time_limit", String.valueOf(relay.getTimeLimit()));
+                        roomDataMap.put("cuts", objectMapper.writeValueAsString(takenCutKeys));
+
+                        hashOps.putAll(roomKey, roomDataMap);
+
+                        redisTemplate.opsForValue().set(relayKey, roomCode);
+                        break;
+                    } catch (JsonProcessingException e) {
+                        throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
+                    }
+                }
+            }
+        }
+
+        AccessToken token = new AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET);
+        token.setName(nickname);
+        token.setIdentity(userUuid);
+        token.addGrants(new RoomJoin(true), new RoomName(roomCode));
+
+        String roomKey = "room:" + roomCode;
+        Map<Object, Object> roomData = redisTemplate.opsForHash().entries(roomKey);
+
+        if (roomData.isEmpty()) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_CODE);
+        }
+
+        String backgroundUrl = s3Service.getFileUrl((String) roomData.get("background_url"));
+        Integer takeCount = Integer.parseInt(roomData.get("take_count").toString());
+        Integer cutCount = Integer.parseInt(roomData.get("cut_count").toString());
+        Integer timeLimit = Integer.parseInt(roomData.get("time_limit").toString());
+        String cutsJson = (String) roomData.get("cuts");
+        List<String> cutKeys = parseCutsJson(cutsJson);
+        List<String> cutUrls = new ArrayList<>();
+        for (String cutKey : cutKeys) {
+            cutUrls.add(s3Service.getFileUrl(cutKey));
+        }
+
+        return new TokenResponse(token.toJwt(), backgroundUrl, takeCount, cutCount, timeLimit,
+            cutUrls);
     }
 
     private List<String> parseCutsJson(String cutsJson) {

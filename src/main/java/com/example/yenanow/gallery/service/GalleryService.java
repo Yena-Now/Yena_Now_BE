@@ -1,5 +1,6 @@
 package com.example.yenanow.gallery.service;
 
+import com.example.yenanow.gallery.dto.request.CreateNcutRelayRequest;
 import com.example.yenanow.gallery.dto.request.CreateNcutRequest;
 import com.example.yenanow.gallery.dto.request.UpdateNcutContentRequest;
 import com.example.yenanow.gallery.dto.request.UpdateNcutVisibilityRequest;
@@ -7,6 +8,7 @@ import com.example.yenanow.gallery.dto.response.MyGalleryResponse;
 import com.example.yenanow.gallery.dto.response.NcutDetailResponse;
 import com.example.yenanow.gallery.dto.response.NcutLikeResponse;
 import com.example.yenanow.gallery.dto.response.NcutLikesResponse;
+import com.example.yenanow.gallery.dto.response.NcutRelayListResponse;
 import com.example.yenanow.gallery.dto.response.UpdateNcutContentResponse;
 import com.example.yenanow.gallery.dto.response.UpdateNcutVisibilityResponse;
 
@@ -41,4 +43,8 @@ public interface GalleryService {
     NcutLikeResponse deleteNcutLike(String userUuid, String ncutUuid);
 
     NcutDetailResponse createNcut(String userUuid, CreateNcutRequest createNcutRequest);
+
+    void createNcutRelay(String userUuid, CreateNcutRelayRequest createNcutRelayRequest);
+
+    NcutRelayListResponse getRelayList(String userUuid, int pageNum, int display);
 }

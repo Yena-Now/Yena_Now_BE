@@ -3,6 +3,9 @@ package com.example.yenanow.gallery.service;
 import com.example.yenanow.common.exception.BusinessException;
 import com.example.yenanow.common.exception.ErrorCode;
 import com.example.yenanow.common.util.UuidUtil;
+import com.example.yenanow.film.entity.Frame;
+import com.example.yenanow.film.repository.FrameRepository;
+import com.example.yenanow.gallery.dto.request.CreateNcutRelayRequest;
 import com.example.yenanow.gallery.dto.request.CreateNcutRequest;
 import com.example.yenanow.gallery.dto.request.UpdateNcutContentRequest;
 import com.example.yenanow.gallery.dto.request.UpdateNcutVisibilityRequest;
@@ -11,13 +14,19 @@ import com.example.yenanow.gallery.dto.response.NcutDetailResponse;
 import com.example.yenanow.gallery.dto.response.NcutLikeResponse;
 import com.example.yenanow.gallery.dto.response.NcutLikesResponse;
 import com.example.yenanow.gallery.dto.response.NcutLikesResponseItem;
+import com.example.yenanow.gallery.dto.response.NcutRelayListResponse;
+import com.example.yenanow.gallery.dto.response.RelayListItem;
 import com.example.yenanow.gallery.dto.response.UpdateNcutContentResponse;
 import com.example.yenanow.gallery.dto.response.UpdateNcutVisibilityResponse;
 import com.example.yenanow.gallery.entity.Ncut;
 import com.example.yenanow.gallery.entity.NcutLike;
+import com.example.yenanow.gallery.entity.Relay;
+import com.example.yenanow.gallery.entity.RelayCut;
+import com.example.yenanow.gallery.entity.RelayParticipant;
 import com.example.yenanow.gallery.entity.Visibility;
 import com.example.yenanow.gallery.repository.NcutLikeRepository;
 import com.example.yenanow.gallery.repository.NcutRepository;
+import com.example.yenanow.gallery.repository.RelayRepository;
 import com.example.yenanow.s3.service.S3Service;
 import com.example.yenanow.s3.util.S3KeyFactory;
 import com.example.yenanow.users.entity.User;
@@ -47,6 +56,8 @@ public class GalleryServiceImpl implements GalleryService {
     private final NcutLikeRepository ncutLikeRepository;
     private final FollowRepository followRepository;
     private final UserRepository userRepository;
+    private final FrameRepository frameRepository;
+    private final RelayRepository relayRepository;
     private final StringRedisTemplate redisTemplate;
     private final NcutCountSyncService ncutCountSyncService;
     private final S3KeyFactory s3KeyFactory;
@@ -347,6 +358,72 @@ public class GalleryServiceImpl implements GalleryService {
             .likeCount(createdNcut.getLikeCount())
             .commentCount(createdNcut.getCommentCount())
             .isMine(true)
+            .build();
+    }
+
+    @Override
+    @Transactional
+    public void createNcutRelay(String userUuid, CreateNcutRelayRequest createNcutRelayRequest) {
+        User creator = userRepository.getReferenceById(userUuid);
+        Frame frame = frameRepository.getReferenceById(createNcutRelayRequest.getFrameUuid());
+
+        Relay relay = Relay.builder()
+            .timeLimit(createNcutRelayRequest.getTimeLimit())
+            .takeCount(createNcutRelayRequest.getTakeCount())
+            .cutCount(createNcutRelayRequest.getCutCount())
+            .backgroundUrl(
+                s3KeyFactory.extractKeyFromUrl(createNcutRelayRequest.getBackgroundUrl()))
+            .expiredAt(LocalDateTime.now().plusDays(7))
+            .user(creator)
+            .frame(frame)
+            .build();
+
+        RelayParticipant creatorParticipant = RelayParticipant.builder()
+            .user(creator)
+            .build();
+        relay.addParticipant(creatorParticipant);
+
+        createNcutRelayRequest.getParticipants().forEach(participantItem -> {
+            User participantUser = userRepository.getReferenceById(participantItem.getUserUuid());
+            RelayParticipant participant = RelayParticipant.builder()
+                .user(participantUser)
+                .build();
+            relay.addParticipant(participant);
+        });
+
+        createNcutRelayRequest.getCuts().forEach(cutItem -> {
+            String cutKey = null;
+            String originalUrl = cutItem.getCutUrl();
+
+            if (originalUrl != null && !originalUrl.isBlank()) {
+                cutKey = s3KeyFactory.extractKeyFromUrl(originalUrl);
+            }
+
+            RelayCut cut = RelayCut.builder()
+                .cutUrl(cutKey)
+                .cutIndex(Integer.parseInt(cutItem.getCutIndex()))
+                .isTaken(cutItem.getIsTaken())
+                .build();
+
+            relay.addCut(cut);
+        });
+
+        relayRepository.save(relay);
+    }
+
+    @Override
+    public NcutRelayListResponse getRelayList(String userUuid, int pageNum, int display) {
+        Pageable pageable = PageRequest.of(pageNum, display);
+        Page<Relay> relayPage = relayRepository.findByUserUuid(userUuid,
+            pageable);
+
+        List<RelayListItem> relayListItems = relayPage.getContent().stream()
+            .map(relay -> RelayListItem.fromEntity(relay, s3Service))
+            .toList();
+
+        return NcutRelayListResponse.builder()
+            .totalPages(relayPage.getTotalPages())
+            .relay(relayListItems)
             .build();
     }
 
