@@ -41,9 +41,6 @@ public enum ErrorCode {
 
     // FILM DOMAIN
     NOT_FOUND_CODE(HttpStatus.NOT_FOUND, "해당 방 코드를 찾을 수 없습니다."),
-    NOT_FOUND_FRAME(HttpStatus.NOT_FOUND, "해당 프레임을 찾을 수 없습니다."),
-    NOT_FOUND_BACKGROUND(HttpStatus.NOT_FOUND, "해당 배경을 찾을 수 없습니다."),
-    NOT_FOUND_STICKER(HttpStatus.NOT_FOUND, "해당 스티커를 찾을 수 없습니다."),
 
     // ROOM / CUT DOMAIN
     MISSING_ROOM_CODE(HttpStatus.BAD_REQUEST, "roomCode는 필수입니다."),

@@ -15,4 +15,6 @@ public interface OpenviduService {
     void reciveWebhook(String authHeader, String body);
 
     TokenResponse createRelayToken(String userUuid, TokenRelayRequest tokenRelayRequest);
+
+    void addCutKeyToRoom(String roomCode, String cutKey);
 }
