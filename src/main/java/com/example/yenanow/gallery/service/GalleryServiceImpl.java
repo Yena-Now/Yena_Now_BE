@@ -79,7 +79,7 @@ public class GalleryServiceImpl implements GalleryService {
                 .ncuts(List.of())
                 .build();
         }
-        return MyGalleryResponse.fromEntity(ncutPage);
+        return MyGalleryResponse.fromEntity(ncutPage, s3Service);
     }
 
     @Override
@@ -97,7 +97,7 @@ public class GalleryServiceImpl implements GalleryService {
                 .ncuts(List.of())
                 .build();
         }
-        return MyGalleryResponse.fromEntity(ncutPage);
+        return MyGalleryResponse.fromEntity(ncutPage, s3Service);
     }
 
     @Override
@@ -111,7 +111,7 @@ public class GalleryServiceImpl implements GalleryService {
                 .ncuts(List.of())
                 .build();
         }
-        return MyGalleryResponse.fromEntityWithUser(ncutPage);
+        return MyGalleryResponse.fromEntityWithUser(ncutPage, s3Service);
     }
 
     @Override
@@ -139,7 +139,7 @@ public class GalleryServiceImpl implements GalleryService {
                 .ncuts(List.of())
                 .build();
         }
-        return MyGalleryResponse.fromEntityWithUser(ncutPage);
+        return MyGalleryResponse.fromEntityWithUser(ncutPage, s3Service);
     }
 
     @Override
@@ -454,7 +454,7 @@ public class GalleryServiceImpl implements GalleryService {
 
             updateRelayRequest.getCuts().forEach(item -> {
                 RelayCut newCut = RelayCut.builder()
-                    .cutUrl(item.getCutUrl())
+                    .cutUrl(s3KeyFactory.extractKeyFromUrl(item.getCutUrl()))
                     .cutIndex(Integer.parseInt(item.getCutIndex()))
                     .isTaken(item.getIsTaken())
                     .build();

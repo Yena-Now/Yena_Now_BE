@@ -22,7 +22,6 @@ public class RelayParticipantItem {
         return RelayParticipantItem.builder()
             .userUuid(participant.getUser().getUserUuid())
             .nickname(participant.getUser().getNickname())
-            // S3 키를 실제 URL로 변환
             .profileUrl(s3Service.getFileUrl(participant.getUser().getProfileUrl()))
             .build();
     }

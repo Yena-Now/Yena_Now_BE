@@ -1,6 +1,7 @@
 package com.example.yenanow.comment.dto.response;
 
 import com.example.yenanow.comment.entity.Comment;
+import com.example.yenanow.s3.service.S3Service;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.Builder;
@@ -17,12 +18,12 @@ public class CommentListResponse {
     /**
      * Page<Comment> -> CommentListResponse 변환
      */
-    public static CommentListResponse fromEntity(Page<Comment> commentPage) {
+    public static CommentListResponse fromEntity(Page<Comment> commentPage, S3Service s3Service) {
         return CommentListResponse.builder()
             .totalPage(commentPage.getTotalPages())
             .comments(commentPage.getContent()
                 .stream()
-                .map(CommentResponse::fromEntity)
+                .map(c -> CommentResponse.fromEntity(c, s3Service))
                 .collect(Collectors.toList()))
             .build();
     }
