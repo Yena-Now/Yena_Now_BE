@@ -14,6 +14,8 @@ import com.example.yenanow.gallery.dto.response.NcutDetailResponse;
 import com.example.yenanow.gallery.dto.response.NcutLikeResponse;
 import com.example.yenanow.gallery.dto.response.NcutLikesResponse;
 import com.example.yenanow.gallery.dto.response.NcutLikesResponseItem;
+import com.example.yenanow.gallery.dto.response.NcutRelayListResponse;
+import com.example.yenanow.gallery.dto.response.RelayListItem;
 import com.example.yenanow.gallery.dto.response.UpdateNcutContentResponse;
 import com.example.yenanow.gallery.dto.response.UpdateNcutVisibilityResponse;
 import com.example.yenanow.gallery.entity.Ncut;
@@ -376,6 +378,11 @@ public class GalleryServiceImpl implements GalleryService {
             .frame(frame)
             .build();
 
+        RelayParticipant creatorParticipant = RelayParticipant.builder()
+            .user(creator)
+            .build();
+        relay.addParticipant(creatorParticipant);
+
         createNcutRelayRequest.getParticipants().forEach(participantItem -> {
             User participantUser = userRepository.getReferenceById(participantItem.getUserUuid());
             RelayParticipant participant = RelayParticipant.builder()
@@ -402,6 +409,22 @@ public class GalleryServiceImpl implements GalleryService {
         });
 
         relayRepository.save(relay);
+    }
+
+    @Override
+    public NcutRelayListResponse getRelayList(String userUuid, int pageNum, int display) {
+        Pageable pageable = PageRequest.of(pageNum, display);
+        Page<Relay> relayPage = relayRepository.findByUserUuid(userUuid,
+            pageable);
+
+        List<RelayListItem> relayListItems = relayPage.getContent().stream()
+            .map(relay -> RelayListItem.fromEntity(relay, s3Service))
+            .toList();
+
+        return NcutRelayListResponse.builder()
+            .totalPages(relayPage.getTotalPages())
+            .relay(relayListItems)
+            .build();
     }
 
     private void validateUserUuid(String userUuid) {

@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface RelayRepository extends JpaRepository<Relay, String> {
-    
+public interface RelayRepository extends JpaRepository<Relay, String>, RelayQueryRepository {
+
     boolean existsByRelayUuidAndUserUserUuid(String relayUuid, String userUuid);
 }

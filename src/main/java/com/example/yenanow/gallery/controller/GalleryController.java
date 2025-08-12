@@ -8,6 +8,7 @@ import com.example.yenanow.gallery.dto.response.MyGalleryResponse;
 import com.example.yenanow.gallery.dto.response.NcutDetailResponse;
 import com.example.yenanow.gallery.dto.response.NcutLikeResponse;
 import com.example.yenanow.gallery.dto.response.NcutLikesResponse;
+import com.example.yenanow.gallery.dto.response.NcutRelayListResponse;
 import com.example.yenanow.gallery.dto.response.UpdateNcutContentResponse;
 import com.example.yenanow.gallery.dto.response.UpdateNcutVisibilityResponse;
 import com.example.yenanow.gallery.service.GalleryService;
@@ -188,5 +189,17 @@ public class GalleryController {
         String userUuid = principal.toString();
         galleryService.createNcutRelay(userUuid, createNcutRelayRequest);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/relay")
+    public ResponseEntity<NcutRelayListResponse> getRelayList(
+        @AuthenticationPrincipal Object principal,
+        @RequestParam("pageNum") int pageNum,
+        @RequestParam("display") int display) {
+
+        String userUuid = principal.toString();
+        NcutRelayListResponse ncutRelayListResponse = galleryService.getRelayList(userUuid, pageNum,
+            display);
+        return ResponseEntity.ok(ncutRelayListResponse);
     }
 }
