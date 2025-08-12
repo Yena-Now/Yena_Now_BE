@@ -169,8 +169,7 @@ public class FilmServiceImpl implements FilmService {
                 throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
             }
 
-            String objectKey = s3KeyFactory.createKey("ncut", outputFileName, userUuid, null,
-                roomCode);
+            String objectKey = s3KeyFactory.createKey("ncut", outputFileName, userUuid, roomCode);
             String contentType = containsVideo ? "video/mp4" : "image/jpeg";
             String resultS3Url = uploadToS3(outputPath, objectKey, contentType);
 
