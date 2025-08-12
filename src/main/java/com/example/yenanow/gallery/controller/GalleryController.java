@@ -1,12 +1,16 @@
 package com.example.yenanow.gallery.controller;
 
+import com.example.yenanow.gallery.dto.request.CreateNcutRelayRequest;
 import com.example.yenanow.gallery.dto.request.CreateNcutRequest;
+import com.example.yenanow.gallery.dto.request.CreateRelayNcutRequest;
 import com.example.yenanow.gallery.dto.request.UpdateNcutContentRequest;
 import com.example.yenanow.gallery.dto.request.UpdateNcutVisibilityRequest;
+import com.example.yenanow.gallery.dto.request.UpdateRelayRequest;
 import com.example.yenanow.gallery.dto.response.MyGalleryResponse;
 import com.example.yenanow.gallery.dto.response.NcutDetailResponse;
 import com.example.yenanow.gallery.dto.response.NcutLikeResponse;
 import com.example.yenanow.gallery.dto.response.NcutLikesResponse;
+import com.example.yenanow.gallery.dto.response.NcutRelayListResponse;
 import com.example.yenanow.gallery.dto.response.UpdateNcutContentResponse;
 import com.example.yenanow.gallery.dto.response.UpdateNcutVisibilityResponse;
 import com.example.yenanow.gallery.service.GalleryService;
@@ -177,5 +181,47 @@ public class GalleryController {
         NcutDetailResponse ncutDetailResponse = galleryService.createNcut(userUuid,
             createNcutRequest);
         return ResponseEntity.ok(ncutDetailResponse);
+    }
+
+    @PostMapping("/ncuts/relay")
+    public ResponseEntity<Void> createNcutRelay(
+        @AuthenticationPrincipal Object principal,
+        @RequestBody CreateNcutRelayRequest createNcutRelayRequest) {
+
+        String userUuid = principal.toString();
+        galleryService.createNcutRelay(userUuid, createNcutRelayRequest);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/relay")
+    public ResponseEntity<NcutRelayListResponse> getRelayList(
+        @AuthenticationPrincipal Object principal,
+        @RequestParam("pageNum") int pageNum,
+        @RequestParam("display") int display) {
+
+        String userUuid = principal.toString();
+        NcutRelayListResponse ncutRelayListResponse = galleryService.getRelayList(userUuid, pageNum,
+            display);
+        return ResponseEntity.ok(ncutRelayListResponse);
+    }
+
+    @PostMapping("/relay/ncut")
+    public ResponseEntity<NcutDetailResponse> createRelayNcut(
+        @AuthenticationPrincipal Object principal,
+        @RequestBody CreateRelayNcutRequest createRelayNcutRequest) {
+
+        String userUuid = principal.toString();
+        NcutDetailResponse ncutDetailResponse = galleryService.createRelayNcut(userUuid,
+            createRelayNcutRequest);
+        return ResponseEntity.ok(ncutDetailResponse);
+    }
+
+    @PostMapping("/relay")
+    public ResponseEntity<Void> updateRelay(
+        @AuthenticationPrincipal Object principal,
+        @RequestBody UpdateRelayRequest updateRelayRequest) {
+        String userUuid = principal.toString();
+        galleryService.updateRelay(userUuid, updateRelayRequest);
+        return ResponseEntity.noContent().build();
     }
 }

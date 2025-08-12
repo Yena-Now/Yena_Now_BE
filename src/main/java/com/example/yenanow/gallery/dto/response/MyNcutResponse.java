@@ -1,6 +1,7 @@
 package com.example.yenanow.gallery.dto.response;
 
 import com.example.yenanow.gallery.entity.Ncut;
+import com.example.yenanow.s3.service.S3Service;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -24,11 +25,11 @@ public class MyNcutResponse {
     /**
      * 유저 정보 없이 (내 갤러리/타인 공개)
      */
-    public static MyNcutResponse fromEntity(Ncut ncut) {
+    public static MyNcutResponse fromEntity(Ncut ncut, S3Service s3Service) {
         return MyNcutResponse.builder()
             .ncutUuid(ncut.getNcutUuid())
-            .thumbnailUrl(ncut.getThumbnailUrl())
-            .ncutUrl(ncut.getNcutUrl())
+            .thumbnailUrl(s3Service.getFileUrl(ncut.getThumbnailUrl())) // 키 → URL 변환
+            .ncutUrl(s3Service.getFileUrl(ncut.getNcutUrl()))
             .likeCount(ncut.getLikeCount())
             .isRelay(ncut.isRelay())
             .build();
@@ -37,14 +38,14 @@ public class MyNcutResponse {
     /**
      * 유저 정보 포함 (팔로잉/공개 전체)
      */
-    public static MyNcutResponse fromEntityWithUser(Ncut ncut) {
+    public static MyNcutResponse fromEntityWithUser(Ncut ncut, S3Service s3Service) {
         return MyNcutResponse.builder()
             .userUuid(ncut.getUser().getUserUuid())
-            .profileUrl(ncut.getUser().getProfileUrl())
+            .profileUrl(s3Service.getFileUrl(ncut.getUser().getProfileUrl()))
             .nickname(ncut.getUser().getNickname())
             .ncutUuid(ncut.getNcutUuid())
-            .thumbnailUrl(ncut.getThumbnailUrl())
-            .ncutUrl(ncut.getNcutUrl())
+            .thumbnailUrl(s3Service.getFileUrl(ncut.getThumbnailUrl()))
+            .ncutUrl(s3Service.getFileUrl(ncut.getNcutUrl()))
             .likeCount(ncut.getLikeCount())
             .isRelay(ncut.isRelay())
             .build();

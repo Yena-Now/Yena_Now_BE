@@ -169,8 +169,7 @@ public class FilmServiceImpl implements FilmService {
                 throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
             }
 
-            String objectKey = s3KeyFactory.createKey("ncut", outputFileName, userUuid, null,
-                roomCode);
+            String objectKey = s3KeyFactory.createKey("ncut", outputFileName, userUuid, roomCode);
             String contentType = containsVideo ? "video/mp4" : "image/jpeg";
             String resultS3Url = uploadToS3(outputPath, objectKey, contentType);
 
@@ -251,11 +250,10 @@ public class FilmServiceImpl implements FilmService {
         }
 
         // 프레임([0:v]) 위에 컷(v0)을 겹치고 그 위에 다시 다음 컷(v1)을 겹치는 과정을 반복
-        String lastOutput = "[0:v]";
+        String lastOutput = "[0:v]"; // 시작은 프레임(배경 역할)
         for (int i = 0; i < cutPaths.size(); i++) {
             String currentOverlayInput = "[v" + i + "]";
-            // 최종 결과 스트림의 이름을 [out]으로 지정
-            String nextOutput = (i == cutPaths.size() - 1) ? "[out]" : "[bg" + i + "]";
+            String nextOutput = (i == cutPaths.size() - 1) ? "[cuts_on_frame]" : "[bg" + i + "]";
             filter.append(lastOutput).append(currentOverlayInput)
                 .append("overlay=").append(getX(positions.get(i))).append(":")
                 .append(getY(positions.get(i)))
@@ -263,10 +261,8 @@ public class FilmServiceImpl implements FilmService {
             lastOutput = nextOutput;
         }
 
-        // 불필요한 세미콜론 제거
-        if (filter.length() > 0) {
-            filter.setLength(filter.length() - 1);
-        }
+        // 프레임을 한 번 더 오버레이
+        filter.append("[cuts_on_frame][0:v]overlay=0:0[out]");
 
         // 생성된 필터 그래프를 FFmpeg 명령어에 추가
         command.add("-filter_complex");
@@ -301,7 +297,6 @@ public class FilmServiceImpl implements FilmService {
     private int getY(Map<Integer, Integer> pos) {
         return pos.entrySet().iterator().next().getValue();
     }
-
 
     private String downloadFromS3(String bucket, String key, String fileName, String tempDirPath) {
         String ext = "";

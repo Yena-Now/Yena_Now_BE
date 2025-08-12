@@ -41,9 +41,14 @@ public enum ErrorCode {
 
     // FILM DOMAIN
     NOT_FOUND_CODE(HttpStatus.NOT_FOUND, "해당 방 코드를 찾을 수 없습니다."),
-    NOT_FOUND_FRAME(HttpStatus.NOT_FOUND, "해당 프레임을 찾을 수 없습니다."),
-    NOT_FOUND_BACKGROUND(HttpStatus.NOT_FOUND, "해당 배경을 찾을 수 없습니다."),
-    NOT_FOUND_STICKER(HttpStatus.NOT_FOUND, "해당 스티커를 찾을 수 없습니다."),
+
+    // ROOM / CUT DOMAIN
+    MISSING_ROOM_CODE(HttpStatus.BAD_REQUEST, "roomCode는 필수입니다."),
+    MISSING_FILE_URL(HttpStatus.BAD_REQUEST, "fileUrl은 필수입니다."),
+    NOT_FOUND_ROOM(HttpStatus.NOT_FOUND, "해당 방을 찾을 수 없습니다."),
+    INVALID_CUTS_JSON(HttpStatus.UNPROCESSABLE_ENTITY, "촬영 데이터(cuts)가 손상되었습니다."),
+    CUT_TAKE_COUNT_EXCEEDED(HttpStatus.CONFLICT, "촬영 가능한 최대 장수를 초과했습니다."),
+    REDIS_TX_RETRY_EXCEEDED(HttpStatus.SERVICE_UNAVAILABLE, "동시 수정 충돌이 반복되었습니다. 잠시 후 다시 시도해 주세요."),
 
     // RELAY DOMAIN
     NOT_FOUND_RELAY_CUT(HttpStatus.NOT_FOUND, "해당 릴레이 컷을 찾을 수 없습니다."),

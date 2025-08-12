@@ -1,6 +1,7 @@
 package com.example.yenanow.comment.dto.response;
 
 import com.example.yenanow.comment.entity.Comment;
+import com.example.yenanow.s3.service.S3Service;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,16 +19,13 @@ public class CommentResponse {
     private String profileUrl;
     private LocalDateTime createdAt;
 
-    /**
-     * Entity -> DTO 변환
-     */
-    public static CommentResponse fromEntity(Comment entity) {
+    public static CommentResponse fromEntity(Comment entity, S3Service s3Service) {
         return CommentResponse.builder()
             .commentUuid(entity.getCommentUuid())
             .comment(entity.getContent())
             .userUuid(entity.getUser().getUserUuid())
             .nickname(entity.getUser().getNickname())
-            .profileUrl(entity.getUser().getProfileUrl())
+            .profileUrl(s3Service.getFileUrl(entity.getUser().getProfileUrl()))
             .createdAt(entity.getCreatedAt())
             .build();
     }
