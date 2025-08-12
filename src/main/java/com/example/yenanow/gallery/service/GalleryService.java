@@ -2,6 +2,7 @@ package com.example.yenanow.gallery.service;
 
 import com.example.yenanow.gallery.dto.request.CreateNcutRelayRequest;
 import com.example.yenanow.gallery.dto.request.CreateNcutRequest;
+import com.example.yenanow.gallery.dto.request.CreateRelayNcutRequest;
 import com.example.yenanow.gallery.dto.request.UpdateNcutContentRequest;
 import com.example.yenanow.gallery.dto.request.UpdateNcutVisibilityRequest;
 import com.example.yenanow.gallery.dto.response.MyGalleryResponse;
@@ -47,4 +48,7 @@ public interface GalleryService {
     void createNcutRelay(String userUuid, CreateNcutRelayRequest createNcutRelayRequest);
 
     NcutRelayListResponse getRelayList(String userUuid, int pageNum, int display);
+
+    NcutDetailResponse createRelayNcut(String userUuid,
+        CreateRelayNcutRequest createRelayNcutRequest);
 }

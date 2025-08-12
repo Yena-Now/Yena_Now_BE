@@ -2,6 +2,7 @@ package com.example.yenanow.gallery.controller;
 
 import com.example.yenanow.gallery.dto.request.CreateNcutRelayRequest;
 import com.example.yenanow.gallery.dto.request.CreateNcutRequest;
+import com.example.yenanow.gallery.dto.request.CreateRelayNcutRequest;
 import com.example.yenanow.gallery.dto.request.UpdateNcutContentRequest;
 import com.example.yenanow.gallery.dto.request.UpdateNcutVisibilityRequest;
 import com.example.yenanow.gallery.dto.response.MyGalleryResponse;
@@ -201,5 +202,16 @@ public class GalleryController {
         NcutRelayListResponse ncutRelayListResponse = galleryService.getRelayList(userUuid, pageNum,
             display);
         return ResponseEntity.ok(ncutRelayListResponse);
+    }
+
+    @PostMapping("/relay/ncut")
+    public ResponseEntity<NcutDetailResponse> createRelayNcut(
+        @AuthenticationPrincipal Object principal,
+        @RequestBody CreateRelayNcutRequest createRelayNcutRequest) {
+
+        String userUuid = principal.toString();
+        NcutDetailResponse ncutDetailResponse = galleryService.createRelayNcut(userUuid,
+            createRelayNcutRequest);
+        return ResponseEntity.ok(ncutDetailResponse);
     }
 }

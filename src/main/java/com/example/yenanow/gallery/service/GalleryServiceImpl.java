@@ -7,6 +7,7 @@ import com.example.yenanow.film.entity.Frame;
 import com.example.yenanow.film.repository.FrameRepository;
 import com.example.yenanow.gallery.dto.request.CreateNcutRelayRequest;
 import com.example.yenanow.gallery.dto.request.CreateNcutRequest;
+import com.example.yenanow.gallery.dto.request.CreateRelayNcutRequest;
 import com.example.yenanow.gallery.dto.request.UpdateNcutContentRequest;
 import com.example.yenanow.gallery.dto.request.UpdateNcutVisibilityRequest;
 import com.example.yenanow.gallery.dto.response.MyGalleryResponse;
@@ -313,52 +314,10 @@ public class GalleryServiceImpl implements GalleryService {
     @Override
     @Transactional
     public NcutDetailResponse createNcut(String userUuid, CreateNcutRequest createNcutRequest) {
-        User userProxy = userRepository.getReferenceById(userUuid);
+        Ncut createdNcut = createAndSaveNcut(userUuid, createNcutRequest);
+        updateUserNcutCount(userUuid, createdNcut.getNcutUuid());
 
-        Ncut ncut = Ncut.builder()
-            .ncutUrl(s3KeyFactory.extractKeyFromUrl(createNcutRequest.getNcutUrl()))
-            .thumbnailUrl(s3KeyFactory.extractKeyFromUrl(createNcutRequest.getThumbnailUrl()))
-            .content(createNcutRequest.getContent())
-            .visibility(createNcutRequest.getVisibility())
-            .isRelay(createNcutRequest.getIsRelay())
-            .likeCount(0)
-            .user(userProxy)
-            .commentCount(0)
-            .build();
-        Ncut createdNcut = ncutRepository.save(ncut);
-
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                String userKey = "user:" + userUuid;
-                Integer totalCut = UuidUtil.incrementCounter(redisTemplate, userKey, "total_cut",
-                    1).intValue();
-                ncutCountSyncService.syncTotalCutToDB(userUuid, totalCut);
-
-                String ncutKey = "ncut:" + createdNcut.getNcutUuid();
-                HashOperations<String, String, Object> hashOps = redisTemplate.opsForHash();
-                Map<String, String> roomDataMap = new HashMap<>();
-                roomDataMap.put("like_count", String.valueOf(createdNcut.getLikeCount()));
-                roomDataMap.put("comment_cnt", String.valueOf(createdNcut.getCommentCount()));
-
-                hashOps.putAll(ncutKey, roomDataMap);
-            }
-        });
-
-        return NcutDetailResponse.builder()
-            .ncutUuid(createdNcut.getNcutUuid())
-            .ncutUrl(s3Service.getFileUrl(createdNcut.getNcutUrl()))
-            .userUuid(createdNcut.getUser().getUserUuid())
-            .nickname(createdNcut.getUser().getNickname())
-            .profileUrl(s3Service.getFileUrl(createdNcut.getUser().getProfileUrl()))
-            .content(createdNcut.getContent())
-            .createdAt(createdNcut.getCreatedAt())
-            .isRelay(createdNcut.isRelay())
-            .visibility(createdNcut.getVisibility())
-            .likeCount(createdNcut.getLikeCount())
-            .commentCount(createdNcut.getCommentCount())
-            .isMine(true)
-            .build();
+        return buildNcutDetailResponse(createdNcut);
     }
 
     @Override
@@ -424,6 +383,107 @@ public class GalleryServiceImpl implements GalleryService {
         return NcutRelayListResponse.builder()
             .totalPages(relayPage.getTotalPages())
             .relay(relayListItems)
+            .build();
+    }
+
+    @Override
+    @Transactional
+    public NcutDetailResponse createRelayNcut(String userUuid,
+        CreateRelayNcutRequest createRelayNcutRequest) {
+        Relay relay = relayRepository.findById(createRelayNcutRequest.getRelayUuid())
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+
+        CreateNcutRequest createNcutRequest = new CreateNcutRequest(
+            createRelayNcutRequest.getNcutUrl(),
+            createRelayNcutRequest.getThumbnailUrl(),
+            createRelayNcutRequest.getContent(),
+            createRelayNcutRequest.getVisibility(),
+            true
+        );
+
+        Ncut mainCreatedNcut = createAndSaveNcut(userUuid, createNcutRequest);
+        updateUserNcutCount(userUuid, mainCreatedNcut.getNcutUuid());
+
+        List<RelayParticipant> allParticipants = relay.getParticipants();
+
+        for (RelayParticipant participant : allParticipants) {
+            User participantUser = participant.getUser();
+
+            if (!participantUser.getUserUuid().equals(userUuid)) {
+
+                CreateNcutRequest placeholderNcutRequest = new CreateNcutRequest(
+                    createRelayNcutRequest.getNcutUrl(),
+                    createRelayNcutRequest.getThumbnailUrl(),
+                    null,
+                    Visibility.PRIVATE,
+                    true
+                );
+
+                Ncut createdNcut = createAndSaveNcut(participantUser.getUserUuid(),
+                    placeholderNcutRequest);
+                updateUserNcutCount(participantUser.getUserUuid(), createdNcut.getNcutUuid());
+            }
+        }
+
+        relayRepository.delete(relay);
+
+        return buildNcutDetailResponse(mainCreatedNcut);
+    }
+
+    private Ncut createAndSaveNcut(String userUuid, CreateNcutRequest createNcutRequest) {
+        User userProxy = userRepository.getReferenceById(userUuid);
+
+        Ncut ncut = Ncut.builder()
+            .ncutUrl(s3KeyFactory.extractKeyFromUrl(createNcutRequest.getNcutUrl()))
+            .thumbnailUrl(s3KeyFactory.extractKeyFromUrl(createNcutRequest.getThumbnailUrl()))
+            .content(createNcutRequest.getContent())
+            .visibility(createNcutRequest.getVisibility())
+            .isRelay(createNcutRequest.getIsRelay())
+            .user(userProxy)
+            .likeCount(0)
+            .commentCount(0)
+            .build();
+
+        Ncut createdNcut = ncutRepository.save(ncut);
+
+        return createdNcut;
+    }
+
+    private void updateUserNcutCount(String userUuid, String ncutUuid) {
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                String userKey = "user:" + userUuid;
+                Integer totalCut = UuidUtil.incrementCounter(redisTemplate, userKey, "total_cut", 1)
+                    .intValue();
+                ncutCountSyncService.syncTotalCutToDB(userUuid, totalCut);
+
+                String ncutKey = "ncut:" + ncutUuid;
+                HashOperations<String, String, Object> hashOps = redisTemplate.opsForHash();
+                Map<String, String> ncutDataMap = new HashMap<>();
+                ncutDataMap.put("like_count", "0");
+                ncutDataMap.put("comment_count", "0");
+                hashOps.putAll(ncutKey, ncutDataMap);
+            }
+        });
+    }
+
+    private NcutDetailResponse buildNcutDetailResponse(Ncut ncut) {
+        User user = ncut.getUser();
+
+        return NcutDetailResponse.builder()
+            .ncutUuid(ncut.getNcutUuid())
+            .ncutUrl(s3Service.getFileUrl(ncut.getNcutUrl()))
+            .userUuid(user.getUserUuid())
+            .nickname(user.getNickname())
+            .profileUrl(s3Service.getFileUrl(user.getProfileUrl()))
+            .content(ncut.getContent())
+            .createdAt(ncut.getCreatedAt())
+            .isRelay(ncut.isRelay())
+            .visibility(ncut.getVisibility())
+            .likeCount(ncut.getLikeCount())
+            .commentCount(ncut.getCommentCount())
+            .isMine(true)
             .build();
     }
 
