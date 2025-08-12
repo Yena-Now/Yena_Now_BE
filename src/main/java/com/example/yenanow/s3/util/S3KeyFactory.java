@@ -12,7 +12,7 @@ public class S3KeyFactory {
     /* 범용 키 생성(기존) -------------------------------------------------- */
 
     public String createKey(String type, String fileName,
-        String userUuid, String relayUuid, String roomCode) {
+        String userUuid, String roomCode) {
         String ext = "";
         int dotIndex = fileName.lastIndexOf('.');
         if (dotIndex > -1) {
@@ -26,7 +26,6 @@ public class S3KeyFactory {
             case "ncutThumbnail" ->
                 "ncut/thumbnail/%s/%s%s".formatted(userUuid, UUID.randomUUID(), ext);
             case "cut" -> "cut/%s/%s%s".formatted(roomCode, UUID.randomUUID(), ext);
-            case "relayCut" -> "relay/%s/%s%s".formatted(relayUuid, UUID.randomUUID(), ext);
             default -> throw new IllegalArgumentException("지원하지 않는 type: " + type);
         };
     }
@@ -56,21 +55,27 @@ public class S3KeyFactory {
     // NCut 결과물: ncut/{UUID}.{ext}
     public String createNcutKey(String userUuid, String fileName) {
         String ext = FilenameUtils.getExtension(fileName);
-        if (ext == null || ext.isBlank()) ext = "bin";
+        if (ext == null || ext.isBlank()) {
+            ext = "bin";
+        }
         return "ncut/%s.%s".formatted(java.util.UUID.randomUUID(), ext.toLowerCase());
     }
 
     // Ncut 썸네일: ncut/thumbnail/{userUuid}/{UUID}.{ext}
     public String createNcutThumbnailKey(String userUuid, String fileName) {
         String ext = FilenameUtils.getExtension(fileName);
-        if (ext == null || ext.isBlank()) ext = "bin";
+        if (ext == null || ext.isBlank()) {
+            ext = "bin";
+        }
         return "ncut/thumbnail/%s/%s.%s".formatted(userUuid, UUID.randomUUID(), ext.toLowerCase());
     }
 
     // 촬영 컷: cut/{roomCode}/{UUID}.{ext}
     public String createCutKey(String roomCode, String fileName, Integer cutIndex) {
         String ext = FilenameUtils.getExtension(fileName);
-        if (ext == null || ext.isBlank()) ext = "bin";
+        if (ext == null || ext.isBlank()) {
+            ext = "bin";
+        }
         String leaf = String.format("%s.%s", java.util.UUID.randomUUID(), ext.toLowerCase());
         return "cut/%s/%s".formatted(roomCode, leaf);
     }
