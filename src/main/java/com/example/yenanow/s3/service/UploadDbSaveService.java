@@ -3,6 +3,7 @@ package com.example.yenanow.s3.service;
 import com.example.yenanow.common.exception.BusinessException;
 import com.example.yenanow.common.exception.ErrorCode;
 import com.example.yenanow.film.service.FilmService;
+import com.example.yenanow.openvidu.service.OpenviduService;
 import com.example.yenanow.s3.dto.response.PresignedUrlResponse;
 import com.example.yenanow.s3.util.S3KeyFactory;
 import com.example.yenanow.users.service.UserService;
@@ -19,6 +20,7 @@ public class UploadDbSaveService {
     // private final RelayCutService relayCutService;
     private final S3KeyFactory s3KeyFactory;
     private final S3Service s3Service;
+    private final OpenviduService openviduService;
 
     public void saveUrl(String type, String fileUrl, String key, String userUuid, String relayUuid,
         String ncutUuid, String roomCode) {
@@ -67,10 +69,16 @@ public class UploadDbSaveService {
         require(fileName != null && !fileName.isBlank(), "fileName required");
         require(contentType != null && !contentType.isBlank(), "contentType required");
 
-        // cutIndex는 더 이상 사용하지 않으므로 null 전달
+        // 1) 프리사인드에 사용할 S3 key 생성
         String key = s3KeyFactory.createCutKey(roomCode, fileName, null);
+
+        // 2) Redis room:{roomCode}.cuts 에 key 추가 (프리사인드 '요청 시점'에 반영)
+        openviduService.addCutKeyToRoom(roomCode, key);
+
+        // 3) Presigned URL & 파일 URL 생성
         String uploadUrl = s3Service.generatePresignedUploadUrl(key, contentType);
         String fileUrl   = s3Service.getFileUrl(key);
+
         return new PresignedUrlResponse(uploadUrl, fileUrl);
     }
 

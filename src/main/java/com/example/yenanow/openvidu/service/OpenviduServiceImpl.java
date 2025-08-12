@@ -23,6 +23,7 @@ import io.livekit.server.RoomJoin;
 import io.livekit.server.RoomName;
 import io.livekit.server.WebhookReceiver;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +34,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.dao.DataAccessException;
+import org.springframework.data.redis.core.RedisOperations;
+import org.springframework.data.redis.core.SessionCallback;
 
 @Service
 @RequiredArgsConstructor
@@ -246,5 +250,82 @@ public class OpenviduServiceImpl implements OpenviduService {
             }
         }
         return cutUrls;
+    }
+
+    @Override
+    public void addCutKeyToRoom(String roomCode, String cutKey) {
+        if (roomCode == null || roomCode.isBlank()) {
+            throw new BusinessException(ErrorCode.MISSING_ROOM_CODE);
+        }
+        if (cutKey == null || cutKey.isBlank()) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST);
+        }
+
+        final String roomKey = "room:" + roomCode;
+        final int maxRetries = 5;
+
+        for (int attempt = 0; attempt < maxRetries; attempt++) {
+            List<Object> tx = redisTemplate.execute(new SessionCallback<List<Object>>() {
+                @Override
+                @SuppressWarnings("unchecked")
+                public List<Object> execute(RedisOperations operations) throws DataAccessException {
+                    operations.watch(roomKey);
+
+                    @SuppressWarnings("unchecked")
+                    HashOperations<String, String, Object> hashOps =
+                        (HashOperations<String, String, Object>) operations.opsForHash();
+                    Map<String, Object> roomData = hashOps.entries(roomKey);
+                    if (roomData == null || roomData.isEmpty()) {
+                        operations.unwatch();
+                        // 방 키 자체가 없을 때: 의미상 ROOM NOT FOUND가 맞음
+                        throw new BusinessException(ErrorCode.NOT_FOUND_ROOM);
+                    }
+
+                    String cutsJson = (String) roomData.get("cuts");
+                    List<String> cutKeys = parseCutsJson(cutsJson);
+
+                    // 이미 존재하면 아무 작업 없이 종료
+                    if (cutKeys.contains(cutKey)) {
+                        operations.unwatch();
+                        return Collections.emptyList();
+                    }
+
+                    // cut_count 안전 파싱 (없거나 숫자 아니면 제한 미적용)
+                    Integer cutCount = tryParseInt(roomData.get("cut_count"));
+                    if (cutCount != null && cutKeys.size() >= cutCount) {
+                        operations.unwatch();
+                        throw new BusinessException(ErrorCode.CUT_TAKE_COUNT_EXCEEDED);
+                    }
+
+                    cutKeys.add(cutKey);
+
+                    final String updatedJson;
+                    try {
+                        updatedJson = objectMapper.writeValueAsString(cutKeys);
+                    } catch (Exception e) {
+                        operations.unwatch();
+                        throw new BusinessException(ErrorCode.INVALID_CUTS_JSON);
+                    }
+
+                    operations.multi();
+                    hashOps.put(roomKey, "cuts", updatedJson);
+                    return operations.exec(); // null 이면 충돌(동시 수정) → 재시도
+                }
+            });
+
+            if (tx != null) {
+                // 성공 또는 중복으로 인한 no-op 성공
+                return;
+            }
+            // 충돌 → 루프 돌며 재시도
+        }
+
+        throw new BusinessException(ErrorCode.REDIS_TX_RETRY_EXCEEDED);
+    }
+
+    private Integer tryParseInt(Object v) {
+        if (v == null) return null;
+        try { return Integer.parseInt(v.toString()); }
+        catch (NumberFormatException ignore) { return null; }
     }
 }
