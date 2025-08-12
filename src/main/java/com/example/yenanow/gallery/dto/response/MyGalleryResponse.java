@@ -1,6 +1,7 @@
 package com.example.yenanow.gallery.dto.response;
 
 import com.example.yenanow.gallery.entity.Ncut;
+import com.example.yenanow.s3.service.S3Service;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
@@ -19,21 +20,21 @@ public class MyGalleryResponse {
     private List<MyNcutResponse> ncuts;
 
     // 유저 정보 없는 응답 - ex) 내 갤러리, 타인 갤러리
-    public static MyGalleryResponse fromEntity(Page<Ncut> page) {
+    public static MyGalleryResponse fromEntity(Page<Ncut> page, S3Service s3Service) {
         return MyGalleryResponse.builder()
             .totalPages(page.getTotalPages())
             .ncuts(page.getContent().stream()
-                .map(MyNcutResponse::fromEntity)
+                .map(n -> MyNcutResponse.fromEntity(n, s3Service)) // 키 → URL 변환
                 .collect(Collectors.toList()))
             .build();
     }
 
     // 유저 정보 포함 응답 - ex) 공개 갤러리, 친구 갤러리
-    public static MyGalleryResponse fromEntityWithUser(Page<Ncut> page) {
+    public static MyGalleryResponse fromEntityWithUser(Page<Ncut> page, S3Service s3Service) {
         return MyGalleryResponse.builder()
             .totalPages(page.getTotalPages())
             .ncuts(page.getContent().stream()
-                .map(MyNcutResponse::fromEntityWithUser)
+                .map(n -> MyNcutResponse.fromEntityWithUser(n, s3Service)) // 키 → URL 변환
                 .collect(Collectors.toList()))
             .build();
     }

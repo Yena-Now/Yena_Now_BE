@@ -5,11 +5,15 @@ import com.example.yenanow.gallery.entity.Ncut;
 import com.example.yenanow.gallery.entity.Visibility;
 import com.example.yenanow.gallery.repository.NcutRankingQueryRepository;
 import com.example.yenanow.gallery.repository.NcutRepository;
+import com.example.yenanow.s3.service.S3Service;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,19 +27,20 @@ public class RankingServiceRedisImpl implements RankingServiceRedis {
 
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
     private static final int LIMIT = 10;
-    private static final int DAILY_TTL_HOURS  = 25;     // 하루 +1h
+    private static final int DAILY_TTL_HOURS = 25;     // 하루 +1h
     private static final int WEEKLY_TTL_HOURS = 24 * 8; // 8일
 
     private final StringRedisTemplate redisTemplate;
     private final NcutRepository ncutRepository;
     private final NcutRankingQueryRepository rankingRepo; // Fallback 조회용
+    private final S3Service s3Service;
 
     @Override
     public List<NcutRankingResponse> getDailyRanking() {
 
         LocalDate today = LocalDate.now(KST);
         LocalDateTime start = today.minusDays(1).atStartOfDay(); // 어제 00:00
-        LocalDateTime end   = today.atStartOfDay().minusNanos(1); // 어제 23:59:59.999
+        LocalDateTime end = today.atStartOfDay().minusNanos(1); // 어제 23:59:59.999
 
         return fetch("ranking:daily_top10", start, end, DAILY_TTL_HOURS);
     }
@@ -45,7 +50,7 @@ public class RankingServiceRedisImpl implements RankingServiceRedis {
 
         LocalDate today = LocalDate.now(KST);
         LocalDateTime start = today.minusDays(7).atStartOfDay(); // 7일 전 00:00
-        LocalDateTime end   = today.atStartOfDay().minusNanos(1); // 어제 23:59:59.999
+        LocalDateTime end = today.atStartOfDay().minusNanos(1); // 어제 23:59:59.999
 
         return fetch("ranking:weekly_top10", start, end, WEEKLY_TTL_HOURS);
     }
@@ -79,7 +84,9 @@ public class RankingServiceRedisImpl implements RankingServiceRedis {
         return toResponse(topN);
     }
 
-    /** UUID 목록으로 상세 엔터티를 가져와 좋아요 순 재정렬 */
+    /**
+     * UUID 목록으로 상세 엔터티를 가져와 좋아요 순 재정렬
+     */
     private List<Ncut> sortedDetail(Set<String> uuidSet) {
 
         List<Ncut> list = ncutRepository.findByNcutUuidIn(
@@ -91,14 +98,18 @@ public class RankingServiceRedisImpl implements RankingServiceRedis {
             .collect(Collectors.toList());
     }
 
-    /** 엔터티 → DTO 변환 */
+    /**
+     * 엔터티 → DTO 변환
+     */
     private List<NcutRankingResponse> toResponse(List<Ncut> list) {
         return list.stream()
-            .map(NcutRankingResponse::fromEntity)
+            .map(n -> NcutRankingResponse.fromEntity(n, s3Service))
             .collect(Collectors.toList());
     }
 
-    /** Redis ZSET에 재적재 + TTL 설정 */
+    /**
+     * Redis ZSET에 재적재 + TTL 설정
+     */
     private void cacheToRedis(String key, List<Ncut> list, int ttlHours) {
 
         redisTemplate.delete(key);

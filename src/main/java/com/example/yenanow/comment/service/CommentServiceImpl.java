@@ -9,6 +9,7 @@ import com.example.yenanow.common.exception.BusinessException;
 import com.example.yenanow.common.exception.ErrorCode;
 import com.example.yenanow.gallery.entity.Ncut;
 import com.example.yenanow.gallery.repository.NcutRepository;
+import com.example.yenanow.s3.service.S3Service;
 import com.example.yenanow.users.entity.User;
 import com.example.yenanow.users.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -29,13 +30,14 @@ public class CommentServiceImpl implements CommentService {
     private final UserRepository userRepository;
     private final StringRedisTemplate redisTemplate;
     private final CommentCountSyncService commentCountSyncService;
+    private final S3Service s3Service;
 
     @Override
     @Transactional(readOnly = true)
     public CommentListResponse getComments(String ncutUuid, int pageNum, int display) {
         Pageable pageable = PageRequest.of(pageNum, display);
         Page<Comment> commentPage = commentRepository.findByNcutNcutUuid(ncutUuid, pageable);
-        return CommentListResponse.fromEntity(commentPage);
+        return CommentListResponse.fromEntity(commentPage, s3Service);
     }
 
     @Override

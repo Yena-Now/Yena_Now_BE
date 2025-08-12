@@ -1,15 +1,14 @@
 package com.example.yenanow.gallery.dto.request;
 
 import com.example.yenanow.gallery.entity.Visibility;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @Getter
-@AllArgsConstructor
 @RequiredArgsConstructor
-public class CreateNcutRequest {
+public class CreateRelayNcutRequest {
 
+    private String relayUuid;
     private String ncutUrl;
     private String thumbnailUrl;
     private String content;

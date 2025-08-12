@@ -36,7 +36,7 @@ public class S3Controller {
     @Operation(
         summary = "S3 Presigned URL 발급",
         description = "S3에 파일 업로드 시 사용할 Presigned URL을 발급합니다.<br>"
-            + "업로드 정보는 DB에 저장됩니다."
+            + "일부 타입은 DB 저장 없이 Presigned URL만 발급합니다."
     )
     @PostMapping("/presigned-url")
     public ResponseEntity<PresignedUrlResponse> getPresignedUrl(
@@ -48,15 +48,38 @@ public class S3Controller {
             throw new BusinessException(ErrorCode.EMPTY_REQUEST_BODY);
         }
 
+        final String type = request.getType();
+        final String fileName = request.getFileName();
+        final String contentType = request.getContentType();
+
+        if ("ncut".equals(type)) {
+            return ResponseEntity.ok(
+                uploadDbSaveService.presignForNcut(fileName, contentType)
+            );
+        }
+
+        if ("ncutThumbnail".equals(type)) {
+            String userUuid = principal.toString();
+            UuidUtil.validateUuid(userUuid);
+            return ResponseEntity.ok(
+                uploadDbSaveService.presignForNcutThumbnail(userUuid, fileName, contentType)
+            );
+        }
+
+        if ("cut".equals(type)) {
+            return ResponseEntity.ok(
+                uploadDbSaveService.presignForCut(request.getRoomCode(), fileName, contentType)
+            );
+        }
+
         String userUuid = principal.toString();
         UuidUtil.validateUuid(userUuid);
 
         // S3 Key 생성
         String key = s3KeyFactory.createKey(
-            request.getType(),
-            request.getFileName(),
+            type,
+            fileName,
             userUuid,
-            request.getRelayUuid(),
             request.getRoomCode()
         );
 
@@ -64,17 +87,13 @@ public class S3Controller {
         String fileUrl = s3Service.getFileUrl(key);
 
         uploadDbSaveService.saveUrl(
-            request.getType(),
+            type,
             fileUrl,
-            key,
-            userUuid,
-            request.getRelayUuid(),
-            request.getNcutUuid(),
-            request.getNcutUuid()
+            userUuid
         );
 
         // Presigned URL 생성
-        String uploadUrl = s3Service.generatePresignedUploadUrl(key, request.getContentType());
+        String uploadUrl = s3Service.generatePresignedUploadUrl(key, contentType);
 
         return ResponseEntity.ok(new PresignedUrlResponse(uploadUrl, fileUrl));
     }
