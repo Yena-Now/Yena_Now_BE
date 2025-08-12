@@ -6,6 +6,7 @@ import com.example.yenanow.gallery.entity.Relay;
 import com.example.yenanow.users.entity.QUser;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -59,5 +60,16 @@ public class RelayQueryRepositoryImpl implements RelayQueryRepository {
         long totalCount = (total == null) ? 0L : total;
 
         return new PageImpl<>(content, pageable, totalCount);
+    }
+
+    @Override
+    public List<Relay> findExpiredRelaysWithCuts(LocalDateTime now) {
+        QRelay relay = QRelay.relay;
+
+        return queryFactory
+            .selectFrom(relay).distinct()
+            .leftJoin(relay.cuts).fetchJoin()
+            .where(relay.expiredAt.before(now))
+            .fetch();
     }
 }
