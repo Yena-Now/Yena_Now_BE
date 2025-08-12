@@ -17,12 +17,6 @@ public class PresignedUrlRequest {
     @Schema(description = "콘텐츠 타입", example = "image/png", required = true)
     private String contentType;
 
-    @Schema(description = "릴레이 UUID (nullable)", example = "null 또는 UUID 값", nullable = true)
-    private String relayUuid;
-
-    @Schema(description = "엔컷 UUID (nullable)", example = "null 또는 UUID 값", nullable = true)
-    private String ncutUuid;
-
     @Schema(description = "룸 UUID (nullable)", example = "null 또는 UUID 값", nullable = true)
     private String roomCode;
 }
