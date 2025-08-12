@@ -236,7 +236,6 @@ public class FilmServiceImpl implements FilmService {
         List<String> command = new ArrayList<>();
         command.add("ffmpeg");
 
-        // FFmpeg는 입력 순서에 따라 [0:v], [1:v], [2:v], .. 와 같이 스트림을 식별
         command.add("-i");
         command.add(framePath);
         for (String cut : cutPaths) {
@@ -244,18 +243,15 @@ public class FilmServiceImpl implements FilmService {
             command.add(cut);
         }
 
-        // 각 컷([1:v], [2:v], ...)을 640x480로 크기 조절 후 임시 이름 부여(v0, v1, ...)
         StringBuilder filter = new StringBuilder();
         for (int i = 0; i < cutPaths.size(); i++) {
             filter.append("[").append(i + 1).append(":v]scale=640:480[v").append(i).append("];");
         }
 
-        // 프레임([0:v]) 위에 컷(v0)을 겹치고 그 위에 다시 다음 컷(v1)을 겹치는 과정을 반복
-        String lastOutput = "[0:v]";
+        String lastOutput = "[0:v]"; // 시작은 프레임(배경 역할)
         for (int i = 0; i < cutPaths.size(); i++) {
             String currentOverlayInput = "[v" + i + "]";
-            // 최종 결과 스트림의 이름을 [out]으로 지정
-            String nextOutput = (i == cutPaths.size() - 1) ? "[out]" : "[bg" + i + "]";
+            String nextOutput = (i == cutPaths.size() - 1) ? "[cuts_on_frame]" : "[bg" + i + "]";
             filter.append(lastOutput).append(currentOverlayInput)
                 .append("overlay=").append(getX(positions.get(i))).append(":")
                 .append(getY(positions.get(i)))
@@ -263,20 +259,15 @@ public class FilmServiceImpl implements FilmService {
             lastOutput = nextOutput;
         }
 
-        // 불필요한 세미콜론 제거
-        if (filter.length() > 0) {
-            filter.setLength(filter.length() - 1);
-        }
+        // 프레임을 한 번 더 오버레이
+        filter.append("[cuts_on_frame][0:v]overlay=0:0[out]");
 
-        // 생성된 필터 그래프를 FFmpeg 명령어에 추가
         command.add("-filter_complex");
         command.add(filter.toString());
 
-        // 최종 출력물로 사용할 스트림을 지정 (여기선 [out])
         command.add("-map");
         command.add("[out]");
 
-        // 비디오 포함 여부에 따라 인코딩 옵션을 다르게 설정
         if (containsVideo) {
             command.add("-c:v");
             command.add("libx264");
@@ -287,7 +278,6 @@ public class FilmServiceImpl implements FilmService {
             command.add("1");
         }
 
-        // 동일 output 파일 있으면 그냥 덮어쓰도록 -y옵션
         command.add("-y");
         command.add(outputPath);
 
