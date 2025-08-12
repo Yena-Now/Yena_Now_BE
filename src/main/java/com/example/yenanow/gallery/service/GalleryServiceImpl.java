@@ -434,7 +434,33 @@ public class GalleryServiceImpl implements GalleryService {
     @Override
     @Transactional
     public void updateRelay(String userUuid, UpdateRelayRequest updateRelayRequest) {
+        Relay relay = relayRepository.findById(updateRelayRequest.getRelayUuid())
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
+        boolean isParticipant = relay.getParticipants().stream()
+            .anyMatch(participant -> participant.getUser().getUserUuid().equals(userUuid));
+
+        if (!isParticipant) {
+            throw new BusinessException(ErrorCode.PERMISSION_DENIED);
+        }
+        
+        if (updateRelayRequest.getFrameUuid() != null) {
+            Frame frame = frameRepository.getReferenceById(updateRelayRequest.getFrameUuid());
+            relay.setFrame(frame);
+        }
+
+        if (updateRelayRequest.getCuts() != null) {
+            relay.getCuts().clear();
+
+            updateRelayRequest.getCuts().forEach(item -> {
+                RelayCut newCut = RelayCut.builder()
+                    .cutUrl(item.getCutUrl())
+                    .cutIndex(Integer.parseInt(item.getCutIndex()))
+                    .isTaken(item.getIsTaken())
+                    .build();
+                relay.addCut(newCut);
+            });
+        }
     }
 
     private Ncut createAndSaveNcut(String userUuid, CreateNcutRequest createNcutRequest) {
