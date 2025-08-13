@@ -26,7 +26,7 @@ public class UploadDbSaveService {
         switch (type) {
             case "profile" -> userService.updateProfileUrl(userUuid, fileUrl);
             case "background" -> {
-                String key = extractKeyOrThrow(fileUrl);
+                String key = s3KeyFactory.extractKeyFromUrl(fileUrl);
                 filmService.createBackground(key);
             }
             case "ncut" -> {
@@ -81,13 +81,6 @@ public class UploadDbSaveService {
         String fileUrl = s3Service.getFileUrl(key);
 
         return new PresignedUrlResponse(uploadUrl, fileUrl);
-    }
-
-    private String extractKeyOrThrow(String fileUrl) {
-        if (fileUrl == null || fileUrl.isBlank()) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST);
-        }
-        return s3KeyFactory.extractKeyFromUrl(fileUrl);
     }
 
     private void require(boolean cond, String message) {
