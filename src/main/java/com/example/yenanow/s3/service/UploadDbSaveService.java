@@ -26,6 +26,8 @@ public class UploadDbSaveService {
         switch (type) {
             case "profile" -> userService.updateProfileUrl(userUuid, fileUrl);
             case "background" -> {
+                String key = extractKeyOrThrow(fileUrl);
+                filmService.createBackground(key);
             }
             case "ncut" -> {
             }
