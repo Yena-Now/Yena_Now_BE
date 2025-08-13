@@ -64,17 +64,17 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
             Map<String, Object> profile = (Map<String, Object>) kakaoAccount.get("profile");
             email = (String) kakaoAccount.get("email");
             name = (String) profile.getOrDefault("nickname", "소셜유저");
-            profileUrl = (String) profile.getOrDefault("profile_image_url", "");
+            //profileUrl = (String) profile.getOrDefault("profile_image_url", "");
         } else {
             // 기본은 Google
             email = (String) attributes.get("email");
             name = (String) attributes.getOrDefault("name", "소셜유저");
-            profileUrl = (String) attributes.getOrDefault("picture", "");
+            // profileUrl = (String) attributes.getOrDefault("picture", "");
         }
 
         String finalEmail = email;
         String finalName = name;
-        String finalProfileUrl = profileUrl;
+        // String finalProfileUrl = profileUrl;
         return userRepository.findByEmailAndProvider(email, registrationId)
             .orElseGet(() -> {
                 User user = User.builder()
@@ -83,7 +83,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                     .nickname("user_" + UUID.randomUUID().toString().substring(0, 8))
                     .password(UUID.randomUUID().toString()) // 소셜로그인 시 비밀번호는 필요없기 때문에 UUID생성해서 저장
                     .phoneNumber(null)
-                    .profileUrl(finalProfileUrl)
+                    .profileUrl(null)
                     .provider(registrationId)
                     .build();
 
