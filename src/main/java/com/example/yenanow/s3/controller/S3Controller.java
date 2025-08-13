@@ -72,6 +72,18 @@ public class S3Controller {
             );
         }
 
+        if ("yena".equals(type)) {
+            final String roomCode = request.getRoomCode();
+            if (roomCode == null || roomCode.isBlank()) {
+                throw new BusinessException(ErrorCode.BAD_REQUEST);
+            }
+
+            String key = s3KeyFactory.createKey("yena", fileName, null, roomCode);
+            String uploadUrl = s3Service.generatePresignedUploadUrl(key, contentType);
+            String fileUrl = s3Service.getFileUrl(key);
+            return ResponseEntity.ok(new PresignedUrlResponse(uploadUrl, fileUrl));
+        }
+
         String userUuid = principal.toString();
         UuidUtil.validateUuid(userUuid);
 
