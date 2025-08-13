@@ -320,9 +320,7 @@ public class FilmServiceImpl implements FilmService {
                 .build(),
             RequestBody.fromFile(file));
 
-        String region = s3Client.serviceClientConfiguration().region().id();
-        String objectUrl = String.format("https://%s.s3.%s.amazonaws.com/%s", bucketName, region,
-            s3Key);
+        String objectUrl = s3Service.getFileUrl(s3Key);
 
         return objectUrl;
     }

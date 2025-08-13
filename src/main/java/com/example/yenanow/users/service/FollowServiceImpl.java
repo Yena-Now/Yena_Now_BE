@@ -3,15 +3,17 @@ package com.example.yenanow.users.service;
 import com.example.yenanow.common.exception.BusinessException;
 import com.example.yenanow.common.exception.ErrorCode;
 import com.example.yenanow.common.util.UuidUtil;
+import com.example.yenanow.s3.service.S3Service;
 import com.example.yenanow.users.dto.response.FollowerResponse;
 import com.example.yenanow.users.dto.response.FollowerResponseItem;
 import com.example.yenanow.users.dto.response.FollowingResponse;
 import com.example.yenanow.users.dto.response.FollowingResponseItem;
 import com.example.yenanow.users.entity.Follow;
 import com.example.yenanow.users.entity.User;
-import com.example.yenanow.users.repository.FollowQueryRepository;
 import com.example.yenanow.users.repository.FollowRepository;
 import com.example.yenanow.users.repository.UserRepository;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -28,6 +30,7 @@ public class FollowServiceImpl implements FollowService {
     private final UserRepository userRepository;
     private final StringRedisTemplate redisTemplate;
     private final FollowCountSyncService followCountSyncService;
+    private final S3Service s3Service;
 
     @Override
     @Transactional
@@ -100,9 +103,20 @@ public class FollowServiceImpl implements FollowService {
         Page<FollowingResponseItem> page = followRepository
             .findFollowings(userUuid, currentUserUuid, pageable);
 
+        // profileUrl을 S3 객체 URL로 변환
+        List<FollowingResponseItem> followings = page.getContent().stream()
+            .map(item -> new FollowingResponseItem(
+                item.getUserUuid(),
+                item.getName(),
+                item.getNickname(),
+                s3Service.getFileUrl(item.getProfileUrl()),
+                item.isFollowing()
+            ))
+            .collect(Collectors.toList());
+
         return FollowingResponse.builder()
             .totalPages(page.getTotalPages())
-            .followings(page.getContent())
+            .followings(followings)
             .build();
     }
 
@@ -113,9 +127,20 @@ public class FollowServiceImpl implements FollowService {
         Page<FollowerResponseItem> page = followRepository
             .findFollowers(userUuid, currentUserUuid, pageable);
 
+        // profileUrl을 S3 객체 URL로 변환
+        List<FollowerResponseItem> followers = page.getContent().stream()
+            .map(item -> new FollowerResponseItem(
+                item.getUserUuid(),
+                item.getName(),
+                item.getNickname(),
+                s3Service.getFileUrl(item.getProfileUrl()),
+                item.isFollowing()
+            ))
+            .collect(Collectors.toList());
+
         return FollowerResponse.builder()
             .totalPages(page.getTotalPages())
-            .followers(page.getContent())
+            .followers(followers)
             .build();
     }
 }
