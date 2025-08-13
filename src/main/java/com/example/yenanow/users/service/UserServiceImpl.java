@@ -30,7 +30,9 @@ import com.example.yenanow.users.repository.UserRepository;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -279,9 +281,19 @@ public class UserServiceImpl implements UserService {
         Page<UserSearchResponseItem> page = userRepository
             .findUsersByKeyword(currentUserUuid, keyword, pageable);
 
+        List<UserSearchResponseItem> userSearches = page.getContent().stream()
+            .map(item -> new UserSearchResponseItem(
+                item.getUserUuid(),
+                s3Service.getFileUrl(item.getProfileUrl()),
+                item.getName(),
+                item.getNickname(),
+                item.getFollowing()
+            ))
+            .collect(Collectors.toList());
+
         return UserSearchResponse.builder()
             .totalPages(page.getTotalPages())
-            .userSearches(page.getContent())
+            .userSearches(userSearches)
             .build();
     }
 
@@ -292,9 +304,18 @@ public class UserServiceImpl implements UserService {
         Page<UserInviteSearchResponseItem> page = userRepository
             .findFollowersByKeyword(currentUserUuid, keyword, pageable);
 
+        List<UserInviteSearchResponseItem> userInviteSearches = page.getContent().stream()
+            .map(item -> new UserInviteSearchResponseItem(
+                item.getUserUuid(),
+                s3Service.getFileUrl(item.getProfileUrl()),
+                item.getName(),
+                item.getNickname()
+            ))
+            .collect(Collectors.toList());
+
         return UserInviteSearchResponse.builder()
             .totalPages(page.getTotalPages())
-            .userSearches(page.getContent())
+            .userSearches(userInviteSearches)
             .build();
     }
 
