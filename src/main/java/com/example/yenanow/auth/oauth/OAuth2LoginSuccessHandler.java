@@ -1,10 +1,10 @@
 package com.example.yenanow.auth.oauth;
 
+import com.example.yenanow.common.util.CookieUtil;
 import com.example.yenanow.common.util.JwtUtil;
 import com.example.yenanow.users.entity.User;
 import com.example.yenanow.users.repository.UserRepository;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -24,6 +24,9 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
     @Value("${client.origin}")
     private String clientOrigin;
+
+    @Value("${jwt.refresh-token-expiration}")
+    private int refreshTokenExpiration;
 
     public OAuth2LoginSuccessHandler(JwtUtil jwtUtil, UserRepository userRepository) {
         this.jwtUtil = jwtUtil;
@@ -57,13 +60,8 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         String refreshToken = jwtUtil.generateRefreshToken(user.getUserUuid());
 
         // 쿠키에 refreshToken 저장
-        Cookie refreshTokenCookie = new Cookie("refresh_token", refreshToken);
-        refreshTokenCookie.setHttpOnly(true); // JS에서 접근 못하도록
-        refreshTokenCookie.setSecure(true); // HTTPS에서만 전송되도록
-        refreshTokenCookie.setPath("/"); // 모든 경로에서 접근 가능하도록
-        refreshTokenCookie.setMaxAge(7 * 24 * 60 * 60);
-
-        response.addCookie(refreshTokenCookie);
+        CookieUtil.addHttpOnlyCookie(response, "refresh_token", refreshToken,
+            refreshTokenExpiration);
 
         String redirectUrl = clientOrigin + "?accessToken=" + accessToken +
             "&userUuid=" + user.getUserUuid() +

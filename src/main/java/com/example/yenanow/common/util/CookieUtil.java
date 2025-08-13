@@ -8,21 +8,12 @@ import org.springframework.util.SerializationUtils;
 
 public class CookieUtil {
 
-    // 요청값(이름, 값, 만료 기간)을 바탕으로 쿠키 추가
-    public static void addCookie(HttpServletResponse response, String name, String value,
-        int maxAge) {
-        Cookie cookie = new Cookie(name, value);
-        cookie.setPath("/");
-        cookie.setMaxAge(maxAge);
-        response.addCookie(cookie);
-    }
-
     // HttpOnly + Secure 쿠키 추가
     public static void addHttpOnlyCookie(HttpServletResponse response, String name, String value,
         int maxAge) {
         Cookie cookie = new Cookie(name, value);
         cookie.setPath("/");
-        cookie.setMaxAge(maxAge);
+        cookie.setMaxAge(maxAge / 1000); // 밀리초를 초로 변환, maxAge는 초 단위
         cookie.setHttpOnly(true);
         cookie.setSecure(true);
         response.addCookie(cookie);
