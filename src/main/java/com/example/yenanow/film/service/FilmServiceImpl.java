@@ -63,7 +63,8 @@ public class FilmServiceImpl implements FilmService {
 
     @Override
     public List<FrameListResponseItem> getFrames(int frameCut) {
-        List<FrameListResponseItem> frames = frameRepository.findByFrameCut(frameCut);
+        List<FrameListResponseItem> frames = frameRepository.findByFrameCutOrderByFrameNameAsc(
+            frameCut);
 
         return frames.stream()
             .map(frame -> {

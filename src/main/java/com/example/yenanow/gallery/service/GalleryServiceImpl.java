@@ -42,6 +42,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -69,7 +70,8 @@ public class GalleryServiceImpl implements GalleryService {
     public MyGalleryResponse getMyGallery(String userUuid, int pageNum, int display) {
         validateUserUuid(userUuid);
 
-        Pageable pageable = PageRequest.of(pageNum, display);
+        Sort sort = Sort.by(Sort.Direction.DESC,"createdAt");
+        Pageable pageable = PageRequest.of(pageNum, display, sort);
         Page<Ncut> ncutPage = ncutRepository.findByUserUserUuid(userUuid, pageable);
 
         // 데이터가 없으면 빈 응답 반환
@@ -86,7 +88,8 @@ public class GalleryServiceImpl implements GalleryService {
     public MyGalleryResponse getOtherGallery(String userUuid, int pageNum, int display) {
         validateUserUuid(userUuid);
 
-        Pageable pageable = PageRequest.of(pageNum, display);
+        Sort sort = Sort.by(Sort.Direction.DESC,"createdAt");
+        Pageable pageable = PageRequest.of(pageNum, display, sort);
         Page<Ncut> ncutPage = ncutRepository.findByUserUserUuidAndVisibility(
             userUuid, Visibility.PUBLIC, pageable
         );
@@ -240,13 +243,21 @@ public class GalleryServiceImpl implements GalleryService {
         boolean isLiked = ncutLikeRepository.existsByNcutNcutUuidAndUserUserUuid(ncutUuid,
             userUuid);
         Pageable pageable = PageRequest.of(pageNum, display);
-        Page<NcutLikesResponseItem> ncutLikesResponseItem = ncutLikeRepository.findNcutLikeByNcutUuid(
+        Page<NcutLikesResponseItem> page = ncutLikeRepository.findNcutLikeByNcutUuid(
             ncutUuid, pageable).orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+
+        List<NcutLikesResponseItem> ncutLikesResponseItem = page.getContent().stream()
+            .map(item -> new NcutLikesResponseItem(
+                item.getUserUuid(),
+                item.getName(),
+                item.getNickname(),
+                s3Service.getFileUrl(item.getProfileUrl())
+            )).toList();
 
         return NcutLikesResponse.builder()
             .isLiked(isLiked)
-            .likeCount(Long.valueOf(ncutLikesResponseItem.getTotalElements()).intValue())
-            .likes(ncutLikesResponseItem.getContent())
+            .likeCount(Long.valueOf(page.getTotalElements()).intValue())
+            .likes(ncutLikesResponseItem)
             .build();
     }
 
