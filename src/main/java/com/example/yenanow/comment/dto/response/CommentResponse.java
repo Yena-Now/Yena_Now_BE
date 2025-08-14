@@ -48,7 +48,7 @@ public class CommentResponse {
         return CommentResponse.builder()
             .commentUuid(dto.getCommentUuid())
             .comment(dto.getContent())
-            .userUuid(dto.getUserUuid())
+            .userUuid(userUuid)
             .nickname(nickname)
             .profileUrl(profileUrl)
             .createdAt(dto.getCreatedAt())
