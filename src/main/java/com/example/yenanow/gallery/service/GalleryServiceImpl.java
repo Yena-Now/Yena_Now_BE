@@ -5,6 +5,7 @@ import com.example.yenanow.common.exception.ErrorCode;
 import com.example.yenanow.common.util.UuidUtil;
 import com.example.yenanow.film.entity.Frame;
 import com.example.yenanow.film.repository.FrameRepository;
+import com.example.yenanow.gallery.dto.query.LikeUserQueryDto;
 import com.example.yenanow.gallery.dto.request.CreateNcutRelayRequest;
 import com.example.yenanow.gallery.dto.request.CreateNcutRequest;
 import com.example.yenanow.gallery.dto.request.CreateRelayNcutRequest;
@@ -240,16 +241,22 @@ public class GalleryServiceImpl implements GalleryService {
         boolean isLiked = ncutLikeRepository.existsByNcutNcutUuidAndUserUserUuid(ncutUuid,
             userUuid);
         Pageable pageable = PageRequest.of(pageNum, display);
-        Page<NcutLikesResponseItem> page = ncutLikeRepository.findNcutLikeByNcutUuid(
-            ncutUuid, pageable).orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+        Page<LikeUserQueryDto> page = ncutLikeRepository.findLikesWithWithdrawnUsers(ncutUuid,
+            pageable);
 
         List<NcutLikesResponseItem> ncutLikesResponseItem = page.getContent().stream()
-            .map(item -> new NcutLikesResponseItem(
-                item.getUserUuid(),
-                item.getName(),
-                item.getNickname(),
-                s3Service.getFileUrl(item.getProfileUrl())
-            )).toList();
+            .map(rawDto -> {
+                if (rawDto.getDeletedAt() != null) {
+                    return new NcutLikesResponseItem(null, null, "탈퇴한 사용자", null);
+                } else {
+                    return new NcutLikesResponseItem(
+                        rawDto.getUserUuid(),
+                        rawDto.getName(),
+                        rawDto.getNickname(),
+                        s3Service.getFileUrl(rawDto.getProfileUrl())
+                    );
+                }
+            }).toList();
 
         return NcutLikesResponse.builder()
             .isLiked(isLiked)
