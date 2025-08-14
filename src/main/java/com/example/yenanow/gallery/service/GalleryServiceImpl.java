@@ -240,13 +240,21 @@ public class GalleryServiceImpl implements GalleryService {
         boolean isLiked = ncutLikeRepository.existsByNcutNcutUuidAndUserUserUuid(ncutUuid,
             userUuid);
         Pageable pageable = PageRequest.of(pageNum, display);
-        Page<NcutLikesResponseItem> ncutLikesResponseItem = ncutLikeRepository.findNcutLikeByNcutUuid(
+        Page<NcutLikesResponseItem> page = ncutLikeRepository.findNcutLikeByNcutUuid(
             ncutUuid, pageable).orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+
+        List<NcutLikesResponseItem> ncutLikesResponseItem = page.getContent().stream()
+            .map(item -> new NcutLikesResponseItem(
+                item.getUserUuid(),
+                item.getName(),
+                item.getNickname(),
+                s3Service.getFileUrl(item.getProfileUrl())
+            )).toList();
 
         return NcutLikesResponse.builder()
             .isLiked(isLiked)
-            .likeCount(Long.valueOf(ncutLikesResponseItem.getTotalElements()).intValue())
-            .likes(ncutLikesResponseItem.getContent())
+            .likeCount(Long.valueOf(page.getTotalElements()).intValue())
+            .likes(ncutLikesResponseItem)
             .build();
     }
 
