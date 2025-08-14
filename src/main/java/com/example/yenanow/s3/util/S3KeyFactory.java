@@ -26,6 +26,7 @@ public class S3KeyFactory {
             case "ncutThumbnail" ->
                 "ncut/thumbnail/%s/%s%s".formatted(userUuid, UUID.randomUUID(), ext);
             case "cut" -> "cut/%s/%s%s".formatted(roomCode, UUID.randomUUID(), ext);
+            case "yena" -> "cut/%s/result/%s%s".formatted(roomCode,UUID.randomUUID(),ext);
             default -> throw new IllegalArgumentException("지원하지 않는 type: " + type);
         };
     }

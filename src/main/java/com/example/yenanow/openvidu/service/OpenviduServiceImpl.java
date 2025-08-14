@@ -290,9 +290,8 @@ public class OpenviduServiceImpl implements OpenviduService {
                         return Collections.emptyList();
                     }
 
-                    // cut_count 안전 파싱 (없거나 숫자 아니면 제한 미적용)
-                    Integer cutCount = tryParseInt(roomData.get("cut_count"));
-                    if (cutCount != null && cutKeys.size() >= cutCount) {
+                    Integer takeCount = tryParseInt(roomData.get("take_count"));
+                    if (takeCount != null && cutKeys.size() >= takeCount) {
                         operations.unwatch();
                         throw new BusinessException(ErrorCode.CUT_TAKE_COUNT_EXCEEDED);
                     }

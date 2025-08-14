@@ -81,13 +81,6 @@ public class UploadDbSaveService {
         return new PresignedUrlResponse(uploadUrl, fileUrl);
     }
 
-    private String extractKeyOrThrow(String fileUrl) {
-        if (fileUrl == null || fileUrl.isBlank()) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST);
-        }
-        return s3KeyFactory.extractKeyFromUrl(fileUrl);
-    }
-
     private void require(boolean cond, String message) {
         if (!cond) {
             throw new BusinessException(ErrorCode.BAD_REQUEST);
