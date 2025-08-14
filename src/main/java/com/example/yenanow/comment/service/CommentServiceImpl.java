@@ -1,5 +1,6 @@
 package com.example.yenanow.comment.service;
 
+import com.example.yenanow.comment.dto.query.CommentQueryDto;
 import com.example.yenanow.comment.dto.request.CommentCreateRequest;
 import com.example.yenanow.comment.dto.request.CommentUpdateRequest;
 import com.example.yenanow.comment.dto.response.CommentListResponse;
@@ -36,8 +37,9 @@ public class CommentServiceImpl implements CommentService {
     @Transactional(readOnly = true)
     public CommentListResponse getComments(String ncutUuid, int pageNum, int display) {
         Pageable pageable = PageRequest.of(pageNum, display);
-        Page<Comment> commentPage = commentRepository.findByNcutNcutUuid(ncutUuid, pageable);
-        return CommentListResponse.fromEntity(commentPage, s3Service);
+        Page<CommentQueryDto> commentPage = commentRepository.findCommentsWithUserInfo(ncutUuid,
+            pageable);
+        return CommentListResponse.fromQueryDtoPage(commentPage, s3Service);
     }
 
     @Override
