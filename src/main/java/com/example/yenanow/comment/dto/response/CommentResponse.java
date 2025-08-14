@@ -32,11 +32,13 @@ public class CommentResponse {
     }
 
     public static CommentResponse fromQueryDto(CommentQueryDto dto, S3Service s3Service) {
+        String userUuid = dto.getUserUuid();
         String name = dto.getName();
         String nickname = dto.getNickname();
         String profileUrl = null;
 
         if (dto.getDeletedAt() != null) {
+            userUuid = null;
             name = null;
             nickname = "탈퇴한 사용자";
         } else if (dto.getProfileUrl() != null) {
@@ -46,7 +48,7 @@ public class CommentResponse {
         return CommentResponse.builder()
             .commentUuid(dto.getCommentUuid())
             .comment(dto.getContent())
-            .userUuid(dto.getUserUuid())
+            .userUuid(userUuid)
             .nickname(nickname)
             .profileUrl(profileUrl)
             .createdAt(dto.getCreatedAt())
