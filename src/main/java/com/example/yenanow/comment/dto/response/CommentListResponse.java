@@ -1,5 +1,6 @@
 package com.example.yenanow.comment.dto.response;
 
+import com.example.yenanow.comment.dto.query.CommentQueryDto;
 import com.example.yenanow.comment.entity.Comment;
 import com.example.yenanow.s3.service.S3Service;
 import java.util.List;
@@ -24,6 +25,17 @@ public class CommentListResponse {
             .comments(commentPage.getContent()
                 .stream()
                 .map(c -> CommentResponse.fromEntity(c, s3Service))
+                .collect(Collectors.toList()))
+            .build();
+    }
+
+    public static CommentListResponse fromQueryDtoPage(Page<CommentQueryDto> dtoPage,
+        S3Service s3Service) {
+        return CommentListResponse.builder()
+            .totalPage(dtoPage.getTotalPages())
+            .comments(dtoPage.getContent()
+                .stream()
+                .map(dto -> CommentResponse.fromQueryDto(dto, s3Service))
                 .collect(Collectors.toList()))
             .build();
     }

@@ -1,5 +1,6 @@
 package com.example.yenanow.comment.dto.response;
 
+import com.example.yenanow.comment.dto.query.CommentQueryDto;
 import com.example.yenanow.comment.entity.Comment;
 import com.example.yenanow.s3.service.S3Service;
 import java.time.LocalDateTime;
@@ -27,6 +28,28 @@ public class CommentResponse {
             .nickname(entity.getUser().getNickname())
             .profileUrl(s3Service.getFileUrl(entity.getUser().getProfileUrl()))
             .createdAt(entity.getCreatedAt())
+            .build();
+    }
+
+    public static CommentResponse fromQueryDto(CommentQueryDto dto, S3Service s3Service) {
+        String name = dto.getName();
+        String nickname = dto.getNickname();
+        String profileUrl = null;
+
+        if (dto.getDeletedAt() != null) {
+            name = null;
+            nickname = "탈퇴한 사용자";
+        } else if (dto.getProfileUrl() != null) {
+            profileUrl = s3Service.getFileUrl(dto.getProfileUrl());
+        }
+
+        return CommentResponse.builder()
+            .commentUuid(dto.getCommentUuid())
+            .comment(dto.getContent())
+            .userUuid(dto.getUserUuid())
+            .nickname(nickname)
+            .profileUrl(profileUrl)
+            .createdAt(dto.getCreatedAt())
             .build();
     }
 }
