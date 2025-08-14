@@ -9,5 +9,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface FrameRepository extends JpaRepository<Frame, String> {
 
-    List<FrameListResponseItem> findByFrameCut(int frameCut);
+    List<FrameListResponseItem> findByFrameCutOrderByFrameNameAsc(int frameCut);
 }
