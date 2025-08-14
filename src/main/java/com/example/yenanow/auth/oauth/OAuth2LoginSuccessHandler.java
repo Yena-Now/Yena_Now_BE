@@ -57,7 +57,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         String refreshToken = jwtUtil.generateRefreshToken(user.getUserUuid());
 
         // 쿠키에 refreshToken 저장
-        Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
+        Cookie refreshTokenCookie = new Cookie("refresh_token", refreshToken);
         refreshTokenCookie.setHttpOnly(true); // JS에서 접근 못하도록
         refreshTokenCookie.setSecure(true); // HTTPS에서만 전송되도록
         refreshTokenCookie.setPath("/"); // 모든 경로에서 접근 가능하도록
