@@ -21,12 +21,13 @@ public class S3KeyFactory {
 
         return switch (type) {
             case "profile" -> "profile/%s/%s%s".formatted(userUuid, UUID.randomUUID(), ext);
-            case "background" -> "background/%s%s".formatted(UUID.randomUUID(), ext);
+            case "background" -> "background/user/%s/%s%s"
+                .formatted(LocalDate.now(ZoneId.of("Asia/Seoul")), UUID.randomUUID(), ext);
             case "ncut" -> "ncut/%s%s".formatted(UUID.randomUUID(), ext);
             case "ncutThumbnail" ->
                 "ncut/thumbnail/%s/%s%s".formatted(userUuid, UUID.randomUUID(), ext);
             case "cut" -> "cut/%s/%s%s".formatted(roomCode, UUID.randomUUID(), ext);
-            case "yena" -> "cut/%s/result/%s%s".formatted(roomCode,UUID.randomUUID(),ext);
+            case "yena" -> "cut/%s/result/%s%s".formatted(roomCode, UUID.randomUUID(), ext);
             default -> throw new IllegalArgumentException("지원하지 않는 type: " + type);
         };
     }
@@ -39,10 +40,8 @@ public class S3KeyFactory {
     }
 
     public String createProfileKeyWithoutUser(String ext) {
-        LocalDate now = LocalDate.now(ZoneId.of("Asia/Seoul"));
-        String datePath = String.format("%04d/%02d/%02d", now.getYear(), now.getMonthValue(),
-            now.getDayOfMonth());
-        return "profile/%s/%s.%s".formatted(datePath, UUID.randomUUID(), ext);
+        return "profile/%s/%s.%s".formatted(LocalDate.now(ZoneId.of("Asia/Seoul")),
+            UUID.randomUUID(), ext);
     }
 
     public String extractKeyFromUrl(String url) {
