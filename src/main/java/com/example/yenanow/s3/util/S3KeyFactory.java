@@ -23,11 +23,17 @@ public class S3KeyFactory {
             case "profile" -> "profile/%s/%s%s".formatted(userUuid, UUID.randomUUID(), ext);
             case "background" -> "background/user/%s/%s%s"
                 .formatted(LocalDate.now(ZoneId.of("Asia/Seoul")), UUID.randomUUID(), ext);
-            case "ncut" -> "ncut/%s%s".formatted(UUID.randomUUID(), ext);
+            case "ncut" ->
+                "ncut/%s/%s%s".formatted(LocalDate.now(ZoneId.of("Asia/Seoul")), UUID.randomUUID(),
+                    ext);
             case "ncutThumbnail" ->
                 "ncut/thumbnail/%s/%s%s".formatted(userUuid, UUID.randomUUID(), ext);
-            case "cut" -> "cut/%s/%s%s".formatted(roomCode, UUID.randomUUID(), ext);
-            case "yena" -> "cut/%s/result/%s%s".formatted(roomCode, UUID.randomUUID(), ext);
+            case "cut" ->
+                "cut/%s/%s/%s%s".formatted(LocalDate.now(ZoneId.of("Asia/Seoul")), roomCode,
+                    UUID.randomUUID(), ext);
+            case "yena" ->
+                "cut/%s/%s/result/%s%s".formatted(LocalDate.now(ZoneId.of("Asia/Seoul")), roomCode,
+                    UUID.randomUUID(), ext);
             default -> throw new IllegalArgumentException("지원하지 않는 type: " + type);
         };
     }
@@ -58,7 +64,8 @@ public class S3KeyFactory {
         if (ext == null || ext.isBlank()) {
             ext = "bin";
         }
-        return "ncut/%s.%s".formatted(java.util.UUID.randomUUID(), ext.toLowerCase());
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Seoul"));
+        return "ncut/%s/%s.%s".formatted(today, UUID.randomUUID(), ext.toLowerCase());
     }
 
     // Ncut 썸네일: ncut/thumbnail/{userUuid}/{UUID}.{ext}
@@ -67,7 +74,9 @@ public class S3KeyFactory {
         if (ext == null || ext.isBlank()) {
             ext = "bin";
         }
-        return "ncut/thumbnail/%s/%s.%s".formatted(userUuid, UUID.randomUUID(), ext.toLowerCase());
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Seoul"));
+        return "ncut/thumbnail/%s/%s/%s.%s".formatted(
+            userUuid, today, UUID.randomUUID(), ext.toLowerCase());
     }
 
     // 촬영 컷: cut/{roomCode}/{UUID}.{ext}
@@ -76,7 +85,8 @@ public class S3KeyFactory {
         if (ext == null || ext.isBlank()) {
             ext = "bin";
         }
-        String leaf = String.format("%s.%s", java.util.UUID.randomUUID(), ext.toLowerCase());
-        return "cut/%s/%s".formatted(roomCode, leaf);
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Seoul"));
+        String leaf = "%s.%s".formatted(UUID.randomUUID(), ext.toLowerCase());
+        return "cut/%s/%s/%s".formatted(today, roomCode, leaf);
     }
 }
