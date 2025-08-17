@@ -3,6 +3,9 @@ package com.example.yenanow.s3.util;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.UUID;
+import java.net.URLDecoder;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.stereotype.Component;
 
@@ -51,11 +54,35 @@ public class S3KeyFactory {
     }
 
     public String extractKeyFromUrl(String url) {
-        int idx = url.indexOf(".amazonaws.com/");
-        if (idx == -1) {
-            throw new IllegalArgumentException("잘못된 S3 URL");
+        try {
+            URI uri = URI.create(url);
+
+            // 1) path만 취득 (쿼리스트링/프래그먼트 제외)
+            String rawPath = uri.getRawPath();
+            if (rawPath == null || rawPath.isBlank()) {
+                throw new IllegalArgumentException("S3 URL에 path가 없습니다.");
+            }
+
+            // 2) 선행 슬래시 제거 → "bucket/...." 형태를 기대
+            String path = rawPath.startsWith("/") ? rawPath.substring(1) : rawPath;
+
+            // 3) 경로식 URL은 첫 세그먼트가 버킷명 → 제거
+            int firstSlash = path.indexOf('/');
+            if (firstSlash < 0) {
+                throw new IllegalArgumentException("경로식 S3 URL 형식이 올바르지 않습니다. (bucket/key 필요)");
+            }
+            String keyEncoded = path.substring(firstSlash + 1);
+            if (keyEncoded.isBlank()) {
+                throw new IllegalArgumentException("S3 key가 비어 있습니다.");
+            }
+
+            // 4) URL 디코딩 (예: a%2Fb%2Fc.jpg → a/b/c.jpg)
+            return URLDecoder.decode(keyEncoded, StandardCharsets.UTF_8);
+        } catch (IllegalArgumentException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IllegalArgumentException("지원하지 않는 경로식 S3 URL: " + url, e);
         }
-        return url.substring(idx + ".amazonaws.com/".length());
     }
 
     // NCut 결과물: ncut/{UUID}.{ext}
