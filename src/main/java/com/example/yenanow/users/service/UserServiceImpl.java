@@ -84,7 +84,7 @@ public class UserServiceImpl implements UserService {
 
             /* 2-d) S3 복사 & temp 삭제 */
             s3Service.copyObject(tempKey, finalKey);
-            s3Service.deleteObject(tempKey);
+            // s3Service.deleteObject(tempKey); 임시 비활성화
         }
 
         /* 3) 엔티티 생성 및 저장 */
