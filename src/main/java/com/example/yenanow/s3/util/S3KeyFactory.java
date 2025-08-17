@@ -56,32 +56,33 @@ public class S3KeyFactory {
     public String extractKeyFromUrl(String url) {
         try {
             URI uri = URI.create(url);
-
-            // 1) path만 취득 (쿼리스트링/프래그먼트 제외)
-            String rawPath = uri.getRawPath();
+            String host = uri.getHost();
+            String rawPath = uri.getRawPath();  // 쿼리/프래그먼트 제외
             if (rawPath == null || rawPath.isBlank()) {
                 throw new IllegalArgumentException("S3 URL에 path가 없습니다.");
             }
 
-            // 2) 선행 슬래시 제거 → "bucket/...." 형태를 기대
+            // 선행 슬래시 제거
             String path = rawPath.startsWith("/") ? rawPath.substring(1) : rawPath;
 
-            // 3) 경로식 URL은 첫 세그먼트가 버킷명 → 제거
-            int firstSlash = path.indexOf('/');
-            if (firstSlash < 0) {
-                throw new IllegalArgumentException("경로식 S3 URL 형식이 올바르지 않습니다. (bucket/key 필요)");
-            }
-            String keyEncoded = path.substring(firstSlash + 1);
-            if (keyEncoded.isBlank()) {
-                throw new IllegalArgumentException("S3 key가 비어 있습니다.");
+            // 경로식(URL이 s3.* 호스트)인 경우에만 첫 세그먼트(버킷) 제거
+            if (host != null &&
+                    (host.equals("s3.amazonaws.com")
+                            || host.startsWith("s3.")
+                            || host.startsWith("s3-accelerate"))) {
+                int firstSlash = path.indexOf('/');
+                if (firstSlash < 0) {
+                    throw new IllegalArgumentException("경로식 S3 URL 형식이 올바르지 않습니다. (bucket/key 필요)");
+                }
+                path = path.substring(firstSlash + 1);
             }
 
-            // 4) URL 디코딩 (예: a%2Fb%2Fc.jpg → a/b/c.jpg)
-            return URLDecoder.decode(keyEncoded, StandardCharsets.UTF_8);
+            // URL 디코딩 (예: a%2Fb%2Fc.jpg -> a/b/c.jpg)
+            return URLDecoder.decode(path, StandardCharsets.UTF_8);
         } catch (IllegalArgumentException e) {
             throw e;
         } catch (Exception e) {
-            throw new IllegalArgumentException("지원하지 않는 경로식 S3 URL: " + url, e);
+            throw new IllegalArgumentException("지원하지 않는 S3 URL: " + url, e);
         }
     }
 
