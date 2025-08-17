@@ -57,30 +57,27 @@ public class S3KeyFactory {
         try {
             URI uri = URI.create(url);
             String host = uri.getHost();
-            String rawPath = uri.getRawPath();  // 쿼리/프래그먼트 제외
+            String rawPath = uri.getRawPath();
             if (rawPath == null || rawPath.isBlank()) {
                 throw new IllegalArgumentException("S3 URL에 path가 없습니다.");
             }
 
-            // 선행 슬래시 제거
             String path = rawPath.startsWith("/") ? rawPath.substring(1) : rawPath;
 
-            // 경로식(URL이 s3.* 호스트)인 경우에만 첫 세그먼트(버킷) 제거
+            // virtual-hosted 스타일이므로 아래 조건을 통과하지 않아야 정상
             if (host != null &&
                     (host.equals("s3.amazonaws.com")
-                            || host.startsWith("s3.")
-                            || host.startsWith("s3-accelerate"))) {
+                            || host.matches("^s3[.-][a-z0-9-]+\\.amazonaws\\.com$")
+                            || host.equals("s3-accelerate.amazonaws.com"))) {
+
                 int firstSlash = path.indexOf('/');
                 if (firstSlash < 0) {
-                    throw new IllegalArgumentException("경로식 S3 URL 형식이 올바르지 않습니다. (bucket/key 필요)");
+                    throw new IllegalArgumentException("경로식 S3 URL 형식이 올바르지 않습니다.");
                 }
                 path = path.substring(firstSlash + 1);
             }
 
-            // URL 디코딩 (예: a%2Fb%2Fc.jpg -> a/b/c.jpg)
             return URLDecoder.decode(path, StandardCharsets.UTF_8);
-        } catch (IllegalArgumentException e) {
-            throw e;
         } catch (Exception e) {
             throw new IllegalArgumentException("지원하지 않는 S3 URL: " + url, e);
         }
